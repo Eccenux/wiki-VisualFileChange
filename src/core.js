@@ -7,7 +7,7 @@
 // TODO obtain images from thumb.php as this would be much faster
 //   Problem: Animated GIFs and some PNGs
 // TODO AJAX userlist-dropdown / verification
-
+ 
 if (typeof(AjaxMassDelete) == 'undefined') {
  
 window.AjaxMassDelete = {
@@ -17,7 +17,7 @@ window.AjaxMassDelete = {
 	mdInstall: function () {
 		// Don't install link if the user opted out
 		if (window.AjaxDeleteOptOut) return;
-		
+ 
 		if ( 1 == $("#t-AjaxQuickDeleteOnDemand").length ) {
 			// User is using the load on demand feature. 
 			// Replace the link
@@ -25,14 +25,20 @@ window.AjaxMassDelete = {
 			// Immedately start Md
 			this.mdStartMd();
 		} else {
-			// Set up toolbox link
-			if (mw.config.get('wgNamespaceNumber') != 14) addPortletLink('p-tb', 'javascript:AjaxQuickDelete.mdStartMd();', "Perform batch task", 't-AjaxQuickDeletx2', null);
+			if ( "MediaWiki:AjaxMassDelete.js" == mw.util.getParamValue('withJS') ) {
+				// Load immediately and add no link
+				this.mdStartMd();
+				
+			} else if (mw.config.get('wgNamespaceNumber') != 14) {
+				// Set up toolbox link
+				addPortletLink('p-tb', 'javascript:AjaxQuickDelete.mdStartMd();', "Perform batch task", 't-AjaxQuickDeletx2', null);
+			}
 		}
 	},
  
 	mdStartMd: function () {
 		var wgPageName = mw.config.get('wgPageName');
-		
+ 
 		this.context = "MD"; // The error handler should know what we are performing
 		this.mdBusy = false; // indicate that any dialog can be closed
 		this.tasks = []; // reset task list in case an earlier error left it non-empty
@@ -212,6 +218,10 @@ window.AjaxMassDelete = {
 			catch (ex) {
 				AjaxQuickDelete.dlg = 0;
 			}
+			try {
+				AjaxQuickDelete.mdCuteSelectDlg.dialog("destroy");
+				AjaxQuickDelete.mdCuteSelectDlg.remove();
+			} catch (ex) {}
 		} else if ( 'AjaxMdContainer' == $(this).children('div').eq(0).attr('id') ) {
 			this.dialog("destroy");
 			this.parent.remove();
@@ -233,7 +243,9 @@ window.AjaxMassDelete = {
 		this.progressDialog.remove();
  
 		this.mdMinLenRequired = true;     // Is a reason required?
- 
+		
+		this.mdDlgThumbDlgClose();        // Are there Contaminated Sites? Remove them now.
+
 		var dlgButtons = {};
 		dlgButtons[this.i18n.submitButtonLabel] = function () {
 			try {
@@ -245,7 +257,10 @@ window.AjaxMassDelete = {
 		dlgButtons[this.i18n.cancelButtonLabel] = function () {
 			$(this).dialog("close");
 		};
-		this.mdDlgThumbDlgClose();        // Are there Contaminated Sites? Remove them now.
+		dlgButtons[this.i18n.mdSelectButtonLabel] = function () {
+			AjaxQuickDelete.mdCuteSelectDlg.dialog("open");
+		};
+		
 		this.dlg = $('<div></div>').html('<div id="AjaxMdContainer"></div>').dialog({
 			modal: true,
 			closeOnEscape: true,
@@ -290,7 +305,7 @@ window.AjaxMassDelete = {
  
 		var submitButton = $('.ui-dialog-buttonpane button:first');
 		var $mdDeleteReason = $('#mdDeleteReason');
-		
+ 
 		$mdDeleteReason.keyup( function (event) {
 			if ( ($(this).val().length < 6 ) && AjaxQuickDelete.mdMinLenRequired ) {
 				submitButton.addClass('ui-state-disabled');
@@ -374,6 +389,108 @@ window.AjaxMassDelete = {
 		$('#AjaxMdType').val('del');
 		$('#AjaxMdType').change();
 		$mdDeleteReason.keyup();
+
+
+
+		// cute-selection dialog
+		var dlgSelectButtons = {};
+		dlgSelectButtons[this.i18n.mdSelectApplyButtonLabel] = function () { 
+			var o = AjaxQuickDelete;
+			var curUpld = '';
+			var $curThmb = '';
+			var newVal = $('#chkAjaxMdSelect')[0].checked;
+			var v_txtAjaxMdSelectCat = $('#txtAjaxMdSelectCat').val();
+			var v_txtAjaxMdSelectTitle = $('#txtAjaxMdSelectTitle').val();
+			if ( '' != v_txtAjaxMdSelectTitle ) v_txtAjaxMdSelectTitle = new RegExp(v_txtAjaxMdSelectTitle, '');
+			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
+			var vl_selAjaxMdSelectSize = ( $('#selAjaxMdSelectSize').val() == 'l' );
+			var v_txtAjaxMdSelectDate0 = $('#txtAjaxMdSelectDate0').val();
+			if ( '' != v_txtAjaxMdSelectDate0 ) {
+				try {
+					/(\d\d)-(\d\d)-(\d{4})/.exec(v_txtAjaxMdSelectDate0);
+					v_txtAjaxMdSelectDate0 = new Date(RegExp.$3, RegExp.$2, RegExp.$1);
+				} catch (ex) { alert('Invalid start-date'); return; }
+			}
+			var v_txtAjaxMdSelectDate1 = $('#txtAjaxMdSelectDate1').val();
+			if ( '' != v_txtAjaxMdSelectDate1 ) {
+				try {
+					/(\d\d)-(\d\d)-(\d{4})/.exec(v_txtAjaxMdSelectDate1);
+					v_txtAjaxMdSelectDate1 = new Date(RegExp.$3, RegExp.$2, RegExp.$1);
+				} catch (ex) { alert('Invalid end-date'); return 0; }
+			}
+			
+			for (var upload in o.iUploads) {
+				try {
+					var isMatch = {};
+					curUpld = o.iUploads[upload];
+					// yyyy    mm     dd
+					/(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d:\d\d)Z/.exec(curUpld.time);
+					curUpldDate = new Date(RegExp.$1, RegExp.$2, RegExp.$3);
+					$curThmb = $('input[value="' + upload.replace('"', '\\"') + '"]');
+					
+					if ( '' != v_txtAjaxMdSelectCat ) {
+						for (var ct in curUpld.categories) {
+							if (curUpld.categories[ct].title.replace("Category:", "") == v_txtAjaxMdSelectCat) { 
+								isMatch.cat = true;
+							}
+						}
+					} else {isMatch.cat = true;}
+					
+					if ( 'object' == typeof(v_txtAjaxMdSelectTitle) ) {
+						if ( v_txtAjaxMdSelectTitle.test(upload.replace("File:", "")) ) {
+							isMatch.title = true;
+						}
+					} else {isMatch.title = true;}
+					
+					if ( '' != v_txtAjaxMdSelectSize ) {
+						if ( (vl_selAjaxMdSelectSize && (curUpld.size < v_txtAjaxMdSelectSize)) || (!vl_selAjaxMdSelectSize && (curUpld.size > v_txtAjaxMdSelectSize)) ) isMatch.size = true;
+					} else {isMatch.size = true;}
+					
+					if ( 'object' == typeof(v_txtAjaxMdSelectDate0) ) { // between -> start date -> must be in the past
+						if (curUpldDate >= v_txtAjaxMdSelectDate0) isMatch.date0 = true;
+					} else {isMatch.date0 = true;} 
+					
+					if ( 'object' == typeof(v_txtAjaxMdSelectDate1) ) { // and -> end date -> must be in the future
+						if (curUpldDate <= v_txtAjaxMdSelectDate1) isMatch.date1 = true;
+					} else {isMatch.date1 = true;}
+					
+					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 == $curThmb.length) ) $curThmb[0].checked = newVal;
+				} catch (ex) { if ('undefined' != typeof(console)) console.log('Error: ' + err); }
+			}
+		};
+		
+		appendCSS('.numbersOnly { text-align:right; }');
+		
+		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } )
+		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
+			modal: true,
+			closeOnEscape: true,
+			position: 'center',
+			title: 'Cute-Selection: Specify the options, please',
+			height: Math.min($(window).height(), 320),
+			width: Math.min($(window).width(), 600),
+			buttons: dlgSelectButtons,
+			show: 'slide',
+			hide: 'fade',
+			autoOpen: false
+		});
+		$AjaxMdCuteSelect
+			.append('The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the buttom. To close this dialog, click on the cross in the top right corner. Specify what to (dis-)select, empty fields are considered fulfilling the condition:<table><tr><td><label for="chkAjaxMdSelect">Select (/Disselect)</label></td><td><input type="checkbox" id="chkAjaxMdSelect" value="1" checked=""/></td></tr>' +
+			'<tr><td><label for="txtAjaxMdSelectCat">In Category (omit Category:) </label></td><td><input type="text" id="txtAjaxMdSelectCat" size="40"/> AND</td></tr>' +
+			'<tr><td><label for="txtAjaxMdSelectTitle">Title (omit File:) matches <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr> </label></td><td><input type="text" id="txtAjaxMdSelectTitle" size="40"/> AND</td></tr>' +
+			'<tr><td>Size <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select></td><td><input type="text" class="numbersOnly" id="txtAjaxMdSelectSize" size="15"/><label for="txtAjaxMdSelectSize">KBytes</label> AND </td></tr>' +
+			'<tr><td>Date (DD-MM-YYYY) </td><td><label for="txtAjaxMdSelectDate0"> between </label><input type="text" id="txtAjaxMdSelectDate0" class="dateOnly" size="10" maxlength="10"/><label for="txtAjaxMdSelectDate1"> and </label><input type="text" id="txtAjaxMdSelectDate1" class="dateOnly" size="10" maxlength="10"/></td></tr></table>');
+			
+		$('.numbersOnly').keyup(function () { 
+			this.value = this.value.replace(/[^0-9]/g,'');
+		});
+		$('.dateOnly').keyup(function () { 
+			this.value = this.value.replace(/[^0-9\-]/g,'');
+		});
+		// End of cute-selection dialog
+
+
+
  
 		var $queryMore = $('<div>', {
 			id: "mdQueryMore",
@@ -441,9 +558,9 @@ window.AjaxMassDelete = {
 				// '<img src="http://commons.wikimedia.org/w/thumb.php?f=' + pages[id].title.replace('File:', '') + '&width=120&height=120" alt="' + pages[id].title + '">'
 				'<img src="' + pages[id].imageinfo[0].thumburl + '" width="' + pages[id].imageinfo[0].thumbwidth + '" height="' + pages[id].imageinfo[0].thumbheight + '" alt="' + pages[id].title + '">' +
 				'</a></div></div><div class="gallerytext"><i>' + this.iUploads[pages[id].title].iId + ': </i>' + 
-				'<input type="checkbox" name="mdCheckDelete" value="' + pages[id].title + '"> ' + 
+				'<input type="checkbox" name="mdCheckDelete" value="' + pages[id].title.replace('"', '\'') + '"> ' + 
 				this.mdExtractTags( pages[id].categories ) + '<br/>' + 
-				pages[id].title + '<br/>' + 
+				pages[id].title.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#x0027;').replace(/"/g, '&quot;').replace(/&/g, '&amp;') + '<br/>' + 
 				this.iUploads[pages[id].title].time.replace(/[T|Z]/g, " ") +  '<br/>' + 
 				Math.round(pages[id].imageinfo[0].size / 1024) + ' KBytes</div></div></li>');
 			this.mdBusy = false;
@@ -452,8 +569,8 @@ window.AjaxMassDelete = {
 			if ( 'undefined' != typeof(pages[id].edittoken) && '' != pages[id].edittoken ) { 
 				this.edittoken = pages[id].edittoken; } // prevent to assign an empty edit token
 			this.iUploads[pages[id].title].content = pages[id].revisions[0]['*']; // save the content for OTRS usage
-			this.iUploads[pages[id].title].categories = pages[id].categories;     // save cats for selector (not implemented yet)
-			
+			this.iUploads[pages[id].title].categories = pages[id].categories;     // save cats for selector
+			this.iUploads[pages[id].title].size = pages[id].imageinfo[0].size / 1024; // for selector
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
@@ -470,7 +587,6 @@ window.AjaxMassDelete = {
 			if ( "string" == typeof (mdCats[ct].hidden) ) {
 				var thiscat = mdCats[ct].title;
 				for (var id in this.mdLicenseRecognization) {
-					console.log(this.mdLicenseRecognization[id][0] + ".test(" + thiscat + ")");
 					if ( this.mdLicenseRecognization[id][0].test(thiscat) ) {
 						if ('' != this.mdLicenseRecognization[id][1]) mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdLicenseRecognization[id][1] + '</abbr> ';
 						continue catloop;
@@ -481,7 +597,7 @@ window.AjaxMassDelete = {
 			}
 		}
 		mdTags += '</i> <span style="background-color:#FC9;">';
-		
+ 
 		// Then, deletion tags:
 		catloop2: // Using another label for this loop
 		for (var ct in mdCats) {
@@ -1080,7 +1196,7 @@ window.AjaxMassDelete = {
 	**/
 	fail: function (err) {
 		document.body.style.cursor = 'auto';
-		if (console) console.log('Error: ' + err);
+		if ('undefined' != typeof(console)) console.log('Error: ' + err);
 		var msg = this.i18n.taskFailure[this.currentTask] || this.i18n.genericFailure;
  
 		var reportPage = '';
@@ -1155,9 +1271,9 @@ window.AjaxMassDelete = {
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ":",
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ":Contributions/",
 	mdReLoader: '<p align="center"><img src="http://upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	
-	/** REVISION CONTROL **/
-	mdScriptRevision: '0.0.0.0',
+ 
+	/** REVISION CONTROL **/ //(x.major.minor.bug)
+	mdScriptRevision: '0.1.2.4',
  
    // Translatable strings - they will be merged into AjaxQuickDelete (Objects)
 	i18n: {
@@ -1178,6 +1294,8 @@ window.AjaxMassDelete = {
 		mdMore: "more",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
 		mdExecutingTask: "Executing your requested task.",
+		mdSelectButtonLabel: "Select",
+		mdSelectApplyButtonLabel: "Apply to selection",
 		mdRevertButtonLabel: "Revert images",
  
 		mdCopyvio: "Copyvio",
