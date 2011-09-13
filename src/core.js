@@ -25,7 +25,7 @@ window.AjaxMassDelete = {
 			// Immedately start Md
 			this.mdStartMd();
 		} else {
-			if ( "MediaWiki:AjaxMassDelete.js" == mw.util.getParamValue('withJS') ) {
+			if ( "MediaWiki:VisualFileChange.js" == mw.util.getParamValue('withJS') ) {
 				// Load immediately and add no link
 				this.mdStartMd();
  
