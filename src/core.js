@@ -8,7 +8,7 @@
 //   Problem: Animated GIFs and some PNGs
 // TODO AJAX userlist-dropdown / verification
  
-if (typeof(AjaxMassDelete) == 'undefined') {
+if (typeof AjaxMassDelete == 'undefined') {
  
 window.AjaxMassDelete = {
 	/**
@@ -128,13 +128,13 @@ window.AjaxMassDelete = {
 		this.mdLestart = '';  // important for continuing the query
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
  
-		if (typeof( 'undefined' != this.uploaders )) {
+		if ( typeof this.uploaders !== 'undefined' ) {
 			for (var user in this.uploaders) {
 				pefilledUser = user;
 			}
 		}
-		if ( '' == pefilledUser ) { pefilledUser = mw.config.get('wgUserName'); }
-		if ( 'undefined' != typeof(this.progressDialog) ) { this.progressDialog.remove(); }
+		if ( pefilledUser === '' ) { pefilledUser = mw.user.name(); }
+		if ( typeof this.progressDialog !== 'undefined' ) { this.progressDialog.remove(); }
 		this.prompt([{
 			message: '',
 			prefill: pefilledUser,
