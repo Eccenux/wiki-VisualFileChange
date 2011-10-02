@@ -364,7 +364,7 @@ window.AjaxMassDelete = {
 				'<tr id="mdReplaceTextNode"><td><label for="mdRRegEx">RegExp?</label><input type="checkbox" id="mdRRegEx"/><br>' + 
 				'<label for="mdReplaceText">' + this.i18n.mdCustomReplaceText + ': </label></td>' + 
 				'<td width="70%"><textarea rows="3" cols="50" id="mdReplaceText"></textarea></td></tr></table>')
-			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxDeletedUploads" style="width:99%; display:none; background:#FCC url(http://upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;"></ul><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
+			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxDeletedUploads" style="width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;"></ul><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
 		var submitButton = $('.ui-dialog-buttonpane button:first');
 		var $mdDeleteReason = $('#mdDeleteReason');
@@ -1184,7 +1184,7 @@ window.AjaxMassDelete = {
 						revArray[Math.floor(iCell/cols)].user = $(aNode).contents().eq(0).text();
 						return true; // skip the other tests, like continue in a loop
 					}
-					if ( -1 != $(aNode).attr('href').indexOf("http://upload.wikimedia.org/wikipedia/")) {
+					if ( -1 != $(aNode).attr('href').indexOf("//upload.wikimedia.org/wikipedia/")) {
 						var hrefContent = $(aNode).attr('href');
 						var imgNode = $(aNode).children('img').eq(0);
 						if ( $(aNode).children('img').length ) {
@@ -1402,7 +1402,7 @@ window.AjaxMassDelete = {
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ":",
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ":Contributions/",
-	mdReLoader: '<p align="center"><img src="http://upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
+	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
 	mdScriptRevision: '0.3.5.4',
@@ -1502,7 +1502,7 @@ mediaWiki.loader.using('jquery.ui.dialog', function () {
 		AjaxQuickDelete.mdInstall();
 		try {
 			AjaxQuickDelete.mdErrorsReportPath = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", AjaxQuickDelete.userTalkPrefix) + 'Rillke';
-			AjaxQuickDelete.mdHelpNode =  '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", AjaxQuickDelete.userTalkPrefix) + 'Rillke/AjaxMassDelete.js" target="_blank"><img title="Help and known issues." alt="?" src="http://upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ';
+			AjaxQuickDelete.mdHelpNode =  '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", AjaxQuickDelete.userTalkPrefix) + 'Rillke/AjaxMassDelete.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ';
 			delete AjaxMassDelete; // Destroy this object
 		} catch (ex) {
 			AjaxMassDelete = {};
