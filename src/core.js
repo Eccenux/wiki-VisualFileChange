@@ -710,7 +710,7 @@ window.VisualFileChange = {
 				$mdDeleteReason.keyup();
 			} else {
 				o.mdMinLenRequired = false;
-				submitButton.removeClass('ui-state-disabled');
+				$mdDeleteReason.keyup();
 			}
 			// acceptReason
 			if (optConfig[1]) {
@@ -2026,7 +2026,7 @@ window.VisualFileChange = {
 	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.5.1.1',
+	mdScriptRevision: '0.5.1.2',
  
    // Translatable strings
 	i18n: {
