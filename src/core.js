@@ -1,49 +1,220 @@
-// This script depends on AjaxQuickDelete. It helps performing mass-changes on the uploads of a paricular user.
+// It helps performing mass-changes on the uploads of a paricular user.
 // It was composed by [[User:Rillke]] in 2011; Thanks DieBuche for advice; some code stolen from commons:MediaWiki:AjaxQuickDelete.js
 // <nowiki>
 // TODO if version 1.18 ready, add possibility to revert all images
 //   http://svn.wikimedia.org/viewvc/mediawiki/trunk/phase3/includes/api/ApiFileRevert.php?view=log
 //   action=filerevert&filename=File:MassDeleteOTRS.png&comment=TestingBryanTongMinhRevert&archivename=20110429234711!Wiki.png&token=+\\
-// TODO obtain images from thumb.php as this would be much faster
-//   Problem: Animated GIFs and some PNGs
 // TODO AJAX userlist-dropdown / verification
- 
-if (typeof AjaxMassDelete == 'undefined') {
- 
-window.AjaxMassDelete = {
+
+/***************************************************
+	Event-System:
+	Event: 'vFC' with parameters
+		vFC = visualFileChange
+	Parameter1: What?
+	Parameter2: This object.
+	Parameter3: optional, depends on context
+
+	Example for listening to the events:
+	$(document).bind('vFC', function(e, p1, p2, p3) {
+		console.log('VisualFileChange> ' + p1);
+	});
+***************************************************/
+if (!window.VisualFileChange) {
+
+/**
+ * Create a progress-box object.
+ * @constructor
+ *
+ * @example
+ *      new progressBox( 150, this );
+ *
+ * @param width {Number} The initial width of the panal.
+ * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like .mdThisTaskIcon
+ */
+function progressBox(width, o) {
+	this.w = (width || 250);
+	this.t = {};
+	this.ct = 0;
+	this.usingObj = o;
+	
+	_this = this;
+	this.$cont = $('<div>', { 
+		style: 'display:none; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
+	}).dblclick(function() { _this.$cmd.focus(); });
+	this.$cmd = $('<input>', {
+		'id': 'mdCMD',
+		'type': 'text',
+		'maxlength': '2',
+		'style': 'position:absolute; top:-10000px;'
+	}).keydown(function(e) {
+		var tVal = ($(this).val() || '');
+		if (13 === (e.keyCode - 0)) {
+			switch (tVal) {
+				case 'd':
+					window.VisualFileChangeDebug = true;
+					_this.setError('Debug mode enabled.');
+					break;
+				case 'e':
+					window.VisualFileChangeDebug = false;
+					_this.setError('Debug mode disabled.');
+					break;
+				default:
+					_this.setError('Unknown command. d-Debug mode; e-Disable debug mode.');
+			}
+			$(this).val('');
+		}
+		if (tVal.length > 1) { 
+			$(this).val($(tVal.substr(tVal.length - 1)));
+		}
+	});
+	this.$x = $('<a>', {
+		'href': '#',
+		'class': 'ui-dialog-titlebar-close ui-corner-all',
+		'role': 'button',
+		'style': 'position:absolute;',
+		'title': 'close this panel'
+	}).append($('<span>', { 
+		'class': 'ui-icon ui-icon-closethick', 
+		'text': 'close' 
+	})).click( function() {
+		_this.$cont.hide(400, function() {
+			if (o.dlg) {
+				o.dlg.dialog( 'option', 'width', $(window).width() );
+				o.dlg.dialog( 'option', 'position', 'center' );
+			}
+		});
+		return false; // Prevent default and stop propagation
+	});
+	this.$capt = $('<div>', {
+		style: 'font:small-caps 1.5em sans-serif; text-align:center; padding:10px; margin-top:10px;',
+		text: 'VisualFileChange.js'
+	});
+	this.$tasklist = $('<div>', {
+		style: 'margin-top: 50px; padding: 10px;',
+		text: 'Tasks:'
+	});
+	this.$aHelpHead = $('<div>');
+	this.$aHelpCont = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
+	this.$aHelpCont2 = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
+	this.$aHelp = $('<div>', {
+		style: 'margin-top: 50px; padding: 10px;',
+		text: 'Notes:'
+	}).append(this.$aHelpHead, this.$aHelpCont, this.$aHelpCont2);
+	this.$error = $('<div>');
+	this.$errorCont = $('<div>', {
+		style: 'margin-top: 50px; padding: 10px; display:none',
+		'class': 'error',
+		text: 'Error:'
+	}).append(this.$error);
+	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$tasklist, this.$aHelp, this.$errorCont);
+	$('body').append(this.$cont);
+	appendCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
+		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
+		+ '.md-failed { padding-left:16px; background:url(\'' + o.mdFailedTaskIcon + '\') no-repeat left; } '
+		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
+	);
+}
+progressBox.prototype.show = function () {
+	this.$cont.show();
+}
+progressBox.prototype.hide = function () {
+	this.$cont.hide();
+}
+progressBox.prototype.remove = function () {
+	this.$cont.remove();
+}
+progressBox.prototype.addTask = function (task) {
+	var n = $('<div>', { text: this.usingObj.i18n.task[task], 'class': 'md-notdone' });
+	this.t[task] = n;
+	this.$tasklist.append( n );
+}
+progressBox.prototype.setCurrentTaskState = function (state) {
+	if (this.ct) this.ct.removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+}
+progressBox.prototype.setCurrentTaskDone = function () {
+	if (this.ct && this.ct.hasClass('md-doing')) this.ct.removeClass('md-doing').addClass('md-done');
+}
+progressBox.prototype.setTaskState = function (taskname, state) {
+	this.t[taskname].removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+	this.ct = this.t[taskname];
+}
+progressBox.prototype.setHelp = function (help) {
+	this.$aHelpHead.text(help);
+}
+progressBox.prototype.setHelp2 = function (help) {
+	this.$aHelpCont.text(help);
+}
+progressBox.prototype.setHelp3 = function (help) {
+	this.$aHelpCont2.text(help);
+}
+progressBox.prototype.setError = function (err) {
+	this.$error.text(err);
+	this.$errorCont.show();
+}
+progressBox.prototype.setZIndex = function (zIndex) {
+	this.$cont.css('z-index', zIndex);
+}
+
+/**
+ * Create a new VisualFileChange-literal-Object.
+ *
+ * @context {window}
+ */
+window.VisualFileChange = {
 	/**
-	** Set up the AjaxMassDelete object and add the toolbox link.  Called via $(document).ready() during page loading.
+	** Set up the VisualFileChange object and add the toolbox link.  Called via $(document).ready() during page loading.
 	**/
 	mdInstall: function () {
 		// Don't install link if the user opted out
 		if (window.AjaxDeleteOptOut) return;
- 
-		if ( 1 == $("#t-AjaxQuickDeleteOnDemand").length ) {
+
+		$tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand")
+		if ( 1 == $tAjaxQuickDeleteOnDemand.length ) {
 			// User is using the load on demand feature. 
 			// Replace the link
-			$("#t-AjaxQuickDeleteOnDemand").replaceWith('<li id="t-AjaxQuickDeletx2"><span><a href="javascript:AjaxQuickDelete.mdStartMd();">Perform batch task</a></span></li>');
+			$tAjaxQuickDeleteOnDemand.remove();
+			addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2', null);
+			
 			// Immedately start Md
 			this.mdStartMd();
 		} else {
-			if ( "MediaWiki:VisualFileChange.js" == mw.util.getParamValue('withJS') ) {
+			if ( "MediaWiki:VisualFileChange.js" === mw.util.getParamValue('withJS') ) {
 				// Load immediately and add no link
 				this.mdStartMd();
  
-			} else if (mw.config.get('wgNamespaceNumber') != 14) {
+			} else if (mw.config.get('wgNamespaceNumber') !== 14) {
 				// Set up toolbox link
-				addPortletLink('p-tb', 'javascript:AjaxQuickDelete.mdStartMd();', "Perform batch task", 't-AjaxQuickDeletx2', null);
+				addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2', null);
 			}
 		}
+		$(document).triggerHandler('vFC', ['installed', this]);
+	},
+	
+	mdCancel: function () {
+		var _this = VisualFileChange;
+		_this.pb.remove();
+		_this.mdDlgThumbDlgClose();
 	},
  
 	mdStartMd: function () {
-		var wgPageName = mw.config.get('wgPageName');
- 
+		var wgPageName = mw.config.get('wgPageName'),
+			pb;
+		
+		$(document).triggerHandler('vFC', ['starting procedure', this]);
+
+		pb = this.pb = new progressBox(undefined, this);
+		pb.addTask('start');
+		pb.addTask('target');
+		pb.addTask('list');
+		pb.addTask('datails');
+		pb.setTaskState( 'start', 'md-doing' );
+		pb.show();
+		
 		this.context = "MD"; // The error handler should know what we are performing
 		this.mdBusy = false; // indicate that any dialog can be closed
 		this.tasks = []; // reset task list in case an earlier error left it non-empty
 		this.pageName = wgPageName;
-		this.mdUser = '';
+		this.mdTarget = '';
 		this.mdListUploadsPending = 0;
  
 		switch (mw.config.get('wgNamespaceNumber')) {
@@ -52,67 +223,82 @@ window.AjaxMassDelete = {
 				break;
 			case 3: // User_talk
 			case 2: // User
-				this.uploaders = {};
-				this.uploaders[mw.config.get('wgPageName').match(/.*?\:(.*?)(\/.*)*$/)[1]] = true;
+				this.mdTarget = mw.config.get('wgPageName').match(/.*?\:(.*?)(\/.*)*$/)[1];
 				break;
 			case -1: // Special pages
 				try {
-					if ( "Contributions" == mw.config.get('wgCanonicalSpecialPageName') ) {
-						this.uploaders = {}; // Extract target from addressline
-						if ( -1 != location.href.indexOf("\/Special:Contributions\/") ) {
-							this.uploaders[decodeURI(location.href.match(/Special\:Contributions\/(.*?)$/)[1])] = true;
-						} else if ( -1 != location.href.indexOf(mw.config.get('wgScript')) ) {
-							this.uploaders[mw.util.getParamValue('target')] = true;
+					if ( "Contributions" === mw.config.get('wgCanonicalSpecialPageName') ) {
+						// Extract target from addressline
+						if ( -1 !== location.href.indexOf("\/Special:Contributions\/") ) {
+							this.mdTarget = decodeURI(location.href.match(/Special\:Contributions\/(.*?)$/)[1]);
+						} else if ( -1 !== location.href.indexOf(mw.config.get('wgScript')) ) {
+							this.mdTarget = mw.util.getParamValue('target');
 						}
 					}
-					if ( "Log" == mw.config.get('wgCanonicalSpecialPageName') ) {
-						this.uploaders = {}; // Extract target from addressline
-						if (mw.util.getParamValue('user')) this.uploaders[mw.util.getParamValue('user')] = true;
-						if (mw.util.getParamValue('page')) { if (/User:+./.test(mw.util.getParamValue('page'))) {this.uploaders[mw.util.getParamValue('page').replace("User:", "")] = true} };
+					if ( "Log" === mw.config.get('wgCanonicalSpecialPageName') ) {
+						// Extract target from addressline
+						if (mw.util.getParamValue('user')) {
+							this.mdTarget = mw.util.getParamValue('user');
+						}
+						if (mw.util.getParamValue('page')) { 
+							if (/User:+./.test(mw.util.getParamValue('page'))) {
+								this.mdTarget = mw.util.getParamValue('page').replace("User:", "");
+							}
+						}
 					}
 				} catch (ex) { }
 				break;
 			case 14: // Category - Exception Script is also able to handle cats
-				this.uploaders = {}; // Don't become confused it's the cat
-				this.uploaders[mw.config.get('wgPageName')] = true;
+				// Don't become confused it's the cat
+				this.mdTarget = mw.config.get('wgPageName');
 				break;
 		}
+		
+		$(document).triggerHandler('vFC', ['prepared', this]);
+		
 		this.addTask('mdContinue');
 		this.nextTask();
 	},
  
-   findOriginalUploader: function () {
-	 var query = {
-		action: 'query',
-		prop: 'imageinfo|revisions|info',
-		rvprop: 'content',
-		intoken: 'edit',
-		iiprop: 'user|comment',
-		iilimit: 50,
-		titles: this.pageName
-		}
-		this.showProgress(this.i18n.mdTryToObtainUser);
+	findOriginalUploader: function () {
+		var query = {
+			action: 'query',
+			prop: 'imageinfo|revisions|info',
+			rvprop: 'content',
+			intoken: 'edit',
+			iiprop: 'user|comment',
+			iilimit: 50,
+			titles: this.pageName
+		};
+		
+		$(document).triggerHandler('vFC', ['seeking uploader', this]);
+		
 		this.doAPICall(query, 'findOriginalUploaderCB');
 	},
  
 	findOriginalUploaderCB: function (result) {
-		this.uploaders = {};
-		var pages = result.query.pages;
+		var pages = result.query.pages,
+			info, content, i;
 		for (var id in pages) { // there should be only one, but we don't know its ID
 			this.edittoken = pages[id].edittoken; // The edittoken only changes between logins
-			var info = pages[id].imageinfo;
-			var content = pages[id].revisions[0]['*'];
-			var i =info.length - 1;
+			info = pages[id].imageinfo;
+			content = pages[id].revisions[0]['*'];
+			i =info.length - 1;
 			// Now exclude bots which only reupload a new version:
 			this.excludedBots = 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot';
 			if (-1 === this.excludedBots.indexOf(info[i].user)) {
-				this.uploaders[info[i].user] = true;
+				this.mdTarget = info[i].user;
 			}
 		}
 		this.nextTask();
 	},
  
 	mdContinue: function () {
+		$(document).triggerHandler('vFC', ['peparing to ask for target', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState( 'target', 'md-doing' );
+		this.pb.setHelp(this.i18n.mdPerformOnWhichTarget);
+		
 		/*  Shedule next tasks  */
 		this.addTask('mdCreateList');
 		this.addTask('mdGenIGallery');
@@ -124,25 +310,88 @@ window.AjaxMassDelete = {
 		this.iiUploads = 0;   // Number of initially uploaded files in the list
 		this.oUploads = {};   // o-overwrite file list
 		this.ioUploads = 0;   // Number of overwriten files in the list
-		this.dlg = 0;         // will become replaced by a jQuery object
+		this.gbs = {};        // File --> Gallery Box
 		this.mdLestart = '';  // important for continuing the query
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
  
-		if ( typeof this.uploaders !== 'undefined' ) {
-			for (var user in this.uploaders) {
-				pefilledUser = user;
-			}
+		if (this.mdTarget) {
+			pefilledUser = this.mdTarget;
 		}
-		if ( pefilledUser === '' ) { pefilledUser = mw.user.name(); }
-		if ( typeof this.progressDialog !== 'undefined' ) { this.progressDialog.remove(); }
-		this.prompt([{
-			message: '',
-			prefill: pefilledUser,
-			returnvalue: 'reason',
-			cleanUp: true,
-			noEmpty: true,
-			minLength: 1
-		}], this.i18n.mdPerformOnWhichUser);
+		if ( !pefilledUser ) { 
+			pefilledUser = mw.user.name(); 
+		}
+		$(document).triggerHandler('vFC', ['asking for target', this]);
+		this.promptForTarget(pefilledUser, 1, this);
+	},
+
+	/**
+	 ** Pseudo-Modal JS windows.
+	 ** Needs to be converted into a class
+	 **/
+	promptForTarget: function (prefill, minlen, o) {
+		var dlgButtons = {},
+			confirmed = false,
+			dlgWidth = 0,
+			$submitButton, $targetinput;
+			
+		dlgButtons[o.i18n.submitButtonLabel] = function () {
+			if (confirmed) return;
+			confirmed = true;
+			o.mdTarget = o.cleanReason($targetinput.val())
+			$('#AjaxMdContainer').text(o.i18n.mdPleaseWait);
+			o.nextTask();
+		};
+		dlgButtons[o.i18n.cancelButtonLabel] = function () {
+			$(this).dialog('close');
+		};
+
+		// Are there Contaminated Sites? Remove them now.
+		o.mdDlgThumbDlgClose();
+
+		// Hide overlapping page (avoids scrolling)
+		$('body').css('overflow', 'hidden');
+
+		dlgWidth = Math.min(600, $(window).width() - 250);
+
+		o.dlg = $('<div></div>').html('<div id="AjaxMdContainer"></div>').dialog({
+			modal: true,
+			closeOnEscape: true,
+			position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
+			dialogClass: "wikiEditor-toolbar-dialog",
+			title: o.i18n.mdPerformOnWhichTarget,
+			height: 'auto',
+			width: dlgWidth,
+			buttons: dlgButtons,
+			close: o.mdCancel
+		});
+		o.pb.setZIndex($('.ui-widget-overlay').css('z-index') + 1);
+		
+		$submitButton = $('.ui-dialog-buttonpane button:first');
+		$targetinput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 98%;', 'value': prefill });
+		
+		$('#AjaxMdContainer').append(
+			$('<label>', { 'for': 'mdTargetInput' }),
+			$targetinput,
+			$('<br>'), $('<br>')
+		);
+		$targetinput.keyup(function(e) {
+			if ($(this).val().length < minlen) {
+				$submitButton.addClass('ui-state-disabled');
+			} else {
+				$submitButton.removeClass('ui-state-disabled');
+			}
+			if (13 === (e.keyCode - 0)) $submitButton.click();
+		}).focus();
+	},
+
+	cleanReason: function (uncleanReason) {
+		// trim whitespace
+		uncleanReason = uncleanReason.replace(/^\s*(.+)\s*$/, '$1');
+		// remove signature
+		uncleanReason = uncleanReason.replace(/(.+)(--)?~{3,5}$/, '$1');
+		// escaping '='
+		uncleanReason = uncleanReason.replace(/\=/g, '&#61;');
+		return uncleanReason;
 	},
  
 	/**  
@@ -150,19 +399,26 @@ window.AjaxMassDelete = {
 	**  Calls the appropriate method (uploads of cats)
 	**/
 	mdCreateList: function () {
-		if ('' == this.mdUser) { 
-			this.mdUser = this.reason; // WARNING: INPUT IS UNCHECKED
-			this.mdModeCat = /^Category\:/.test(this.mdUser);
+		$(document).triggerHandler('vFC', ['preparing querying the filelist', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState( 'list', 'md-doing' );
+		if ('' == this.mdLestart) { // First time only
+			this.pb.setHelp(this.i18n.mdPleaseWait);
 		}
-		if (this.context != 'MD') return;
+		
+		this.mdTarget = $.trim(this.mdTarget.replace(/^User\:/, '')); // WARNING: INPUT IS UNCHECKED
+		this.mdModeCat = /^Category\:/.test(this.mdTarget);
+		
+		if (this.context !== 'MD') return;
 		if (this.mdListUploadsPending > 0) { // If there are queries pendig continue later
 			var o = this;
-			setTimeout(function () { o.mdCreateList() }, 200); // See me later ...
+			setTimeout(function () { 
+				o.mdCreateList() 
+			}, 200); // See me later ...
 			return true;
 		}
 		this.mdListUploadsPending++;
 		
-		if (!this.dlg) this.showProgress(this.i18n.mdWaitingApiRes);
 		if (this.mdModeCat) this.mdSecureCall("mdFindCatMembers"); else this.mdSecureCall("mdFindUploads");
 	},
 	
@@ -172,25 +428,28 @@ window.AjaxMassDelete = {
 			list: 'logevents',
 			leprop: 'title|type|timestamp',
 			letype: 'upload',
-			leuser: this.mdUser,
+			leuser: this.mdTarget,
 			lelimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
 			lestart: this.mdLestart
 		};
+		$(document).triggerHandler('vFC', ['useruploads', this, query]);
 		this.doAPICall(query, 'mdFindUploadsCB');
 	},
 	
 	mdFindUploadsCB: function (result) {
 		this.mdListUploadsPending--;
-		if ( !this.dlg && ('' == this.mdLestart) ) this.showProgress(this.i18n.mdSortingAPIres);
+		$(document).triggerHandler('vFC', ['got useruploads', this, result]);
+		this.pb.setCurrentTaskDone();
+		
 		var allFileChanges = result.query.logevents;
 		for (var id in allFileChanges) { // loop through all filechanges (array)
 			if ('upload' === allFileChanges[id].action) { // This file was initially uploaded by the user.
-				this.iUploads[allFileChanges[id].title] = [];
+				this.iUploads[allFileChanges[id].title] = { uploader: [] };
 				this.iUploads[allFileChanges[id].title].iId = this.iiUploads;
 				this.iUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
 				this.iiUploads++;
 			} else if ('overwrite' === allFileChanges[id].action) {
-				this.oUploads[allFileChanges[id].title] = [];
+				this.oUploads[allFileChanges[id].title] = {};
 				this.oUploads[allFileChanges[id].title].iId = this.ioUploads;
 				this.oUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
 				this.ioUploads++;
@@ -199,7 +458,7 @@ window.AjaxMassDelete = {
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
-		if ('' == this.mdLestart) {			// Call nextTask the first time only
+		if ('' === this.mdLestart) {			// Call nextTask the first time only
 			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].logevents.lestart;
 			this.nextTask();
 		} else {
@@ -211,21 +470,26 @@ window.AjaxMassDelete = {
 		var query = {
 			action: 'query',
 			list: 'categorymembers',
-			cmtitle: this.mdUser,
+			cmtitle: this.mdTarget,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
 			cmlimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
 			cmcontinue: this.mdLestart
 		};
+		
+		$(document).triggerHandler('vFC', ['catmembers', this, query]);
+		
 		this.doAPICall(query, 'mdFindCatMembersCB');
 	},
 	
 	mdFindCatMembersCB: function (result) {
 		this.mdListUploadsPending--;
-		if ( !this.dlg && ('' == this.mdLestart) ) this.showProgress(this.i18n.mdSortingAPIres);
+		$(document).triggerHandler('vFC', ['got catmembers', this, result]);
+		this.pb.setCurrentTaskDone();
+		
 		var allFileChanges = result.query.categorymembers;
 		for (var id in allFileChanges) { // loop through all category-members (object)
-			this.iUploads[allFileChanges[id].title] = [];
+			this.iUploads[allFileChanges[id].title] = { uploader: [] };
 			this.iUploads[allFileChanges[id].title].iId = this.iiUploads;
 			this.iUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
 			this.iiUploads++;
@@ -245,20 +509,18 @@ window.AjaxMassDelete = {
 	**  Method to securely close (you may call it "nuke") the dialog, even if there were errors; called on button cancel and by several methods
 	**/
  	mdDlgThumbDlgClose: function () {
-		var o = AjaxQuickDelete;
+		var o = VisualFileChange;
+		$(document).triggerHandler('vFC', ['closing dialog', o, o.dlg]);
+		
 		if ( o.mdBusy ) {     // Call myself later if script is busy
 			setTimeout(o.mdDlgThumbDlgClose(), 10);
 			return true;
 		}
-		// Re-desplay the page's content
-		$('#mw-page-base').show();
-		$('#mw-head-base').show();
-		$('#content').show();
-		$('#mw-head').show();
-		$('#mw-panel').show();
-		$('#footer').show();
 		
-		if ('object' == typeof(o.dlg)) {
+		// Re-desplay the page's content
+		$('body').css('overflow', 'visible');
+		
+		if ('object' === typeof(o.dlg)) {
 			o.dlg.dialog("destroy");
 			o.dlg.remove();
 			document.body.style.cursor = 'auto';
@@ -273,187 +535,229 @@ window.AjaxMassDelete = {
 				o.mdCuteSelectDlg.dialog("destroy");
 				o.mdCuteSelectDlg.remove();
 			} catch (ex) {}
-		} else if ( 'AjaxMdContainer' == $(this).children('div').eq(0).attr('id') ) {
+		} else if ( 'AjaxMdContainer' === $(this).children('div').eq(0).attr('id') ) {
 			this.dialog("destroy");
 			this.parent.remove();
 			document.body.style.cursor = 'auto';
 			o.context = 'MD-postDlg';
 		}
 	},
+	
+	mdCloseAndContinue: function() {
+		this.mdDlgThumbDlgClose();
+		this.nextTask();
+	},
  
 	/**  
 	**  Mammoth method to set up and manage the UserInterface (UI)
 	**/
-	mdGenIGallery: function () {
+	mdGenIGallery: function() {
+		$(document).triggerHandler('vFC', ['preparing initial uploads dialog', this]);
+	
 		this.mdUploadCt = 0;              // Number of pending API queries
 		this.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
 		this.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
 		this.mdNumberOfExecs = 0;         // Is Execute called already?
-		
+		if (mw.user && mw.user.tokens && mw.user.tokens.get) this.edittoken = mw.user.tokens.get('editToken');
+		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
+
 		var o = this;
 
 		/*  The UI  */
-		this.progressDialog.remove();
- 
 		this.mdMinLenRequired = true;     // Is a reason required?
- 
-		this.mdDlgThumbDlgClose();        // Are there Contaminated Sites? Remove them now.
-		
+
 		appendCSS( '.rgallery { background-color:#FFF !important; }' );
- 
+
 		var dlgButtons = {};
-		dlgButtons[this.i18n.submitButtonLabel] = function () {
-			o.mdSecureCall("mdExecute");
+		dlgButtons[this.i18n.submitButtonLabel] = function() {
+			if ($('input[name="mdCheckDelete"]:checked').length === 0) {
+				var dlg2Btns = {};
+				var dlgWidth = Math.min(600, $(window).width() - 250);
+				dlg2Btns[o.i18n.mdNoFilesSelected.back] = function() {
+					$(this).dialog("close");
+				}
+				dlg2Btns[o.i18n.mdNoFilesSelected.proceed] = function() {
+					$(this).dialog("close");
+					o.mdSecureCall("mdExecute");
+				}
+				$('<div>').append($('<img>', { src: o.mdInfoIcon, height: 128, width: 128, style: 'float:left;' }), $('<div>', { style: 'margin-top: 30px' }).text(o.i18n.mdNoFilesSelected.text))
+					.dialog({
+						title: o.i18n.mdNoFilesSelected.title,
+						buttons: dlg2Btns,
+						modal: true,
+						position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
+						close: function() {
+							$(this).dialog("destroy");
+							$(this).remove();
+						}
+					});
+			} else {
+				o.mdSecureCall("mdExecute");
+			}
 		};
-		dlgButtons[this.i18n.cancelButtonLabel] = function () {
+		dlgButtons[this.i18n.cancelButtonLabel] = function() {
 			$(this).dialog("close");
 		};
-		dlgButtons[this.i18n.mdSelectButtonLabel] = function () {
+		dlgButtons[this.i18n.mdSelectButtonLabel] = function() {
 			o.mdCuteSelectDlg.dialog("open");
 		};
-		dlgButtons[this.i18n.mdDelContribsButtonLabel] = function () {
+		dlgButtons[this.i18n.mdDelContribsButtonLabel] = function() {
 			$('#AjaxDeletedUploads').slideToggle();
 		};
- 
-		this.dlg = $('<div></div>').html('<div id="AjaxMdContainer"></div>').dialog({
+
+		var getSelect = function() {
+			var sel = '<select size="1" id="AjaxMdType">';
+			for (var id in o.mdOpt) {
+				sel += '<option value="' + id + '">' + o.i18n.mdOptions[id] + '</option>';
+			}
+			sel += '</select>';
+			return sel;
+		};
+
+		this.dlg.dialog({
 			modal: false,
-			closeOnEscape: true,
-			position: 'top',
-			dialogClass: "wikiEditor-toolbar-dialog",
 			title: this.mdHelpNode +
 				'Batch Surgery Script v.' + this.mdScriptRevision + 
 				' Report bugs and ideas to <a href="' + this.mdErrorsReportPath + '" target="_blank">Rillke</a>. ' + 
-				'Action:&nbsp;<select size="1" id="AjaxMdType">' +
-				'<option value="cv">' + this.i18n.mdCopyvio + '</option><option value="cv-dw">' + this.i18n.mdCopyvioDerative + '</option><option value="cv-fu">' + this.i18n.mdCopyvioFairUse + '</option><option value="cv-logo">' + this.i18n.mdCopyvioLogo + '</option><option value="cv-ndw">' + this.i18n.mdCopyvioND + '</option>' + 
-				'<option value="del" selected="selected">' + this.i18n.mdDelete + '</option><option value="np">' + this.i18n.mdNoPermission + '</option><option value="ns">' + this.i18n.mdNoSource + '</option>' + 
-				'<option value="other">' + this.i18n.mdOtrsAdd + '</option><option value="otrs">' + this.i18n.mdOtrsRmTags + '</option>' + 
-				'<option value="c_replace">' + this.i18n.mdCustomReplace + '</option>' +
-				'</select>' + 
+				'Action:&nbsp;' +
+				getSelect() +
 				this.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/>',
-			height: $(window).height() - 30,
-			width: $(window).width(),
+			width: $(window).width() - 250,
+			height: $(window).height(),
 			buttons: dlgButtons,
-			close: this.mdDlgThumbDlgClose,
 			resizeStop: function(event, ui) { $('.ui-dialog > .ui-dialog-content').eq(0).scroll(); } // Fire scroll evt on resize for (continue query if btn gets visible)
 		});
+		this.dlg.dialog( 'option', 'position', 'right' );
+		this.dlg.dialog( 'option', 'modal', 'false' );
 		
-		// Hide the complete page (avoids scrolling)
-		$('#mw-page-base').hide();
-		$('#mw-head-base').hide();
-		$('#content').hide();
-		$('#mw-head').hide();
-		$('#mw-panel').hide();
-		$('#footer').hide();
- 
+		$('#AjaxMdContainer').text('');
+
 		if (!this.dlg) return 0;
-		$('.ui-dialog-buttonpane').prepend(
-			'<div id="mdConfirmationSurrounder" style="width:100%;min-height:20px;"><span id="mdDelteReasonConfirmationLabel">' + this.i18n.mdDelteReasonConfirmationLabel +
-			'</span>: <span id="mdDelteReasonConfirmation">' + this.i18n.mdSpecifyReason + '</span></div>');
+
 		$('#AjaxMdContainer').append(
-			(this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -') + 
-			'<a href="' + mw.config.get('wgServer') + (this.mdModeCat ? mw.config.get('wgArticlePath').replace("$1", this.mdUser) : (mw.config.get('wgArticlePath').replace("$1", o.userTalkPrefix) + this.mdUser)) + '" target="_blank">' + this.mdUser +'</a>-. ' + 
-			'<label id="mdTaskForUser" for="mdDeleteReason">' + this.i18n.mdInsertDeleteReasen + '</label>: <input type="text" id="mdDeleteReason" style="width: 70%;"/>' + 
-			'<span id="mdReplacePermissionWrapper"><input type="checkbox" id="mdReplacePermission"/><label for="mdReplacePermission"> ' + this.i18n.mdReplacePermissionText + '</label></span>')
-			.append('<table width="100%"><tr id="mdRequestPageTitle"><td><label for="mdDeleteHeading">' + this.i18n.mdInsertDeleteHeading + ': </label></td>' + 
-				'<td width="70%"><input type="text" id="mdDeleteHeading" style="width: 99%;" value="' + 
-				(this.mdModeCat ? 'Files in [[:' + this.mdUser + ']] ' : ('Files uploaded by [[' + this.mdUserPrefix + this.mdUser + '|' + this.mdUser + ']] ' + 
-				'([[' + this.userTalkPrefix + this.mdUser + '|talk]] &#x00B7; [[' + this.mdContribPrefix + this.mdUser + '|contribs]])')) + '"/></td></tr>' +
-				'<tr id="mdTalkNoteNode"><td><label for="mdTalkNote">' + this.i18n.mdInsertTalkNote + ': </label></td>' + 
-				'<td width="70%"><input type="text" id="mdTalkNote" style="width: 99%;" value="' + 
-					(window.AjaxMassDeleteUserNote ? window.AjaxMassDeleteUserNote : 'Yours sincerely') + '"/></td></tr>' +
-				'<tr id="mdReplaceTextNode"><td><label for="mdRRegEx">RegExp?</label><input type="checkbox" id="mdRRegEx"/><br>' + 
-				'<label for="mdReplaceText">' + this.i18n.mdCustomReplaceText + ': </label></td>' + 
-				'<td width="70%"><textarea rows="3" cols="50" id="mdReplaceText"></textarea></td></tr></table>')
+			(this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -')
+			+ '<a href="' + mw.config.get('wgServer') + (this.mdModeCat ? mw.config.get('wgArticlePath').replace("$1", this.mdTarget) : (mw.config.get('wgArticlePath').replace("$1", o.mdUserTalkPrefix) + this.mdTarget)) + '" target="_blank">' + this.mdTarget +'</a>-. '
+			+ '<label id="mdTaskForUser" for="mdDeleteReason">' + this.i18n.mdInsertDeleteReasen + '</label>: <textarea id="mdDeleteReason" style="width: 99%; height: 40px;"></textarea>'
+			+ '<br/><label for="mdEditSummary">' + this.i18n.mdInsertEditSummary + '</label>: <input type="text" id="mdEditSummary" style="width: 70%;" maxlength="100"/>'
+			+ '<span id="mdReplacePermissionWrapper"><input type="checkbox" id="mdReplacePermission"/><label for="mdReplacePermission"> ' + this.i18n.mdReplacePermissionText + '</label></span>')
+			.append('<table width="100%"><tr id="mdRequestPageTitle"><td><label for="mdDeleteHeading">' + this.i18n.mdInsertDeleteHeading + ': </label></td>'
+				+ '<td width="70%"><input type="text" id="mdDeleteHeading" style="width: 99%;" value="'
+				+ (this.mdModeCat ? 'Files in [[:' + this.mdTarget + ']] ' : ('Files uploaded by [[' + this.mdUserPrefix + this.mdTarget + '|' + this.mdTarget + ']] '
+				+ '([[' + this.mdUserTalkPrefix + this.mdTarget + '|talk]] &#x00B7; [[' + this.mdContribPrefix + this.mdTarget + '|contribs]])')) + '"/></td></tr>'
+				+ '<tr id="mdTalkNoteNode"><td><label for="mdTalkNote">' + this.i18n.mdInsertTalkNote + ': </label></td>'
+				+ '<td width="70%"><input type="text" id="mdTalkNote" style="width: 99%;" value="'
+				+	(window.AjaxMassDeleteUserNote ? window.AjaxMassDeleteUserNote : 'Yours sincerely') + '"/></td></tr>'
+				+ '<tr id="mdReplaceTextNode"><td><label for="mdRRegEx">RegExp?</label><input type="checkbox" id="mdRRegEx"/><br/>'
+				+ '<label for="mdReplaceText">' + this.i18n.mdCustomReplaceText + ': </label></td>'
+				+ '<td width="70%"><textarea rows="3" cols="50" id="mdReplaceText"></textarea></td></tr></table>')
 			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxDeletedUploads" style="width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;"></ul><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
-		var submitButton = $('.ui-dialog-buttonpane button:first');
-		var $mdDeleteReason = $('#mdDeleteReason');
- 
+		var $submitButton = $('.ui-dialog-buttonpane button:first'),
+			$mdDeleteReason = $('#mdDeleteReason');
+
 		$mdDeleteReason.keyup( function (event) {
 			if ( ($(this).val().length < 6 ) && o.mdMinLenRequired ) {
-				submitButton.addClass('ui-state-disabled');
-				$('#mdDelteReasonConfirmation').replaceWith('<span id="mdDelteReasonConfirmation" style="font-weight:bold;">' + o.i18n.mdSpecifyReason + '</span>');
+				$submitButton.addClass('ui-state-disabled');
+				o.pb.setHelp2(o.i18n.mdSpecifyReason);
 			} else {
-				submitButton.removeClass('ui-state-disabled');
-				$('#mdDelteReasonConfirmation').replaceWith('<span id="mdDelteReasonConfirmation">' + 
-					mw.html.escape($(this).val()) + '</span>'); 
-				if ('13' == event.keyCode) submitButton.click();
+				$submitButton.removeClass('ui-state-disabled');
+				o.pb.setHelp2($(this).val());
 			}
 		});
-		$('#mdDeleteHeading').keyup( function (event) { if ('13' == event.keyCode && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) submitButton.click(); });
-		$('#mdTalkNote').keyup( function (event) { if ('13' == event.keyCode && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) submitButton.click(); });
+		// Binding enter-key event. -0 ensures number
+		$('#mdDeleteHeading').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		$('#mdTalkNote').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		$('#mdEditSummary').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		
+		var timoutID = 0;
+		var updateSelectedCount = function () {
+			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $('input[name="mdCheckDelete"]:checked').length));
+		}
+		updateSelectedCount();
 		$('#AjaxMdIa').change( function (event) {
 			var tmpChecked = this.checked;
 			$('input[name="mdCheckDelete"]').each(function(index) {
 				this.checked = tmpChecked;
 			});
+			clearTimeout(timoutID);
+			timoutID = setTimeout(updateSelectedCount, 200);
+		});
+		$('input[name="mdCheckDelete"]').die( 'change' );
+		$('input[name="mdCheckDelete"]').live( 'change', function (e) {
+			clearTimeout(timoutID);
+			timoutID = setTimeout(updateSelectedCount, 200);
 		});
 		
 		this.$AjaxDeletedUploads = $('#AjaxDeletedUploads'); // For later usage to speed up gallery-box creating
+		this.$AjaxMdUlContainer = $('#AjaxMdUlContainer');
 		this.$AjaxMdNotReady = $('#AjaxMdNotReady');
 		//
 		// Event handler for the selection box (task to perform)
 		//
-		$('#AjaxMdType').change( function (event) {
-			var submitButton = $('.ui-dialog-buttonpane button:first');
-			if ('del' == $(this).val()) { $('#mdRequestPageTitle').show(); } else { $('#mdRequestPageTitle').hide(); }
-			switch ($(this).val()) {
-				case 'cv':
-				case 'cv-dw':
-				case 'cv-fu':
-				case 'del':
-					o.mdMinLenRequired = true;
-					$mdDeleteReason.removeClass('ui-state-disabled');
-					$mdDeleteReason.keyup();
-					$('#mdTaskForUser').contents().eq(0).replaceWith(o.i18n.mdInsertDeleteReasen);
-					$('#mdConfirmationSurrounder').show();
-					$('#mdDelteReasonConfirmationLabel').replaceWith('<span id="mdDelteReasonConfirmationLabel">' + o.i18n.mdDelteReasonConfirmationLabel + '</span>');
-					$('#mdTalkNoteNode').show();
-					$('#mdReplaceTextNode').hide();
-					$('#mdReplacePermissionWrapper').hide();
-				break;
-				case 'otrs':
-				case 'other':
-					o.mdMinLenRequired = false;
-					submitButton.removeClass('ui-state-disabled');
-					$mdDeleteReason.removeClass('ui-state-disabled');
-					if ( '' == $mdDeleteReason.val() )  $mdDeleteReason.val(o.mdOTRSprefill);
-					// For some reason RegExp.$1 will not work in the following line
-					if ( /(\d{16})/g.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o.mdOTRSprefill.replace(/\%ID/g, /(\d{16})/g.exec($mdDeleteReason.val())[0]) ); 
-					if ( o.mdURLPattern.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o.mdOTRSTicketPrefill.replace(/\%URL/g, $mdDeleteReason.val()) );
-					$('#mdTaskForUser').contents().eq(0).replaceWith(o.i18n.mdInsertOther);
-					$('#mdConfirmationSurrounder').show();
-					$('#mdDelteReasonConfirmationLabel').replaceWith('<span id="mdDelteReasonConfirmationLabel">' + o.i18n.mdInsertConfirmationLabel + '</span>');
-					$('#mdTalkNoteNode').hide();
-					$('#mdReplaceTextNode').hide();
-					$('#mdReplacePermissionWrapper').show();
-				break;
-				case 'cv-ndw':
-				case 'cv-logo':
-				case 'np':
-				case 'ns':
-					o.mdMinLenRequired = false;
-					submitButton.removeClass('ui-state-disabled');
-					$mdDeleteReason.addClass('ui-state-disabled');
-					$('#mdConfirmationSurrounder').hide();
-					$('#mdTalkNoteNode').show();
-					$('#mdReplaceTextNode').hide();
-					$('#mdReplacePermissionWrapper').hide();
-				break;
-				case 'c_replace':
-					o.mdMinLenRequired = false;
-					submitButton.removeClass('ui-state-disabled');
-					$mdDeleteReason.removeClass('ui-state-disabled');
-					$('#mdConfirmationSurrounder').hide();
-					$('#mdTalkNoteNode').hide();
-					$('#mdTaskForUser').contents().eq(0).replaceWith(o.i18n.mdInsertReplaceMatch);
-					$('#mdReplaceTextNode').show();
-					$('#mdReplacePermissionWrapper').hide();
-				break;
+		var $AjaxMdType = $('#AjaxMdType');
+		$AjaxMdType.change( function (event) {
+			var optConfig = o.mdOpt[$(this).val()];
+			if (!optConfig) return;
+			if ('del' == $(this).val()) { 
+				$('#mdRequestPageTitle').show(); 
+			} else { 
+				$('#mdRequestPageTitle').hide(); 
+			}
+
+			// minLenReq
+			if (optConfig[0]) {
+				o.mdMinLenRequired = true;
+				$mdDeleteReason.keyup();
+			} else {
+				o.mdMinLenRequired = false;
+				submitButton.removeClass('ui-state-disabled');
+			}
+			// acceptReason
+			if (optConfig[1]) {
+				$('#mdTaskForUser').text(o.i18n[optConfig[1]]);
+				$('#mdTaskForUser').show();
+				$mdDeleteReason.show();
+			} else {
+				$('#mdTaskForUser').hide();
+				$mdDeleteReason.hide();
+			}
+			// prefill
+			if (optConfig[2]) {
+				if (!$mdDeleteReason.val()) $mdDeleteReason.val(o[optConfig[2]]);
+				// For some reason RegExp.$1 will not work in the following line
+				if ( /(\d{16})/g.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o[optConfig[2]].replace(/\%ID/g, /(\d{16})/g.exec($mdDeleteReason.val())[0]) ); 
+				if ( o.mdURLPattern.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o.mdOTRSTicketPrefill.replace(/\%URL/g, $mdDeleteReason.val()) );
+			}
+			// confirmation
+			if (optConfig[3]) {
+				o.pb.setHelp(o.i18n[optConfig[3]]);
+			} else {
+				o.pb.setHelp2('');
+				o.pb.setHelp('');
+			}
+			// talk note
+			if (optConfig[4]) {
+				$('#mdTalkNoteNode').show();
+			} else {
+				$('#mdTalkNoteNode').hide();
+			}
+			// replace node
+			if (optConfig[5]) {
+				$('#mdReplaceTextNode').show();
+			} else {
+				$('#mdReplaceTextNode').hide();
+			}
+			// OTRS replace node
+			if (optConfig[6]) {
+				$('#mdReplacePermissionWrapper').show();
+			} else {
+				$('#mdReplacePermissionWrapper').hide();
 			}
 		});
-		$('#AjaxMdType').val('del');
-		$('#AjaxMdType').change();
+		$AjaxMdType.val(this.mdOptDefault);
+		$AjaxMdType.change();
+		$AjaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation() });
+		$('#AjaxMdIa').bind('click mousedown mouseup', function(e) { e.stopPropagation() });
 		$mdDeleteReason.keyup();
  
  
@@ -540,11 +844,11 @@ window.AjaxMassDelete = {
 			autoOpen: false
 		});
 		$AjaxMdCuteSelect
-			.append(this.i18n.mdCuteSelectionIntro + '<table><tr><td><label for="chkAjaxMdSelect">' + this.i18n.mdCuteSelectionSelect + '</label></td><td><input type="checkbox" id="chkAjaxMdSelect" value="1" checked=""/></td></tr>' +
-			'<tr><td><label for="txtAjaxMdSelectCat">' + this.i18n.mdCuteSelectionInCat + ' </label></td><td><input type="text" id="txtAjaxMdSelectCat" size="40"/> ' + this.i18n.mdCuteSelectionAnd + '</td></tr>' +
-			'<tr><td><label for="txtAjaxMdSelectTitle">' + this.i18n.mdCuteSelectionTitle + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr> </label></td><td><input type="text" id="txtAjaxMdSelectTitle" size="40"/> ' + this.i18n.mdCuteSelectionAnd + '</td></tr>' +
-			'<tr><td>' + this.i18n.mdCuteSelectionSize + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select></td><td><input type="text" class="numbersOnly" id="txtAjaxMdSelectSize" size="15"/><label for="txtAjaxMdSelectSize">KBytes</label> ' + this.i18n.mdCuteSelectionAnd + ' </td></tr>' +
-			'<tr><td>' + this.i18n.mdCuteSelectionDate + ' </td><td><label for="txtAjaxMdSelectDate0"> ' + this.i18n.mdCuteSelectionBetween + ' </label><input type="text" id="txtAjaxMdSelectDate0" class="dateOnly" size="10" maxlength="10"/><label for="txtAjaxMdSelectDate1"> ' + this.i18n.mdCuteSelectionAnd + ' </label><input type="text" id="txtAjaxMdSelectDate1" class="dateOnly" size="10" maxlength="10"/></td></tr></table>');
+			.append(this.i18n.mdCuteSelect.intro + '<table><tr><td><label for="chkAjaxMdSelect">' + this.i18n.mdCuteSelect.select + '</label></td><td><input type="checkbox" id="chkAjaxMdSelect" value="1" checked=""/></td></tr>'
+			+ '<tr><td><label for="txtAjaxMdSelectCat">' + this.i18n.mdCuteSelect.inCat + ' </label></td><td><input type="text" id="txtAjaxMdSelectCat" size="40"/> ' + this.i18n.mdCuteSelect.and + '</td></tr>'
+			+ '<tr><td><label for="txtAjaxMdSelectTitle">' + this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr> </label></td><td><input type="text" id="txtAjaxMdSelectTitle" size="40"/> ' + this.i18n.mdCuteSelect.and + '</td></tr>'
+			+ '<tr><td>' + this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select></td><td><input type="text" class="numbersOnly" id="txtAjaxMdSelectSize" size="15"/><label for="txtAjaxMdSelectSize">KBytes</label> ' + this.i18n.mdCuteSelect.and + ' </td></tr>'
+			+ '<tr><td>' + this.i18n.mdCuteSelect.date + ' </td><td><label for="txtAjaxMdSelectDate0"> ' + this.i18n.mdCuteSelect.between + ' </label><input type="text" id="txtAjaxMdSelectDate0" class="dateOnly" size="10" maxlength="10"/><label for="txtAjaxMdSelectDate1"> ' + this.i18n.mdCuteSelect.and + ' </label><input type="text" id="txtAjaxMdSelectDate1" class="dateOnly" size="10" maxlength="10"/></td></tr></table>');
  
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
@@ -565,6 +869,8 @@ window.AjaxMassDelete = {
 		$('#AjaxMdContainer').append($queryMore).append('<div style="height:100px">&nbsp;</div>');
 		$('#mdQueryMoreBtn').click( function (event) { o.mdQueryMore(); });
 		/* End of UI */
+		
+		$(document).triggerHandler('vFC', ['initial uploads dialog', this, this.dlg]);
  
 		this.iCurrentIId = -1;     // Last queried file to continue obtaining detail-info
 		this.mdSecureCall("mdSendNextQueries");
@@ -574,30 +880,57 @@ window.AjaxMassDelete = {
 	**  Send the next batch of queries. Called by mdGenIGallery (mammoth method above) and mdQueryMore (Query on demand)
 	**/
 	mdSendNextQueries: function () {
-		if (0 == this.mdPendingBatchQueries)  {
+		$(document).triggerHandler('vFC', ['querying detail-info', this]);
+		this.pb.setTaskState( 'datails', 'md-doing' );
+		
+		if (0 === this.mdPendingBatchQueries)  {
 			this.mdPendingBatchQueries++;
-			for (var upload in this.iUploads) {
-				if ((this.iCurrentIId + 1) > this.iUploads[upload].iId) continue;
+			var collectedFiles = [];
+			var collectedCount = 0;
+			var _this = this;
+			
+			var sendReq = function (files) {
+				if (0 === files.length) return;
 				var query = {
 					action: 'query',
 					prop: 'imageinfo|info|revisions|categories',
 					rvprop: 'timestamp|content',
-					intoken: ('undefined' == typeof(this.edittoken)) ? 'edit' : '',
+					intoken: ('undefined' == typeof(_this.edittoken)) ? 'edit' : '',
 					iiprop: 'url|size',
 					iiurlwidth: 120,
 					iiurlheight: 120,
-					titles: upload,
+					titles: files.join('|'),
 					clprop: 'hidden',
-					cllimit: 25
+					cllimit: 500
+				};
+				if (_this.mdModeCat) {
+					query.iiprop += '|user|sha1';
+					query.iilimit = 500;
 				}
-				this.doAPICall(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
-				this.mdUploadCt++;
+				
+				$(document).triggerHandler('vFC', ['detail-info', _this, query]);
+				
+				_this.mdUploadCt++;
+				_this.doAPICall(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
+			};
+
+			for (var upload in this.iUploads) {
+				if ((this.iCurrentIId + 1) > this.iUploads[upload].iId) continue;
+				collectedFiles.push(upload);
+				collectedCount++;
+				if (collectedCount > 9) {  // only 10 at once
+					collectedCount = 0;
+					sendReq(collectedFiles);
+					collectedFiles = [];
+				}
 				this.iCurrentIId = this.iUploads[upload].iId;
 				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) == this.mdUploadCt) {
 					break;
 				}
 			}
+			sendReq(collectedFiles);
 		}
+		
 		if (0 === this.mdUploadCt) this.nextTask();
 		$('#mdQueryMoreBtn').addClass('ui-state-disabled');
 	},
@@ -606,7 +939,7 @@ window.AjaxMassDelete = {
 	mdCreateGalleryBox: function (img, txt, height) {
 		$ih = $('<div>', { style: 'margin:15px auto;', name: 'mdImageHere' } );
 		$th = $('<div>', { 'class': 'gallerytext', name: 'mdTextHere' });
-		var $galleryBox = $('<li>', { style: 'width: 155px', 'class': 'gallerybox ronpending' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
+		var $galleryBox = $('<li>', { style: 'width: 155px', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
 
 		for (var id in img) {
 			$ih.append(img[id]);
@@ -668,41 +1001,69 @@ window.AjaxMassDelete = {
 	**/
 	mdQueriedFile: function (result) {
 		this.mdUploadCt--;
+		
+		$(document).triggerHandler('vFC', ['got detail-info', this, result]);
+		
 		if ('MD-Error' == this.context || 'MD-postDlg' == this.context) return; // don't try to add something if there was an error.
 		var pages = result.query.pages;
-		for (var id in pages) { // there should be only one, but we don't know its ID
+		for (var id in pages) {
+			var pg = pages[id],
+				dirtyTitle = pg.title,
+				cleanTitle = mw.html.escape(dirtyTitle),
+				uItem = this.iUploads[dirtyTitle],
+				i, ii,
+				seenHash = {};
+			
 			this.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (this.mdUploadCt) + 
-			' uploads left on this batch of queries. ' + (this.iiUploads) + ' cached uploads current image: ' + pages[id].title); 
+			' uploads left on this batch of queries. ' + (this.iiUploads) + ' cached uploads current image: ' + dirtyTitle); 
 
-			if ('undefined' == typeof(pages[id].imageinfo)) { try { 
-				this.$AjaxDeletedUploads.append(this.mdSecureCall("mdCreateDelUploadItem", pages[id].title));
+			if ('undefined' == typeof(pg.imageinfo)) { try { 
+				this.$AjaxDeletedUploads.append(this.mdSecureCall("mdCreateDelUploadItem", dirtyTitle));
 				} catch (e) {} continue; 
 			} // The file has been deleted
 
 			/*  Adding a thumbnail to the dialog  */
 			this.mdBusy = true;
 			this.mdActualResultCount++;
-			var cleanPageTitle = mw.html.escape(pages[id].title);
+			
+			if (this.mdModeCat) {
+				iiloop:
+				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
+					ii = pg.imageinfo[i];
+					if (ii.sha1) {
+						if (seenHash[ii.sha1]) {
+							// do nothing
+						} else {
+							seenHash[ii.sha1] = true;
+							// Admins can hide usernames. Make sure not pushing undefined.
+							if (ii.user) uItem.uploader.push(ii.user);
+						}
+					}
+				}
+			}
+			
 			$galleryBox = this.mdCreateGalleryBox(
-				[ $('<a>', { href: pages[id].imageinfo[0].descriptionurl, target: '_blank', 'class': 'image' })
-					.append( $('<img>', { src: pages[id].imageinfo[0].thumburl, width: pages[id].imageinfo[0].thumbwidth, height: pages[id].imageinfo[0].thumbheight, alt: pages[id].title }) ) ],
-				[ ('<i>' + this.iUploads[pages[id].title].iId + ': </i>'),
-				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: pages[id].title } ),
-				(this.mdSecureCall("mdExtractTags", pages[id].categories) + '<br/>'),
-				(cleanPageTitle  + '<br/>'),
-				(this.iUploads[pages[id].title].time.replace(/[T|Z]/g, " ") +  '<br/>'),
-				(Math.round(pages[id].imageinfo[0].size / 1024) + ' KBytes') ],
+				[ $('<a>', { href: pg.imageinfo[0].descriptionurl, target: '_blank', 'class': 'image' })
+					.append( $('<img>', { src: pg.imageinfo[0].thumburl, width: pg.imageinfo[0].thumbwidth, height: pg.imageinfo[0].thumbheight, alt: dirtyTitle }) ) ],
+				[ ('<i>' + uItem.iId + ': </i>'),
+				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: dirtyTitle } ),
+				(this.mdSecureCall("mdExtractTags", pg.categories) + '<br/>'),
+				(cleanTitle  + '<br/>'),
+				(uItem.time.replace(/[T|Z]/g, " ") +  '<br/>'),
+				((pg.imageinfo[0].size >> 10) + '&nbsp;KiB') ],
 				150
 			);
-			$('#AjaxMdUlContainer').append($galleryBox);
+			this.$AjaxMdUlContainer.append($galleryBox);
+			this.gbs[dirtyTitle] = $galleryBox;
 			this.mdBusy = false;
  
  
-			if ( 'undefined' != typeof(pages[id].edittoken) && '' != pages[id].edittoken ) { 
-				this.edittoken = pages[id].edittoken; } // prevent to assign an empty edit token
-			this.iUploads[pages[id].title].content = pages[id].revisions[0]['*']; // save the content for OTRS usage
-			this.iUploads[pages[id].title].categories = pages[id].categories;     // save cats for selector
-			this.iUploads[pages[id].title].size = pages[id].imageinfo[0].size / 1024; // for selector
+			if ( pg.edittoken ) { // prevent assigning an empty edit token
+				this.edittoken = pg.edittoken; 
+			} 
+			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage
+			uItem.categories = pg.categories;     // save cats for selector
+			uItem.size = pg.imageinfo[0].size / 1024; // for selector
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
@@ -714,10 +1075,12 @@ window.AjaxMassDelete = {
 		this.mdBusy = false;
 		this.mdPendingBatchQueries--;
 		$('#AjaxMdNotReady').hide();
+		this.pb.setCurrentTaskDone();
 		
 		var o = this;
+		$(document).triggerHandler('vFC', ['detail-info processed', o]);
  
-		if ( (this.iiUploads > (this.iCurrentIId + 1))  || !this.mdNoMoreFiles) {
+		if ( (o.iiUploads > (o.iCurrentIId + 1))  || !o.mdNoMoreFiles) {
 			var $mdQueryMore = $('#mdQueryMoreBtn');
 			$mdQueryMore.removeClass('ui-state-disabled');
 			$('.ui-dialog > .ui-dialog-content').bind("scroll", function() {
@@ -726,19 +1089,19 @@ window.AjaxMassDelete = {
 				}
 			});
 		}
-		if (!this.mdNoMoreFiles) { // silently run the next upload-list-query in background
-			this.mdSecureCall("mdCreateList");
+		if (!o.mdNoMoreFiles) { // silently run the next upload-list-query in background
+			o.mdSecureCall("mdCreateList");
 		}
  
 		document.body.style.cursor = 'auto';
-		if (0 == this.mdActualResultCount) { // If there are no thumbs on the dialog, continue
-			if ('MD-RevertImage' != this.context) { // Don't shedule further tasks if called from revert part
-				if ("MD" == this.context) alert(this.i18n.mdNoResult.replace("$1", this.mdUser));
-				this.mdDlgThumbDlgClose(); // remove the dialog
-				if (!this.mdModeCat) this.addTask('mdRvGenOGallery');
-				this.addTask('mdExecuteReady');
+		if (0 == o.mdActualResultCount) { // If there are no thumbs on the dialog, continue
+			if ('MD-RevertImage' != o.context) { // Don't shedule further tasks if called from revert part
+				if ("MD" == o.context) alert(o.i18n.mdNoResult.replace("%TARGET%", o.mdTarget));
+				o.mdDlgThumbDlgClose(); // remove the dialog
+				if (!o.mdModeCat) o.addTask('mdRvGenOGallery');
+				o.addTask('mdExecuteReady');
 			}
-			this.nextTask();
+			o.nextTask();
 		}
 	},
  
@@ -758,180 +1121,199 @@ window.AjaxMassDelete = {
 	**/
 	mdExecute: function () {
 		var o = this;
+		o.mdTaskToPerform = $('#AjaxMdType').val();
+		var cmdConfig = o.mdCommands[o.mdTaskToPerform];
 		
-		if (0 != this.mdNumberOfExecs || 0 != this.mdListUploadsPending) return; // refuse futher exec request
-		if (0 != this.mdPendingBatchQueries) { // call me later
-			setTimeout( function () { o.mdExecute() }, 1000);
+		if (0 !== o.mdNumberOfExecs || 0 !== o.mdListUploadsPending) return; // refuse futher exec request
+		if (0 !== o.mdPendingBatchQueries) { // call me later
+			setTimeout(function () { 
+				o.mdExecute() 
+			}, 1000);
 			return;
 		}
-		this.mdNumberOfExecs++;
-		
-		var fAreMultipleFiles = 0;
-		$('#AjaxMdContainer').hide();
-		$('#AjaxMdContainer').parent().append('<div id="mdWaitContainer">' + this.i18n.mdExecutingTaskEnumerateFiles + this.mdReLoader + '</div>');
+		o.mdNumberOfExecs++;
+
+		$(document).triggerHandler('vFC', ['processing user\'s input', o]);
+		o.pb.addTask('inputcheck');
+		o.pb.setTaskState('inputcheck', 'md-doing');
+		o.pb.setHelp(this.i18n.mdPleaseWait);
+		o.pb.setHelp2('');
+		o.pb.setHelp3('');
+
+		var filesToTag = 0;
  
 		$('input[name="mdCheckDelete"]').each(function(index) {
 			if (this.checked) {
 				o.iUploads[this.value].iId = -2; // Indicate the action will be performed on this file
-				fAreMultipleFiles++;
+				filesToTag++;
+				var $gb = o.gbs[this.value];
+				if ($gb) {
+					$gb.find('img').attr({
+						'src': o.mdDoingIcon, 
+						'width': 120, 
+						'height': 120
+					}).css('height', 120).css('width', 120);
+				}
 			}
 		});
  
-		if (0 == fAreMultipleFiles) {
-			if ( ('other' != $('#AjaxMdType').val() ) && ('otrs' != $('#AjaxMdType').val()) && (0 < this.ioUploads) ) {
-				this.addTask('mdRvGenOGallery');
+		if (0 === filesToTag) {
+			if ( ('other' != $('#AjaxMdType').val() ) && ('otrs' != $('#AjaxMdType').val()) && (0 < o.ioUploads) ) {
+				o.addTask('mdRvGenOGallery');
 			}
-			this.addTask('mdExecuteReady');
-			this.dlg.dialog("close");
-			this.nextTask();
+			o.addTask('mdExecuteReady');
+			o.dlg.dialog('close');
+			o.nextTask();
 			return;
 		} else {
-			this.mdInsertedTag = true;
+			o.mdInsertedTag = true;
 		}
  
-		this.mdDeleteHeading = this.cleanReason($('#mdDeleteHeading').val());
+		o.mdDeleteHeading = o.cleanReason($('#mdDeleteHeading').val());
  
-		this.mdTaskToPerform = $('#AjaxMdType').val();
-		if ('undefined' != typeof($('#mdDeleteReason').val())) {
-			this.reason = ('other' == this.mdTaskToPerform || 'otrs' == this.mdTaskToPerform || 'c_replace' == this.mdTaskToPerform) ? 
-				$('#mdDeleteReason').val() : this.cleanReason($('#mdDeleteReason').val());
+		if ($('#mdDeleteReason').val()) {
+			o.reason = cmdConfig.cleanReason ? o.cleanReason($('#mdDeleteReason').val()) : $('#mdDeleteReason').val();
 		} else {
-			this.reason = '';
+			o.reason = '';
 		}
-		this.mdReplaceText = $('#mdReplaceText').val();
-		this.mdMatchRegExp = $('#mdRRegEx')[0].checked;
-		this.mdReplacePermission = $('#mdReplacePermission')[0].checked;
-		this.mdTalkNote = $('#mdTalkNote').val();
+		o.mdReplaceText = $('#mdReplaceText').val();
+		o.mdMatchRegExp = $('#mdRRegEx')[0].checked;
+		o.mdReplacePermission = $('#mdReplacePermission')[0].checked;
+		o.mdTalkNote = $('#mdTalkNote').val();
+		o.mdAddEditSummary = $('#mdEditSummary').val();
  
-		this.addTask('mdExecuteContinue');
-		this.mdDlgThumbDlgClose();
-		this.nextTask();
+		o.addTask('mdExecuteContinue');
+		o.nextTask();
 	},
- 
+	
+	formatDate: function (fmt, date) {
+		var pad0 = function (s) {
+				s = "" + s;
+				return (s.length > 1 ? s : "0" + s);
+			}; // zero-pad to two digits
+		if (!date) date = this.startDate;
+		fmt = fmt.replace(/YYYY/g, date.getUTCFullYear());
+		fmt = fmt.replace(/MM/g, pad0(date.getUTCMonth() + 1));
+		fmt = fmt.replace(/DD/g, pad0(date.getUTCDate()));
+		fmt = fmt.replace(/MON/g, mw.config.get('wgMonthNames')[date.getUTCMonth()+1]);
+		fmt = fmt.replace(/DAY/g, date.getUTCDate());
+		return fmt;
+	},
+
 	/**  
-	**  Dialog has been removed; preparing to perform our edits
+	**  Preparing to perform our edits
 	**/
 	mdExecuteContinue: function () {
-		this.showProgress(this.i18n.mdExecutingTask);
+		$(document).triggerHandler('vFC', ['generating page messages and summaries', this]);
 		this.startDate = new Date();
  
 		// set up some page names we'll need later
-		var mdRequestPage = (this.mdModeCat ? 'Files in ' : 'Files uploaded by ') + this.mdUser;
-		this.requestPage =  this.requestPagePrefix + mdRequestPage;
-		this.dailyLogPage = this.requestPagePrefix + this.formatDate("YYYY/MM/DD");
+		var mdRequestPage = (this.mdModeCat ? 'Files in ' : 'Files uploaded by ') + this.mdTarget;
+		this.requestPage =  this.mdRequestPagePrefix + mdRequestPage;
+		this.dailyLogPage = this.mdRequestPagePrefix + this.formatDate("YYYY/MM/DD");
  
-		var mdUploadCt = 0;
- 
-		switch (this.mdTaskToPerform) {
-			case 'del':
-				this.tag = "{{delete|reason=" + this.reason + "|subpage=" + mdRequestPage + this.formatDate("|year=YYYY|month=MON|day=DAY}}\n");
-				this.img_summary = 'Nominating for deletion. Tagging performed with [[' + this.mdSelfPath + '|AjaxMassDelete.js]].';
-				this.talk_tag = "{\{subst:idw|2=" + mdRequestPage + "|3=plural}}";
-				this.talk_summary = "Warning: Some of your [[" + this.requestPage + "|uploads have been nominated for deletion]].";
-				// Prepare for createRequestSubpage
-				for (var upload in this.iUploads) {
-					if ( -2 == this.iUploads[upload].iId )  { this.reason += '\n* [[:' + upload + ']]'; }
-				}
-				if ( this.mdTalkNote && '' != this.mdTalkNote ) this.talk_tag += '\n\n' + this.mdTalkNote;
-				break;
-			case 'np':
-				this.tag = "{\{subst:npd}}\n";
-				this.img_summary = 'Missing permission. Tagging performed with [[' + this.mdSelfPath + '|AjaxMassDelete.js]].';
-				this.talk_tag = "{\{subst:image permission|1=%FILE%}} And also for:";
-				this.talk_summary = "Please send a permission for [[:%FILE%]] and some other files to [[COM:OTRS|OTRS]]";
-				for (var upload in this.iUploads) {
-					if ( -2 == this.iUploads[upload].iId )  { 
-						if ( 0 == mdUploadCt ) {
-							this.talk_tag = this.talk_tag.replace('%FILE%', upload);
-							this.talk_summary = this.talk_summary.replace('%FILE%', upload);
-						} else {
-							this.talk_tag += '\n* [[:' + upload + ']] '; 
-						}
-						mdUploadCt++;
-					}
-				}
-				if ( this.mdTalkNote && '' != this.mdTalkNote ) this.talk_tag += '\n\n' + this.mdTalkNote;
-				break;
-			case 'ns':
-				this.tag = "{\{subst:nsd}}\n";
-				this.img_summary = 'File has no source. Tagging performed with [[' + this.mdSelfPath + '|AjaxMassDelete.js]].';
-				this.talk_tag = "{\{subst:image source|1=%FILE%}} And also for:";
-				this.talk_summary = "%FILE% does not have a source.";
-				for (var upload in this.iUploads) {
-					if ( -2 == this.iUploads[upload].iId )  { 
-						if ( 0 == mdUploadCt ) {
-							this.talk_tag = this.talk_tag.replace('%FILE%', upload);
-							this.talk_summary = this.talk_summary.replace('%FILE%', upload);
-						} else {
-							this.talk_tag += '\n* [[:' + upload + ']] '; 
-						}
-						mdUploadCt++;
-					}
-				}
-				if ( this.mdTalkNote && '' != this.mdTalkNote ) this.talk_tag += '\n\n' + this.mdTalkNote;
-				break;
-			case 'cv-ndw':
-				this.reason = "This file is under a license that does not allow unrestricted modification. " + 
-					"The file is subject to speedy deletion unless it is relicensed according to the [[Commons:Licensing|Commons&nbsp;licensing&nbsp;policy]]."
-			case 'cv-logo':
-			case 'cv':
-			case 'cv-dw':
-			case 'cv-fu':
-				this.tag = ('cv-logo' == this.mdTaskToPerform) ? "{\{Logo}}\n" : ('cv-dw' == this.mdTaskToPerform) ? "{\{Derivative|1=" + this.reason + "}}\n" : "{\{copyvio|1=" + this.reason + "}}\n";
-				this.img_summary = "Marking as possible copyvio because " + (('cv-logo' == this.mdTaskToPerform) ? "this logo exceeds the threshold of originality" : this.reason ) 
-					+ " using [[" + this.mdSelfPath + "|VisualFileChange.js]].";
-				this.talk_tag = "{\{subst:" + (('cv-fu' == this.mdTaskToPerform) ? "No fair use" : (('cv-dw' == this.mdTaskToPerform) ? "Derivativenote" : "copyvionote")) + "|1=%FILE%}} And also:";
-				this.talk_summary = "Notification of possible copyright violations.";
-				for (var upload in this.iUploads) {
-					if ( -2 == this.iUploads[upload].iId )  { 
-						if ( 0 == mdUploadCt ) {
-							this.talk_tag = this.talk_tag.replace('%FILE%', upload);
-						} else {
-							this.talk_tag += '\n* [[:' + upload + ']] '; 
-						}
-						mdUploadCt++;
-					}
-				}
-				if ( this.mdTalkNote && '' != this.mdTalkNote ) this.talk_tag += '\n\n' + this.mdTalkNote;
-				break;
-			case 'otrs':
-			case 'other':
-				this.tag = this.reason;
-				this.img_summary = 'Adding [[COM:OTRS|OTRS]] permission or another tag to the permission section using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
-			break;
-			case 'c_replace':
-				this.tag = this.reason;
-				this.img_summary = 'Replacing "%pattern%" with "%replace%" using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
-			break;
-		}
- 
-		// Task sheduling
- 
-		// Prepare for notifyUploaders
+		var uploadCt = 0;
+
+		var optConfig = this.mdOpt[this.mdTaskToPerform];
+		var cmdConfig = this.mdCommands[this.mdTaskToPerform];
+		this.tag = optConfig[7].replace('%REASON%', this.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', this.formatDate('year=YYYY|month=MON|day=DAY'));
+		
+		this.img_summary = (this.mdAddEditSummary ? (this.mdAddEditSummary + ' - ') : '') + optConfig[8].replace('%pattern%', this.reason).replace('%replace%', this.mdReplaceText) + ' Using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
+		var r = this.img_summary.match(/\%(.{1,9})\%/);
+		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
+		
 		this.uploaders = {};
-		this.uploaders[this.mdUser] = true;
- 
-		//First, create deletion page
-		if ('del' == this.mdTaskToPerform) 
-			this.addTask('mdCreateRequestSubpage');
-		if ( ('other' != this.mdTaskToPerform) && ('otrs' != this.mdTaskToPerform) && ('c_replace' != this.mdTaskToPerform) ) {
-			this.addTask('mdPrependTemplate');
-			if (!this.mdModeCat) this.addTask('notifyUploaders');
+		// Reverse-mapping: files-uploader --- > uploader-files
+		for (var upload in this.iUploads) {
+			var uItem = this.iUploads[upload];
+			if ( -2 === uItem.iId )  {
+				if (this.mdModeCat) {
+					// Remember: u is just an index of an array
+					for (var u in uItem.uploader) {
+						var ul = uItem.uploader[u];
+						if (!this.uploaders[ul]) {
+							this.uploaders[ul] = { uploads: {} };
+						}
+						this.uploaders[ul].uploads[upload] = true;
+						}
+				} else {
+					if (!this.uploaders[this.mdTarget]) {
+						this.uploaders[this.mdTarget] = { uploads: {} };
+					}
+					this.uploaders[this.mdTarget].uploads[upload] = true;
+				}
+			}
 		}
-		else {
-			this.addTask('mdInsertPermission');
+		
+		for (var uploader in this.uploaders) {
+			var uploaderItem = this.uploaders[uploader];
+			uploadCt = 0;
+			
+			uploaderItem.talk_tag = optConfig[9].replace('%REQUESTPAGE%', mdRequestPage);
+			uploaderItem.talk_summary = optConfig[10].replace('%FULLREQUESTPAGE%', this.requestPage);
+			if (/\%FILE\%/.test(uploaderItem.talk_tag)) {
+				for (var userUpload in uploaderItem.uploads) {
+					if ( 0 === uploadCt ) {
+						uploaderItem.talk_tag = uploaderItem.talk_tag.replace('%FILE%', userUpload);
+						uploaderItem.talk_summary = uploaderItem.talk_summary.replace('%FILE%', userUpload);
+					} else if ( 1 === uploadCt ) {
+						uploaderItem.talk_tag += '\nAnd also: \n* [[:' + userUpload + ']] '; 
+					} else {
+						uploaderItem.talk_tag += '\n* [[:' + userUpload + ']] '; 
+					}
+					uploadCt++;
+				}
+			}
+			if (optConfig[4]) {
+				if ( this.mdTalkNote ) uploaderItem.talk_tag += '\n\n' + this.mdTalkNote;
+			}
 		}
-		if ('del' == this.mdTaskToPerform) 
-			this.addTask('listRequestSubpage');
-		if ( ('other' != this.mdTaskToPerform) && ('otrs' != this.mdTaskToPerform) && ('c_replace' != this.mdTaskToPerform) && (0 != this.ioUploads) ) {
-			this.addTask('mdRvGenOGallery');
+		
+		// Prepare for createRequestSubpage
+		this.requestPageContents = this.reason;
+		for (var upload in this.iUploads) {
+			if ( -2 == this.iUploads[upload].iId )  { this.requestPageContents += '\n* [[:' + upload + ']]'; }
+		}
+				
+		// Task sheduling
+		for (var id in cmdConfig.tasks) {
+			var task = cmdConfig.tasks[id];
+			if ('mdRvGenOGallery' === task && 0 === this.ioUploads) continue;
+			this.addTask(task);
+			if (task in this.i18n.task) this.pb.addTask(task);
 		}
 		this.addTask('mdExecuteReady');
 		this.nextTask();
 	},
+	
+	mdPrependText: function () {
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdPrependText', 'md-doing');
+		this.tag = this.reason;
+		this.nextTask();
+	},
+	
+	mdAppendText: function () {
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdAppendText', 'md-doing');
+		this.tag = this.reason;
+		this.nextTask();
+	},
  
 	mdPrependTemplate: function () {
-		try { this.showProgress(this.i18n.addingAnyTemplate); } catch (ex) { }
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdPrependTemplate', 'md-doing');
+		this.mdSecureCall('mdAddTemplate', 'prependtext');
+	},
+	
+	mdAppendTemplate: function () {
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdAppendTemplate', 'md-doing');
+		this.mdSecureCall('mdAddTemplate', 'appendtext');
+	},
+	
+	mdAddTemplate: function (edittype) {
+		$(document).triggerHandler('vFC', ['adding templates to filepages', this]);
 		this.mdUploadCt = 0;
  
 		for (var upload in this.iUploads) {
@@ -940,41 +1322,46 @@ window.AjaxMassDelete = {
 			var page = [];
 			page.title = upload;
 			page.text = this.tag;
-			page.editType = 'prependtext';
+			page.editType = edittype;
 			if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
  
 			this.mdUploadCt++;
-			this.savePage(page, this.img_summary, 'mdTemplateAdded');
+			this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
  
 	mdInsertPermission: function () {
-		try { this.showProgress(this.i18n.addingAnyTemplate); } catch (ex) { }
+		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdInsertPermission', 'md-doing');
 		this.mdUploadCt = 0;
  
 		for (var upload in this.iUploads) {
-			if (-2 != this.iUploads[upload].iId) continue;
+			if (-2 !== this.iUploads[upload].iId) continue;
  
 			var page = [];
 			page.title = upload;
 			page.text = this.iUploads[upload].content;
  
-			if ('otrs' == this.mdTaskToPerform) { // drop out other permission templates
+			if ('otrs' === this.mdTaskToPerform) { // drop out other permission templates
 				var iCt = 0;
 				mdTagLoop:
 				for (var id in this.mdTagRemoval) {
 					iCt++;
-					if (1 == iCt) continue mdTagLoop; // Skip first pattern
+					if (1 === iCt) continue mdTagLoop; // Skip first pattern
 					page.text = page.text.replace(this.mdTagRemoval[id][0], '');
 				}
 			}
-			if ('c_replace' != this.mdTaskToPerform) {
-				page.text = this.mdSecureCall( "mdInsertOTRS", page.text, this.tag );
+			if ('c_replace' !== this.mdTaskToPerform) {
+				page.text = this.mdSecureCall( "mdInsertOTRS", page.text, this.reason );
 			} else {
-				if ('' == this.tag) continue;
-				this.img_summary = this.img_summary.replace('%pattern%', this.tag).replace('%replace%', this.mdReplaceText);
-				var tmpRegEx = this.mdMatchRegExp ? eval(this.tag) : this.tag;
+				if ('' === this.reason) continue;
+				var m, tmpRegEx = this.reason;
+				if (this.mdMatchRegExp) {
+					m = tmpRegEx.match(/\/(.+)\/(.*)/);
+					if (m && m[0] && m[1]) tmpRegEx = new RegExp(m[1], m[2]);
+				}
 				page.text = page.text.replace(tmpRegEx, this.mdReplaceText);
 			}
  
@@ -984,9 +1371,9 @@ window.AjaxMassDelete = {
 			page.editType = 'text';
 			if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
  
-			if (this.iUploads[upload].content != page.text) {
+			if (this.iUploads[upload].content !== page.text) {
 				this.mdUploadCt++;
-				this.savePage(page, this.img_summary, 'mdTemplateAdded');
+				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 			}
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
@@ -1011,21 +1398,127 @@ window.AjaxMassDelete = {
 	},
  
 	mdCreateRequestSubpage: function () {
+		$(document).triggerHandler('vFC', ['creating request subpage', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdCreateRequestSubpage', 'md-doing');
+		
 		var page = [];
 		page.title = this.requestPage;
-		page.text = "\n\n=== " + this.mdDeleteHeading + " ===\n\n" + this.reason + "\n~~" + "~~\n";
+		page.text = "\n\n=== " + this.mdDeleteHeading + " ===\n\n" + this.requestPageContents + "\n~~" + "~~\n";
 		page.watchlist = 'watch';
 		page.editType = 'appendtext';
- 
-		this.showProgress(this.i18n.creatingNomination);
- 
-		this.savePage(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'nextTask');
+		
+		$(document).triggerHandler('vFC', ['request subpage', this, page]);
+		this.mdSavePage(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
 	},
- 
-	mdTemplateAdded: function (result) {
-		this.showProgress(this.i18n.addingAnyTemplate + result.edit.title);
+	
+	mdCreateRequestSubpageCB: function (result, query, err) {
+		if (err) {
+			this.pb.setCurrentTaskState('md-notdone');
+			this.pb.setError(err);
+		} else {
+			this.pb.setCurrentTaskDone();
+		}
+		this.nextTask();
+	},
+	
+	/**
+	 ** Transclude the nomination page onto today's DR log page, creating it if necessary.
+	 ** The log page will never be watchlisted (unless the user is already watching it).
+	 **/
+	mdListRequestSubpage: function () {
+		$(document).triggerHandler('vFC', ['creating request subpage', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdListRequestSubpage', 'md-doing');
+		var page = [];
+		page.title = this.dailyLogPage;
+
+		page.text = "\n{{" + this.requestPage + "}}\n";
+		page.watchlist = 'nochange';
+		page.editType = 'appendtext';
+
+		this.mdSavePage(page, "Listing [[" + this.requestPage + "]]", 'mdListRequestSubpageCB', 'mdListRequestSubpageCB');
+	},
+	
+	mdListRequestSubpageCB: function (result, query, err) {
+		if (err) {
+			this.pb.setCurrentTaskState('md-notdone');
+			this.pb.setError(err);
+		} else {
+			this.pb.setCurrentTaskDone();
+		}
+		this.nextTask();
+	},
+	
+	mdTemplateAdded: function (result, query, err) {
 		this.mdUploadCt--;
+		var pgTitle = (result.requestid || query.title);
+		var $gb = this.gbs[pgTitle];
+		if ($gb) {
+			$gb.find('img').attr('src', (err ? this.mdFailIcon : this.mdSuccessIcon));
+			if (err) $gb.find('.gallerytext').prepend($('<span>', { 'class': 'error' }).text(err), '<br/>');
+		}
+		if (result.error) {
+			this.pb.setCurrentTaskState('md-attention');
+		}
 		if (0 === this.mdUploadCt) this.nextTask();
+	},
+	
+	mdNotifyUploaders: function () {
+		$(document).triggerHandler('vFC', ['notifying uploaders', this, this.uploaders]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdNotifyUploaders', 'md-doing');
+		
+		this.uploadersToNotify = 0;
+		for (var user in this.uploaders) {
+			var page = [];
+			page.title = this.mdUserTalkPrefix + user;
+			page.text = "\n" + this.uploaders[user].talk_tag + " ~~" + "~~\n";
+			page.editType = 'appendtext';
+			page.redirect = true;
+			if (window.AjaxDeleteWatchUserTalk) page.watchlist = 'watch';
+			this.mdSavePage(page, this.uploaders[user].talk_summary, 'mdUploaderNotified');
+
+			this.uploadersToNotify++;
+		}
+		if (this.uploadersToNotify === 0) this.nextTask();
+	},
+
+	mdUploaderNotified: function (result, query, err) {
+		this.uploadersToNotify--;
+		if (this.uploadersToNotify === 0) this.nextTask();
+	},
+	
+	/**
+	** Submit an edited page.
+	**/
+	mdSavePage: function (page, summary, callback, errCallBack) {
+		var edit = {
+			action: 'edit',
+			summary: summary,
+			watchlist: (page.watchlist || 'preferences'),
+			title: page.title,
+			requestid: page.title
+		};
+		if (page.redirect) edit.redirect = '';
+		edit[page.editType] = page.text;
+		// Token last!
+		edit.token = this.edittoken;
+		
+		
+		// emulation possible
+		if (window.VisualFileChangeDebug) {
+			console.log('VisualFileChange> savepage:');
+			console.log(summary);
+			console.log(page);
+			
+			var _this = this;
+			setTimeout(function() {
+				_this[callback]({ requestid: page.title });
+			}, 8000);
+		} else {
+			this.doAPICall(edit, callback, errCallBack);
+		}
 	},
  
 	/**
@@ -1033,6 +1526,16 @@ window.AjaxMassDelete = {
 	**
 	**/
 	mdRvGenOGallery: function () {
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdRvGenOGallery', 'md-doing');
+
+		///////////////////////////////////////////
+		//   SKIP THIS - TEMPORARY NOT WORKING   //
+		///////////////////////////////////////////
+		this.nextTask();
+		return;
+		///////////////////////////////////////////
+
 		this.context = "MD-RevertImage";
 		this.mdUploadCt = 0;
 		if ( this.progressDialog ) this.progressDialog.remove();
@@ -1065,7 +1568,7 @@ window.AjaxMassDelete = {
 			height: $(window).height() * 0.97,
 			width: $(window).width() * 0.99,
 			buttons: dlgButtons,
-			close: this.mdDlgThumbDlgClose
+			close: this.mdCancel
 		});
 		if (this.dlg) {
 			$('#AjaxMdIa').change( function (event) {
@@ -1085,7 +1588,6 @@ window.AjaxMassDelete = {
 				this.mdUploadCt++;
 			}
 		}
-		this.progressDialog.remove();
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
  
@@ -1102,12 +1604,12 @@ window.AjaxMassDelete = {
 			' of ' + (this.ioUploads) + ' total uploads current image: ' + pageTitle); 
 			var rvMatrix = this.mdSecureCall("mdRvCreateImgRevisionMatrix", parsedDOM);
 			var preVandalRv = 0;
-			if (0 == rvMatrix.length || 'object' != typeof(rvMatrix[0]) || rvMatrix[0].user != this.mdUser) { 
+			if (0 == rvMatrix.length || 'object' != typeof(rvMatrix[0]) || rvMatrix[0].user != this.mdTarget) { 
 				this.mdRvAllFilesQueried();
 				return;
 			}
 			for (var rv in rvMatrix) {
-				if (rvMatrix[rv].user != this.mdUser) { // Find the first revision of another user
+				if (rvMatrix[rv].user != this.mdTarget) { // Find the first revision of another user
 					preVandalRv = rvMatrix[rv];
 					break;
 				}
@@ -1224,7 +1726,7 @@ window.AjaxMassDelete = {
 		var pageTitle = title.replace(/ /g, '_');
 		var data = {
 			wpEditToken: this.oUploads[title].editToken,
-			wpComment: 'Reverting this image to previous revision of ' + this.oUploads[title].preVandalUser + ' using [[' + this.mdSelfPath + '|AjaxMassDelete.js]]'
+			wpComment: 'Reverting this image to previous revision of ' + this.oUploads[title].preVandalUser + ' using [[' + this.mdSelfPath + '|VisualFileChange.js]]'
 		};
  
 		$('#mdWaitContainer').replaceWith('<div id="mdWaitContainer">Posting the revert request for ' + title + ' via index.php ' + this.mdReLoader + '</div>');
@@ -1243,27 +1745,83 @@ window.AjaxMassDelete = {
 	},
  
 	mdExecuteReady: function () {
-		if (this.progressDialog) this.progressDialog.remove();
- 
 		this.context = "QD";
+		this.pb.setCurrentTaskDone();
  
 		if ( this.mdInsertedTag ) {
-			if ('del' == this.mdTaskToPerform) {
+			if ('del' === this.mdTaskToPerform) {
 				// navigating to the new created deletion request
 				var encTitle = this.requestPage;
 				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
-				location.href = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle);
+				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			}
-			else if (-1 == mw.config.get('wgNamespaceNumber') && ( 'c_replace' != this.mdTaskToPerform && 'OTRS' != this.mdTaskToPerform && 'other' != this.mdTaskToPerform )) {
+			else if (-1 === mw.config.get('wgNamespaceNumber') && ( 'c_replace' !== this.mdTaskToPerform && 'OTRS' !== this.mdTaskToPerform && 'other' !== this.mdTaskToPerform )) {
 				// navigating to the user-discussion-page
-				var encTitle = this.userTalkPrefix + this.mdUser;
+				var encTitle = this.mdUserTalkPrefix + this.mdTarget;
 				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
-				location.href = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle);
+				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			} else {
-				this.reloadPage();
+				this.mdGoToSite(location.href);
 			}
 		}
 	},
+
+	mdGoToSite: function (target) {
+		if (!window.VisualFileChangeDebug) {
+			setTimeout(function() {
+				location.href = target;
+			}, 5000);
+		}
+	},
+
+   /**
+    ** Does a MediaWiki API request and passes the result to the supplied callback (method name).
+    ** Uses POST requests for everything for simplicity.
+    **/
+   doAPICall: function (params, callback, errCallBack) {
+      var o = this;
+ 
+      params.format = 'json';
+      $.ajax({
+         url: mw.util.wikiScript('api'),
+         cache: false,
+         dataType: 'json',
+         data: params,
+         type: 'POST',
+         success: function (result, status, x) {
+            if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
+ 
+            // In case we get the mysterious 231 unknown error, just try again
+            if (result.error && result.error.info.indexOf('231') != -1) return setTimeout(function () {
+               o.doAPICall(params, callback);
+            }, 500);
+            if (result.error) {
+				if (errCallBack && $.isFunction(o[errCallBack])) {
+					this.mdWasAPIError = true;
+					o[errCallBack](result, params, result.error.code + ': ' + result.error.info);
+				} else {
+					return o.fail("API request failed (" + result.error.code + "): " + result.error.info);
+				}
+            }
+            if (result.edit && result.edit.spamblacklist) {
+                 return o.fail("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
+            }
+            try {
+               o[callback](result);
+            } catch (e) {
+               return o.fail(e);
+            }
+         },
+         error: function (x, status, error) {
+			if (errCallBack && $.isFunction(o[errCallBack])) {
+				this.mdWasAPIError = true;
+				o[errCallBack]('', params, 'Server status: ' + x.status + ' - Error:' + error);
+			} else {
+				return o.fail("Server returned code " + x.status + " " + status + "Error code is " + error);
+			}
+         }
+      });
+   },
  
 	/**
 	** Does a HTTP request and passes the result to the supplied callback (method name).
@@ -1280,7 +1838,6 @@ window.AjaxMassDelete = {
 			success: function (result, status, x) {
 				if (!result) return o.fail("Received empty response:\n" + x.responseText);
 				if (x.status > 299) return o.fail("Status over 299 - fail\n" + x.responseText);
-				if (x.status < 200) return this.showProgress(status);
 				
 				o.mdSecureCall(callback, result);
 			},
@@ -1291,40 +1848,27 @@ window.AjaxMassDelete = {
 	},
  
 	/**
-	** Overwrite the crude error handler.
-	** Has to become updated if AjaxQuickDelete is updated
+	** crude error handler.
+	**
 	**/
 	fail: function (err) {
+		err = err.toString();
 		document.body.style.cursor = 'auto';
 		if ('undefined' != typeof(console)) console.log('Error: ' + err);
-		var msg = this.i18n.taskFailure[this.currentTask] || this.i18n.genericFailure;
+		var msg = this.i18n.taskFailure[this.currentTask] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
  
 		var reportPage = '';
 		this.mdBusy = false; // Prevents that our mdDlgThumbDlgClose will be refused
+		
+		this.pb.setCurrentTaskState('md-failed');
  
-		if ( 'MD' == this.context || 'MD-RevertImage' == this.context || 'MD-postDlg' == this.context ) {
+		if ( 'MD' === this.context || 'MD-RevertImage' === this.context || 'MD-postDlg' === this.context ) {
 			reportPage = this.mdErrReportPath;
 			fix = '';
- 
-			this.mdDlgThumbDlgClose();
-			this.showProgress(this.i18n.genericFailure);
+
 			this.context = 'MD-Error';
-			$('.ui-dialog-titlebar').show();
-		} else {
-			//TODO: Needs cleanup
-			if (this.img_summary == 'Nominating for deletion') fix = (this.templateAdded ? this.i18n.completeRequestByHand : this.i18n.addTemplateByHand);
-			else fix = '';
-			reportPage = "MediaWiki_talk:AjaxQuickDelete";
 		}
- 
-		$('#feedbackContainer').html(msg + ' ' + fix + '<br>' + this.i18n.errorDetails + '<br>' + err + '<br><a href="' + mw.config.get('wgServer') + '/wiki/' + reportPage + '">' + this.i18n.errorReport + '</a>');
-		$('.ui-dialog-content').height('auto');
-		$('.ui-dialog').addClass('ajaxDeleteError');
-		// This funny construct is necessary: 
-		// 1. o because this-pointer in set-timeout is altered
-		// 2. annonymous function to prevent that the code is immediatly executed (browser would "think" to obtain the value of reloadPage())
-		var o = this;
-		if (this.templateAdded) setTimeout(function () { o.reloadPage() }, 5000); 
+		if (this.pb) this.pb.setError(msg + ' ##### ' + err);
 	},
 	
 	/**
@@ -1334,10 +1878,74 @@ window.AjaxMassDelete = {
 		var o = this;
 		try {
 			this.currentTask = o.mdSecureCall.arguments[0];
-			return this[stFunction].apply(this, Array.prototype.slice.call(o.mdSecureCall.arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
+			return o[stFunction].apply(this, Array.prototype.slice.call(o.mdSecureCall.arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
 		} catch (ex) {
 			o.fail(ex);
 		}
+	},
+	
+	/**
+	** Simple task queue.  addTask() adds a new task to the queue, nextTask() executes
+	** the next scheduled task.  Tasks are specified as method names to call.
+	**/
+	tasks: [],
+	// list of pending tasks
+	currentTask: '',
+	// current task, for error reporting
+	oldTask: '',
+	// task called before
+	addTask: function( task ) {
+		this.tasks.push(task);
+	},
+	nextTask: function() {
+		var task = this.currentTask = this.tasks.shift();
+		return ($.isArray(task) ? this.mdSecureCall.apply(this, task) : this.mdSecureCall(task)); // Ja da guckste ...
+	},
+	lastTask: function() {
+		var task = this.currentTask = this.tasks[this.tasks.length - 1];
+		this.tasks = [];
+		return ($.isArray(task) ? this.mdSecureCall.apply(this, task) : this.mdSecureCall(task));
+	},
+	
+	/**                                                    **
+	*************** SETTINGS / CONFIGURATION ****************
+	**                                                    **/
+	mdOpt: { // 		0	1						2					3						4		5		6		7												8																									9											10
+		// key, minLenReq, acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
+		'c_replace':[false,	'mdInsertPattern',		'',					'',						false,	true,	false,	"",												'Replacing "%pattern%" with "%replace%"', 															'',											''],
+		'prepend':  [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
+		'append':   [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
+		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{copyvio|1=%REASON%}}\n",					'%cv% %REASON%', 																					'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
+		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{Derivative|1=%REASON%}}\n",					'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{\{subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
+		'cv-fu':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{Fair use}}\n",								'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{\{subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
+		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{\{Logo}}\n",									'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
+		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{\{Nonderivative}}\n",							'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
+		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 														'{\{subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
+		'np':		[false,	false,					'',					'',						true,	false,	false,	"{\{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{\{subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
+		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{\{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{\{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
+		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{\{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{\{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
+		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											],
+		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											]
+	},
+	mdCommands: {
+		'c_replace':{ tasks: ['mdInsertPermission'] },
+		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'] },
+		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'] },
+		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'cv-fu':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'del':		{ cleanReason: true, tasks: ['mdCreateRequestSubpage', 'mdPrependTemplate', 'mdNotifyUploaders', 'mdListRequestSubpage', 'mdRvGenOGallery'] },
+		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'otrs':		{ tasks: ['mdInsertPermission'] },
+		'other':	{ tasks: ['mdInsertPermission'] }
+	},
+	mdOptDefault: 'del',
+	mdOptText: {
+		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
 	},
  
 	mdTagRemoval: [
@@ -1347,6 +1955,7 @@ window.AjaxMassDelete = {
 		[/\{\{[Nn]o[ _]permission[^\}\n]*\}\}/g],
 		[/\{\{[Nn]o[ _]OTRS[ _]permission[^\}\n]*\}\}/g],
 		[/\{\{[Nn]o[ _]source[ _]since\|.*\}\}/g],
+		[/\{\{[Dd]w[ _]no[ _]source[ _]since\|.*\}\}/g],
 		[/\{\{[Ss]peedydelete.*\}\}/g],
 		[/\{\{[Cc]opyvio.*\}\}/g],
 		[/\{\{[Ll]ogo[\|.*]?\}\}/g],
@@ -1391,67 +2000,116 @@ window.AjaxMassDelete = {
 		[/Category:GPL/i, 										'GPL'],
 		[/Category:Free screenshot.*/i, 						'free-Screenshot'],
 		[/Category:Self[- _]published[- _]work/i, 				'<b>self</b>'],  // rm the next tags from being shown
-		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[- _]received/, ''], [/Items[- _]with[- _]OTRS[- _]permission/, ''], [/OTRS[- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''],
+		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[- _]received/, ''], [/Items[- _]with[- _]OTRS[- _]permission/, ''], [/OTRS[- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
  
-	mdOTRSprefill: "{{PermissionOTRS|id=%ID|\~\~\~\~}} {{OTRS received|id=%ID|reason=processing, nonfree, email}}",
-	mdOTRSTicketPrefill: "{{PermissionOTRS|ticket=%URL|\~\~\~\~}} {{OTRS received|ticket=%URL|reason=processing, nonfree, email}}",
+	mdOTRSprefill: "{{PermissionOTRS|id=%ID|\~\~\~\~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}",
+	mdOTRSTicketPrefill: "{{PermissionOTRS|ticket=%URL|\~\~\~\~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}",
 	mdPermissionPattern: /(\|Permission\s*\=)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
-	mdSelfPath: 'User:Rillke/AjaxMassDelete.js',
+	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ":",
+	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ":",
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ":Contributions/",
+	mdRequestPagePrefix: "Commons:Deletion requests/",
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
+	mdSuccessIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/120px-Crystal_Project_success.png',
+	mdDoingIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Quick_restart.png/120px-Quick_restart.png',
+	mdFailIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/120px-Crystal_Project_cancel.png',
+	mdThisTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png',
+	mdDoneTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
+	mdFailedTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
+	mdInfoIcon: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
+	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
+	mdErrorsReportPath: mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[3]) + ':Rillke',
+	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.3.5.4',
+	mdScriptRevision: '0.5.1.1',
  
-   // Translatable strings - they will be merged into AjaxQuickDelete (Objects)
+   // Translatable strings
 	i18n: {
-		mdPerformOnWhichUser:  "What user or category is this action about? Please insert Category:-prefix if it's a cat.",
-		mdWaitingApiRes: "Waiting for API response list.",
-		mdSortingAPIres: "Sorting API results.",
-		mdTryToObtainUser: "Trying to guess which user this task will be about.",
-		mdDisselectAll: " (Dis-)select&nbsp;all:&nbsp;",
+		mdButtonLabel: "Perform batch task",
+		mdPerformOnWhichTarget:  "What user or category is this action about? Please insert Category:-prefix if it's a cat.",
+		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
 		mdInsertDeleteHeading: "Insert the heading for the mass deletion request, please",
 		mdInsertOther: "Please insert the OTRS (or other) text to add to the permission section",
+		mdInsertEditSummary: "An auto-edit summary for the file-pages will be created. Additionally add",
 		mdReplacePermissionText: "Clean permission-section?",
+		mdInsertPattern: "Please insert the text to be replaced.",
 		mdCustomReplaceText: "Please insert the text that should be inserted instead",
+		mdInsertGeneric: "Please insert the text to be added to each selected file.",
 		mdInsertTalkNote: "Please enter a note to add to the user\'s talk-page",
 		mdInsertReplaceMatch: "What text should become replaced on the selected files?",
-		mdDelteReasonConfirmationLabel: "Your provided reason to delete is",
-		mdInsertConfirmationLabel: "Your provided tag to insert in the permission section is",
+		mdDelteConfirmation: "Your provided reason to delete is",
+		mdInsertConfirmation: "Your provided tag to insert in the permission section is",
 		mdSpecifyReason: "Please specify a reason with at least 6 letters.",
+		mdSelectedCount: "You selected %C% files to tag.",
 		mdMore: "more",
-		mdNoResult: "Script cannot find any file / initial upload in / by $1.",
-		mdCuteSelectionAnd: "AND",
-		mdCuteSelectionIntro: "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (dis-)select, empty fields are considered fulfilling the condition:",
-		mdCuteSelectionSelect: "Select (/Disselect)",
-		mdCuteSelectionInCat: "In Category",
-		mdCuteSelectionTitle: "Title matches",
-		mdCuteSelectionSize: "Size",
-		mdCuteSelectionDate: "Date (DD-MM-YYYY)",
-		mdCuteSelectionBetween: "between",
+		mdNoResult: "Script cannot find any file / initial upload in / by %TARGET%.",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
 		mdExecutingTask: "Executing your requested task.",
 		mdSelectButtonLabel: "Select",
 		mdDelContribsButtonLabel: "Toggle cached deleted uploads",
 		mdSelectApplyButtonLabel: "Apply to selection",
 		mdRevertButtonLabel: "Revert images",
- 
-		mdCopyvio: "Copyvio",
-		mdCopyvioDerative: "Copyvio derivative",
-		mdCopyvioFairUse: "Copyvio fair-use",
-		mdCopyvioLogo: "Copyvio sophisticated logo",
-		mdCopyvioND: "Copyvio derivative prohib",
-		mdDelete: "Nominate for deletion",
-		mdNoPermission: "No permission",
-		mdNoSource: "No source",
-		mdOtrsAdd: "OTRS- add",
-		mdOtrsRmTags: "OTRS- remove tags",
-		mdCustomReplace: "custom replace",
+		submitButtonLabel: 'Proceed',
+		cancelButtonLabel: 'Cancel',
+		mdPleaseWait: "Please wait.",
+		
+		mdCuteSelect: {
+			'and': "AND",
+			'intro': "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (dis-)select, empty fields are considered fulfilling the condition:",
+			'select': "Select (/Deselect)",
+			'inCat': "In Category",
+			'title': "Title matches",
+			'size': "Size",
+			'date': "Date (DD-MM-YYYY)",
+			'between': "between"
+		},
+		
+		mdNoFilesSelected: {
+			'title': 'No files selected',
+			'text': 'It seems to me that you did not select any file to tag. Proceed?',
+			'back': 'Oops forgot this.',
+			'proceed': 'Proceed anyway.'
+		},
+
+		mdOptions: {
+			'cv': "Copyvio",
+			'cv-dw': "Copyvio derivative",
+			'cv-fu': "Copyvio fair-use",
+			'cv-logo': "Copyvio sophisticated logo",
+			'cv-ndw': "Copyvio derivative prohib",
+			'del': "Nominate for deletion",
+			'np': "No permission",
+			'ns': "No source",
+			'ns-dw': "No source -Derivative",
+			'other': "OTRS- add",
+			'otrs': "OTRS- remove tags",
+			'c_replace': "custom replace",
+			'prepend': "prepend any text",
+			'append': "append any text"
+		},
+		
+		task: {
+			start: 'Starting and gathering information.',
+			target: 'Determining target.',
+			list: 'Retrieving file-list from server.',
+			datails: 'Retrieving details from server.',
+			inputcheck: 'Checking input.',
+			mdPrependTemplate: 'Tagging files. (Prepend text)',
+			mdAppendTemplate: 'Tagging files. (Append text)',
+			mdPrependText: 'Prepending text to files.',
+			mdAppendText: 'Appending text to files.',
+			mdInsertPermission: 'Inserting permission or custom replace.',
+			mdNotifyUploaders: 'Notifying uploaders.',
+			mdCreateRequestSubpage: 'Creating request subpage.',
+			mdListRequestSubpage: 'Listing request subpage to the daily list.',
+			mdRvGenOGallery: 'Overwritten files can\'t be reverted due to software changes. But hopefully fixed soon.'
+		},
  
 		taskFailure: {
 			mdStartMd: "An error occurred while starting the request an determining the contributor. Nothing has been modified.",
@@ -1477,6 +2135,9 @@ window.AjaxMassDelete = {
 			mdInsertPermission: "An error occurred while preparing the insertion of the permission.",
 			mdInsertOTRS: "An error occurred while preparing the page-content of the permission.",
 			mdCreateRequestSubpage: "An error occurred creating the deletion-request subpage.",
+			mdListRequestSubpage: "There was an error while listing the request-subpage.",
+			mdPrependText: 'There was an error prepending free-text to files.',
+			mdAppendText: 'There was an error appending free-text to files.',
 			mdTemplateAdded: "An error occurred after a template has been added to a description page.",
 			mdRvGenOGallery: "An error occurred setting up the selection-revert dialog.",
 			mdRvQueriedFile: "An error occurred after gathering revert-file information and inserting them into the dialog.",
@@ -1487,29 +2148,23 @@ window.AjaxMassDelete = {
 		}
 	}
 };
- 
-// Load this script in special-namespace, too.
-if (!window.AjaxDeleteOptOut  && -1 == mw.config.get('wgNamespaceNumber')) {
-	importScript('MediaWiki:AjaxQuickDelete.js');
-}
- 
-/*if (wgUserLanguage != 'en') importScript('MediaWiki:AjaxMassDelete.js/' + wgUserLanguage);*/
-mediaWiki.loader.using('jquery.ui.dialog', function () {
+
+
+/**                                                    **
+******************* PLUGINS / LOAD **********************
+**                                                    **/
+
+/*if (wgUserLanguage != 'en') importScript('MediaWiki:VisualFileChange.js/' + wgUserLanguage);*/
+mediaWiki.loader.using(['jquery.ui.dialog', 'mediawiki.html', 'mediawiki.user', 'mediawiki.util'], function () {
 	$(document).ready(function () {
 		this.context = "QD";
-		//$.extend( [ deep ], target, object1, [ objectN ] )
-		$.extend( true, AjaxQuickDelete, AjaxMassDelete ) // merge the content into AjaxQuickDelete-Object; returnvalue is the merged object but AjaxQuickDelete is also modified
-		AjaxQuickDelete.mdInstall();
-		try {
-			AjaxQuickDelete.mdErrorsReportPath = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", AjaxQuickDelete.userTalkPrefix) + 'Rillke';
-			AjaxQuickDelete.mdHelpNode =  '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", AjaxQuickDelete.userTalkPrefix) + 'Rillke/AjaxMassDelete.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ';
-			delete AjaxMassDelete; // Destroy this object
-		} catch (ex) {
-			AjaxMassDelete = {};
-		}
+		$(document).bind('vFC', function(e, p1, p2, p3) {
+			if (window.VisualFileChangeDebug) console.log('VisualFileChange> ' + p1);
+		});
+		VisualFileChange.mdInstall();
 	});
 });
- 
+
 // / <reference path="jquery-1.4.2.min.js"/>
 /*
 @author Dan Gidman
@@ -1519,7 +2174,6 @@ version 1
 September 2, 2010
 */
 (function ($) {
-    jq = jQuery;
     $.fn.visible = function () {
         // / <summary>Filter that checks if the item(s) is visible within the page. Returns set of visible elements</summary>
         // / <returns type="jQuery" />
@@ -1533,12 +2187,12 @@ September 2, 2010
             // loop through the parent elements checking that each 
             // scrollable element is visible in parent.
             for (var i = 0; i < p.length; ++i) {
-                var vp = jq(p[i]), v = { 
+                var vp = $(p[i]), v = { 
                     t: vp.scrollTop(),
                     b: vp.scrollTop() + vp.height(),
                     l: vp.scrollLeft(),
                     r: vp.scrollLeft() + vp.width()
-                }, el = jq(elem), e = {
+                }, el = $(elem), e = {
                     t: elem.offsetTop,
                     b: elem.offsetTop + el.height(),
                     l: elem.offsetLeft,
