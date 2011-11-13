@@ -39,7 +39,7 @@ function progressBox(width, o) {
 	
 	_this = this;
 	this.$cont = $('<div>', { 
-		style: 'display:none; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
+		style: 'display:none; overflow:hidden; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
 	}).dblclick(function() { _this.$cmd.focus(); });
 	this.$cmd = $('<input>', {
 		'id': 'mdCMD',
@@ -141,8 +141,12 @@ progressBox.prototype.setTaskState = function (taskname, state) {
 progressBox.prototype.setHelp = function (help) {
 	this.$aHelpHead.text(help);
 }
-progressBox.prototype.setHelp2 = function (help) {
-	this.$aHelpCont.text(help);
+progressBox.prototype.setHelp2 = function (help, html) {
+	if (html) {
+		this.$aHelpCont.html(help);
+	} else {
+		this.$aHelpCont.text(help);
+	}
 }
 progressBox.prototype.setHelp3 = function (help) {
 	this.$aHelpCont2.text(help);
@@ -390,7 +394,7 @@ window.VisualFileChange = {
 		// remove signature
 		uncleanReason = uncleanReason.replace(/(.+)(--)?~{3,5}$/, '$1');
 		// escaping '='
-		uncleanReason = uncleanReason.replace(/\=/g, '&#61;');
+		uncleanReason = uncleanReason.replace(/\|/g, '&#124;');
 		return uncleanReason;
 	},
  
@@ -547,6 +551,38 @@ window.VisualFileChange = {
 		this.mdDlgThumbDlgClose();
 		this.nextTask();
 	},
+	
+	mdParseReason: function(r, cb, obj) {
+		var _this = this;
+		
+		_this.parsertimeout = _this.parsertimeout || 0;
+		if (_this.parserjqXHR) _this.parserjqXHR.abort();
+		
+		var gotJSON = function(d) {
+			try {
+				cb.apply(obj, [d.parse.text['*'], true]);
+			} catch (ex) {}
+		};
+		
+		var maybeParse = function() {
+			var query = {
+				format: 'json',
+				action: 'parse',
+				uselang: mw.config.get('wgUserLanguage'),
+				redirects: true,
+				prop: 'text',
+				pst: true,
+				text: r
+			};
+			_this.parserjqXHR = $.getJSON(mw.util.wikiScript('api'), query, function(text) { 
+				gotJSON(text);
+			});
+		};
+		clearTimeout(_this.parsertimeout);
+		_this.parsertimeout = setTimeout(function() { 
+			maybeParse();
+		}, 1000);
+	},
  
 	/**  
 	**  Mammoth method to set up and manage the UserInterface (UI)
@@ -662,6 +698,7 @@ window.VisualFileChange = {
 			} else {
 				$submitButton.removeClass('ui-state-disabled');
 				o.pb.setHelp2($(this).val());
+				o.mdParseReason($(this).val(), o.pb.setHelp2, o.pb);
 			}
 		});
 		// Binding enter-key event. -0 ensures number
@@ -1340,9 +1377,10 @@ window.VisualFileChange = {
 		for (var upload in this.iUploads) {
 			if (-2 !== this.iUploads[upload].iId) continue;
  
-			var page = [];
+			var page = {};
 			page.title = upload;
 			page.text = this.iUploads[upload].content;
+			page.watchlist = 'nochange';
  
 			if ('otrs' === this.mdTaskToPerform) { // drop out other permission templates
 				var iCt = 0;
@@ -1369,7 +1407,9 @@ window.VisualFileChange = {
 				.replace('== Licensing ==', '== {{int:license-header}} ==').replace('== License ==', '== {{int:license-header}} ==').replace('== Lizenz ==', '== {{int:license-header}} ==');
  
 			page.editType = 'text';
-			if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
+			if (window.AjaxDeleteWatchFile && ('c_replace' !== this.mdTaskToPerform)) {
+				page.watchlist = 'watch';
+			}
  
 			if (this.iUploads[upload].content !== page.text) {
 				this.mdUploadCt++;
@@ -1747,7 +1787,11 @@ window.VisualFileChange = {
 	mdExecuteReady: function () {
 		this.context = "QD";
 		this.pb.setCurrentTaskDone();
- 
+
+		if (mdWasAPIError) {
+			alert('We regret the the inconvenience: The Server-API reported an error during the execution of this process. Please check your contributions, whether something went wrong.');
+		}
+		
 		if ( this.mdInsertedTag ) {
 			if ('del' === this.mdTaskToPerform) {
 				// navigating to the new created deletion request
@@ -1767,7 +1811,7 @@ window.VisualFileChange = {
 	},
 
 	mdGoToSite: function (target) {
-		if (!window.VisualFileChangeDebug) {
+		if (!window.VisualFileChangeDebug && !this.mdWasAPIError) {
 			setTimeout(function() {
 				location.href = target;
 			}, 5000);
@@ -2026,7 +2070,7 @@ window.VisualFileChange = {
 	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.5.1.2',
+	mdScriptRevision: '0.5.2.0',
  
    // Translatable strings
 	i18n: {
