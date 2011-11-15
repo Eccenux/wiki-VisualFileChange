@@ -393,8 +393,8 @@ window.VisualFileChange = {
 		uncleanReason = uncleanReason.replace(/^\s*(.+)\s*$/, '$1');
 		// remove signature
 		uncleanReason = uncleanReason.replace(/(.+)(--)?~{3,5}$/, '$1');
-		// escaping '='
-		uncleanReason = uncleanReason.replace(/\|/g, '&#124;');
+		// escaping '|'
+		//uncleanReason = uncleanReason.replace(/\|/g, '&#124;');
 		return uncleanReason;
 	},
  
@@ -2070,7 +2070,7 @@ window.VisualFileChange = {
 	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.5.2.1',
+	mdScriptRevision: '0.5.2.2',
  
    // Translatable strings
 	i18n: {
