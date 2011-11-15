@@ -1788,7 +1788,7 @@ window.VisualFileChange = {
 		this.context = "QD";
 		this.pb.setCurrentTaskDone();
 
-		if (mdWasAPIError) {
+		if (this.mdWasAPIError) {
 			alert('We regret the the inconvenience: The Server-API reported an error during the execution of this process. Please check your contributions, whether something went wrong.');
 		}
 		
@@ -2070,7 +2070,7 @@ window.VisualFileChange = {
 	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.5.2.0',
+	mdScriptRevision: '0.5.2.1',
  
    // Translatable strings
 	i18n: {
@@ -2188,7 +2188,8 @@ window.VisualFileChange = {
 			mdRvCreateImgRevisionMatrix: "An error occurred trying to obtain image revisions.",
 			mdRvEvalSelction: "An error occurred processing selected files.",
 			mdRevertImage: "There was an error before or while posting the revert-request.",
-			mdReverted: "An error occurred after posting the revert-request."
+			mdReverted: "An error occurred after posting the revert-request.",
+			mdExecuteReady: 'And error occured after all sheduled tasks are done.'
 		}
 	}
 };
