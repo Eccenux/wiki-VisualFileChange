@@ -94,7 +94,7 @@ function progressBox(width, o) {
 		text: 'Tasks:'
 	});
 	this.$aHelpHead = $('<div>');
-	this.$aHelpCont = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
+	this.$aHelpCont = $('<div>', { style: ('font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min($(window).height() / 3, 500) + 'px;') });
 	this.$aHelpCont2 = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
 	this.$aHelp = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
@@ -289,7 +289,6 @@ window.VisualFileChange = {
 			content = pages[id].revisions[0]['*'];
 			i =info.length - 1;
 			// Now exclude bots which only reupload a new version:
-			this.excludedBots = 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot';
 			if (-1 === this.excludedBots.indexOf(info[i].user)) {
 				this.mdTarget = info[i].user;
 			}
@@ -316,7 +315,12 @@ window.VisualFileChange = {
 		this.ioUploads = 0;   // Number of overwriten files in the list
 		this.gbs = {};        // File --> Gallery Box
 		this.mdLestart = '';  // important for continuing the query
+		this.mdLedir = 'older';      // in which direction to enumerate logevents: older/newer
+		this.mdCmdir = 'asc';        // in which direction to sort: asc/desc
+		this.mdCmsort = 'sortkey';   // property to sort by: sortkey/timestamp
+		this.mdCmstart = 0;          // extrawurst für catmembers by date - sorting
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
+		this.mdFirstRun = true;       // determining whether it is the first query-cycle
  
 		if (this.mdTarget) {
 			pefilledUser = this.mdTarget;
@@ -336,13 +340,54 @@ window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $targetinput;
+			$submitButton, $targetinput,
+			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
+		var getMwDate = function(dateX) {
+			if ('string' !== typeof dateX) return dateX;
+			if (mwDateRx.test(dateX)) return dateX;
+			var m1 = dateX.match(/(\d{4}).(\d{2}).(\d{2})\D*(\d{2}:\d{2}:\d{2})?/);
+			if (m1) return (m1[1] + '-' + m1[2] + '-' + m1[3] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
+			m1 = dateX.match(/(\d{2}).(\d{2}).(\d{4})\D*(\d{2}:\d{2}:\d{2})?/);
+			if (m1) return (m1[3] + '-' + m1[2] + '-' + m1[1] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
+			else return 'Invalid. Use YYYY-MM-DD';
+		};
+		
 		dlgButtons[o.i18n.submitButtonLabel] = function () {
 			if (confirmed) return;
 			confirmed = true;
+			// Reading input
 			o.mdTarget = o.cleanReason($targetinput.val())
 			$('#AjaxMdContainer').text(o.i18n.mdPleaseWait);
+			if (mwDateRx.test($gStartAt.val())) o.mdLestart = $gStartAt.val();
+			switch ($gSortBy.val()) {
+				case 'of':
+					o.mdLedir = 'newer';
+					o.mdCmdir = 'asc';
+					o.mdCmsort = 'timestamp';
+					o.mdCmstart = o.mdLestart;
+					break;
+				case 'nf':
+					o.mdLedir = 'older';
+					o.mdCmdir = 'desc';
+					o.mdCmsort = 'timestamp';
+					o.mdCmstart = o.mdLestart;
+					break;
+				case 'ca':
+					o.mdCmdir = 'asc';
+					o.mdCmsort = 'sortkey';
+					break;
+				case 'cd':
+					o.mdCmdir = 'desc';
+					o.mdCmsort = 'sortkey';
+					break;
+				case 'default':
+					o.mdLedir = 'older';
+					o.mdCmdir = 'asc';
+					o.mdCmsort = 'sortkey';
+					break;
+			}
+			
 			o.nextTask();
 		};
 		dlgButtons[o.i18n.cancelButtonLabel] = function () {
@@ -373,10 +418,68 @@ window.VisualFileChange = {
 		$submitButton = $('.ui-dialog-buttonpane button:first');
 		$targetinput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 98%;', 'value': prefill });
 		
+		 // Start date
+		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get('wgUserLanguage') ] );
+		var $gStartAt = o.$gStartAt = $('<input>', {
+				id: 'gStartAt',
+				type: 'text',
+				title: o.i18n.optStartAt,
+				value: o.mdLestart,
+				placeholder: 'YYYY-MM-DD'
+			} )
+			.datepicker( {
+				changeYear: true,
+				'dateFormat': 'yy-mm-ddT12:00:00Z',
+				showWeek: true,
+				firstDay: 1
+			} )
+			.blur( function( e ) {
+				$(this).val( getMwDate($(this).val()) );
+			} )
+			.keyup( function( e ) {
+				if ( e.keyCode === 13 ) {
+					$(this).val( getMwDate($(this).val()) );
+					$submitButton.click();
+				}
+			} )
+			.tipsy({
+				trigger: 'focus',
+				gravity: 's',
+				html: true,
+				title: function() {
+					return o.i18n.optStartAtHowTo;
+				} })
+			.placeholder();
+		var $gStartAtL = $('<label>', {
+				'for': 'gStartAt',
+				title: o.i18n.optStartAt,
+				html: " &nbsp;Start&nbsp;at&nbsp;"
+			} );
+			
+		var $gSortBy = $('<select>', {
+				id: 'gSortBy'
+			} )
+			.append( $('<option>', { 'value': 'default' }).text('default')
+				,$('<option>', { 'value': 'of' }).text('from old to new (category: added-date)')
+				,$('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)')
+				,$('<option>', { 'value': 'ca' }).text('category only: asc')
+				,$('<option>', { 'value': 'cd' }).text('category only: desc')
+			);
+		var $gSortByL = $('<label>', {
+				'for': 'gSortBy',
+				title: 'Sorting',
+				text: 'Sorting'
+			} );
+		
 		$('#AjaxMdContainer').append(
-			$('<label>', { 'for': 'mdTargetInput' }),
+			$('<label>', { 'for': 'mdTargetInput', text: o.i18n.mdTargetInput }),
 			$targetinput,
-			$('<br>'), $('<br>')
+			$('<br>'), $('<br>'),
+			$gStartAtL,
+			$gStartAt,
+			' ',
+			$gSortByL,
+			$gSortBy
 		);
 		$targetinput.keyup(function(e) {
 			if ($(this).val().length < minlen) {
@@ -406,7 +509,7 @@ window.VisualFileChange = {
 		$(document).triggerHandler('vFC', ['preparing querying the filelist', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'list', 'md-doing' );
-		if ('' == this.mdLestart) { // First time only
+		if (this.mdFirstRun) { // First time only
 			this.pb.setHelp(this.i18n.mdPleaseWait);
 		}
 		
@@ -434,8 +537,9 @@ window.VisualFileChange = {
 			letype: 'upload',
 			leuser: this.mdTarget,
 			lelimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
-			lestart: this.mdLestart
+			ledir: this.mdLedir
 		};
+		if (this.mdLestart) query.lestart = this.mdLestart;
 		$(document).triggerHandler('vFC', ['useruploads', this, query]);
 		this.doAPICall(query, 'mdFindUploadsCB');
 	},
@@ -462,8 +566,9 @@ window.VisualFileChange = {
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
-		if ('' === this.mdLestart) {			// Call nextTask the first time only
+		if (this.mdFirstRun) {			// Call nextTask the first time only
 			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].logevents.lestart;
+			this.mdFirstRun = false;
 			this.nextTask();
 		} else {
 			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].logevents.lestart;
@@ -478,9 +583,11 @@ window.VisualFileChange = {
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
 			cmlimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
-			cmcontinue: this.mdLestart
+			cmcontinue: this.mdLestart,
+			cmdir: this.mdCmdir,
+			cmsort: this.mdCmsort
 		};
-		
+		if (this.mdCmstart) query.cmstart = this.mdCmstart;
 		$(document).triggerHandler('vFC', ['catmembers', this, query]);
 		
 		this.doAPICall(query, 'mdFindCatMembersCB');
@@ -501,11 +608,13 @@ window.VisualFileChange = {
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
-		if ('' == this.mdLestart) {			// Call nextTask the first time only
-			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].categorymembers.cmcontinue;
+		if (!this.mdNoMoreFiles) {
+			this.mdLestart = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
+			if (result['query-continue'].categorymembers.cmstart) this.mdCmstart = result['query-continue'].categorymembers.cmstart;
+		}
+		if (this.mdFirstRun) {			// Call nextTask the first time only
+			this.mdFirstRun = false;
 			this.nextTask();
-		} else {
-			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].categorymembers.cmcontinue;
 		}
 	},
  
@@ -1079,7 +1188,7 @@ window.VisualFileChange = {
 				}
 			}
 			
-			$galleryBox = this.mdCreateGalleryBox(
+			var $galleryBox = this.mdCreateGalleryBox(
 				[ $('<a>', { href: pg.imageinfo[0].descriptionurl, target: '_blank', 'class': 'image' })
 					.append( $('<img>', { src: pg.imageinfo[0].thumburl, width: pg.imageinfo[0].thumbwidth, height: pg.imageinfo[0].thumbheight, alt: dirtyTitle }) ) ],
 				[ ('<i>' + uItem.iId + ': </i>'),
@@ -1087,13 +1196,11 @@ window.VisualFileChange = {
 				(this.mdSecureCall("mdExtractTags", pg.categories) + '<br/>'),
 				(cleanTitle  + '<br/>'),
 				(uItem.time.replace(/[T|Z]/g, " ") +  '<br/>'),
-				((pg.imageinfo[0].size >> 10) + '&nbsp;KiB') ],
+				((pg.imageinfo[0].size >> 10) + '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>') ],
 				150
 			);
-			this.$AjaxMdUlContainer.append($galleryBox);
 			this.gbs[dirtyTitle] = $galleryBox;
 			this.mdBusy = false;
- 
  
 			if ( pg.edittoken ) { // prevent assigning an empty edit token
 				this.edittoken = pg.edittoken; 
@@ -1109,6 +1216,18 @@ window.VisualFileChange = {
 	**  Called when a batch of files has been queried  
 	**/
 	mdQueryFileDone: function () {
+		// Append all queried files to the screen-container
+		for (var id in this.iUploads) {
+			var uItem = this.iUploads[id];
+			if (!uItem.gbInUse) {
+				uItem.gbInUse = true;
+				var $galleryBox = this.gbs[id];
+				if ($galleryBox) {
+					this.$AjaxMdUlContainer.append($galleryBox);
+				}
+			}
+		}
+
 		this.mdBusy = false;
 		this.mdPendingBatchQueries--;
 		$('#AjaxMdNotReady').hide();
@@ -1272,7 +1391,7 @@ window.VisualFileChange = {
 							this.uploaders[ul] = { uploads: {} };
 						}
 						this.uploaders[ul].uploads[upload] = true;
-						}
+					}
 				} else {
 					if (!this.uploaders[this.mdTarget]) {
 						this.uploaders[this.mdTarget] = { uploads: {} };
@@ -1511,6 +1630,7 @@ window.VisualFileChange = {
 		
 		this.uploadersToNotify = 0;
 		for (var user in this.uploaders) {
+			if (-1 !== this.excludedBots.indexOf(user)) continue;
 			var page = [];
 			page.title = this.mdUserTalkPrefix + user;
 			page.text = "\n" + this.uploaders[user].talk_tag + " ~~" + "~~\n";
@@ -2068,14 +2188,16 @@ window.VisualFileChange = {
 	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
 	mdErrorsReportPath: mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[3]) + ':Rillke',
 	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
+	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.5.2.3',
+	mdScriptRevision: '0.6.1.0',
  
    // Translatable strings
 	i18n: {
 		mdButtonLabel: "Perform batch task",
-		mdPerformOnWhichTarget:  "What user or category is this action about? Please insert Category:-prefix if it's a cat.",
+		mdPerformOnWhichTarget:  "What user or category is this action about? Please insert Category:-prefix if it's a cat. Other fields are optional. Empty or invalid fields will be ignored.",
+		mdTargetInput: "User or category:",
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
 		mdInsertDeleteHeading: "Insert the heading for the mass deletion request, please",
@@ -2103,9 +2225,12 @@ window.VisualFileChange = {
 		cancelButtonLabel: 'Cancel',
 		mdPleaseWait: "Please wait.",
 		
+		optStartAt: "Start listing from a specific date",
+		optStartAtHowTo: 'Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker',
+		
 		mdCuteSelect: {
 			'and': "AND",
-			'intro': "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (dis-)select, empty fields are considered fulfilling the condition:",
+			'intro': "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (de-)select, empty fields are considered fulfilling the condition:",
 			'select': "Select (/Deselect)",
 			'inCat': "In Category",
 			'title': "Title matches",
@@ -2200,7 +2325,15 @@ window.VisualFileChange = {
 **                                                    **/
 
 /*if (wgUserLanguage != 'en') importScript('MediaWiki:VisualFileChange.js/' + wgUserLanguage);*/
-mediaWiki.loader.using(['jquery.ui.dialog', 'mediawiki.html', 'mediawiki.user', 'mediawiki.util'], function () {
+mediaWiki.loader.using([
+'jquery.ui.dialog',
+'jquery.ui.datepicker',
+'jquery.tipsy',
+'jquery.placeholder',
+'mediawiki.html',
+'mediawiki.user',
+'mediawiki.util',
+], function () {
 	$(document).ready(function () {
 		this.context = "QD";
 		$(document).bind('vFC', function(e, p1, p2, p3) {
