@@ -89,6 +89,10 @@ function progressBox(width, o) {
 		style: 'font:small-caps 1.5em sans-serif; text-align:center; padding:10px; margin-top:10px;',
 		text: 'VisualFileChange.js'
 	});
+	this.$subheading = $('<span>', {
+		style: 'font:small-caps 0.8em sans-serif;',
+		text: 'Batch Surgery Script v.' + o.mdScriptRevision
+	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.');
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: 'Tasks:'
@@ -106,7 +110,7 @@ function progressBox(width, o) {
 		'class': 'error',
 		text: 'Error:'
 	}).append(this.$error);
-	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$tasklist, this.$aHelp, this.$errorCont);
+	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$aHelp, this.$errorCont);
 	$('body').append(this.$cont);
 	appendCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
 		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
@@ -157,6 +161,9 @@ progressBox.prototype.setError = function (err) {
 }
 progressBox.prototype.setZIndex = function (zIndex) {
 	this.$cont.css('z-index', zIndex);
+}
+progressBox.prototype.isHidden = function () {
+	return ('none' === this.$cont.css('display'))
 }
 
 /**
@@ -353,7 +360,7 @@ window.VisualFileChange = {
 			else return 'Invalid. Use YYYY-MM-DD';
 		};
 		
-		dlgButtons[o.i18n.submitButtonLabel] = function () {
+		dlgButtons[o.i18n.nextButtonLabel] = function () {
 			if (confirmed) return;
 			confirmed = true;
 			// Reading input
@@ -711,7 +718,11 @@ window.VisualFileChange = {
 		/*  The UI  */
 		this.mdMinLenRequired = true;     // Is a reason required?
 
-		appendCSS( '.rgallery { background-color:#FFF !important; }' );
+		appendCSS( '.rgallery { background-color:#FFF !important; } '
+			+ '.md-collapse-closed { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/closed-ltr.png) no-repeat center left } '
+			+ '.md-collapse-open { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/open.png) no-repeat center left } '
+			+ '.md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; } '
+		);
 
 		var dlgButtons = {};
 		dlgButtons[this.i18n.submitButtonLabel] = function() {
@@ -743,12 +754,6 @@ window.VisualFileChange = {
 		dlgButtons[this.i18n.cancelButtonLabel] = function() {
 			$(this).dialog("close");
 		};
-		dlgButtons[this.i18n.mdSelectButtonLabel] = function() {
-			o.mdCuteSelectDlg.dialog("open");
-		};
-		dlgButtons[this.i18n.mdDelContribsButtonLabel] = function() {
-			$('#AjaxDeletedUploads').slideToggle();
-		};
 
 		var getSelect = function() {
 			var sel = '<select size="1" id="AjaxMdType">';
@@ -762,11 +767,9 @@ window.VisualFileChange = {
 		this.dlg.dialog({
 			modal: false,
 			title: this.mdHelpNode +
-				'Batch Surgery Script v.' + this.mdScriptRevision + 
-				' Report bugs and ideas to <a href="' + this.mdErrorsReportPath + '" target="_blank">Rillke</a>. ' + 
-				'Action:&nbsp;' +
+				' Action:&nbsp;' +
 				getSelect() +
-				this.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/>',
+				this.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
 			width: $(window).width() - 250,
 			height: $(window).height(),
 			buttons: dlgButtons,
@@ -774,10 +777,18 @@ window.VisualFileChange = {
 		});
 		this.dlg.dialog( 'option', 'position', 'right' );
 		this.dlg.dialog( 'option', 'modal', 'false' );
-		
+		$(window).resize(function() {
+			o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
+		});
+
 		$('#AjaxMdContainer').text('');
 
 		if (!this.dlg) return 0;
+		
+		$('<a>', { href: '#', text: this.i18n.mdCuteSelectLabel }).click(function(e) {
+			e.preventDefault();
+			o.mdCuteSelectDlg.dialog("open");
+		}).appendTo( $('#AjaxMdIa').parent() );
 
 		$('#AjaxMdContainer').append(
 			(this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -')
@@ -795,7 +806,24 @@ window.VisualFileChange = {
 				+ '<tr id="mdReplaceTextNode"><td><label for="mdRRegEx">RegExp?</label><input type="checkbox" id="mdRRegEx"/><br/>'
 				+ '<label for="mdReplaceText">' + this.i18n.mdCustomReplaceText + ': </label></td>'
 				+ '<td width="70%"><textarea rows="3" cols="50" id="mdReplaceText"></textarea></td></tr></table>')
-			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxDeletedUploads" style="width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;"></ul><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
+			.append($('<a>', { text: this.i18n.mdDelContribsButtonLabel, href: '#', 'class': 'md-collapse-closed' })
+				.click(function(e){
+					e.preventDefault();
+					$(this).next().slideToggle();
+					if ($(this).hasClass('md-collapse-closed')) {
+						$(this).addClass('md-collapse-open');
+						$(this).removeClass('md-collapse-closed');
+					} else {
+						$(this).addClass('md-collapse-closed');
+						$(this).removeClass('md-collapse-open');
+					}
+				})
+			)
+			.append($('<ul>', { 
+				id: 'AjaxDeletedUploads', 
+				'class': 'md-deleted-uploads'
+			}))
+			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
 		var $submitButton = $('.ui-dialog-buttonpane button:first'),
 			$mdDeleteReason = $('#mdDeleteReason');
@@ -910,7 +938,7 @@ window.VisualFileChange = {
  
 		// cute-selection dialog
 		var dlgSelectButtons = {};
-		dlgSelectButtons[this.i18n.mdSelectApplyButtonLabel] = function () { 
+		dlgSelectButtons[this.i18n.mdCuteSelect.button] = function () { 
 			var curUpld = '';
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
@@ -920,18 +948,22 @@ window.VisualFileChange = {
 			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
 			var vl_selAjaxMdSelectSize = ( $('#selAjaxMdSelectSize').val() == 'l' );
 			var v_txtAjaxMdSelectDate0 = $('#txtAjaxMdSelectDate0').val();
-			if ( '' != v_txtAjaxMdSelectDate0 ) {
+			var dateFromString = function(st) {
 				try {
-					/(\d\d)-(\d\d)-(\d{4})/.exec(v_txtAjaxMdSelectDate0);
-					v_txtAjaxMdSelectDate0 = new Date(RegExp.$3, RegExp.$2, RegExp.$1);
-				} catch (ex) { alert('Invalid start-date'); return; }
+					/(\d{4})-(\d\d?)-(\d\d?)(?: (\d\d?):(\d\d?):(\d\d?))?/.exec(st);
+					return RegExp.$4 ? (new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6)) : (new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3));
+				} catch (ex) {
+					return 0;
+				}
+			}
+			if ( '' != v_txtAjaxMdSelectDate0 ) {
+				v_txtAjaxMdSelectDate0 = dateFromString(v_txtAjaxMdSelectDate0);
+				if (!v_txtAjaxMdSelectDate0) { alert('Invalid start-date'); return; }
 			}
 			var v_txtAjaxMdSelectDate1 = $('#txtAjaxMdSelectDate1').val();
 			if ( '' != v_txtAjaxMdSelectDate1 ) {
-				try {
-					/(\d\d)-(\d\d)-(\d{4})/.exec(v_txtAjaxMdSelectDate1);
-					v_txtAjaxMdSelectDate1 = new Date(RegExp.$3, RegExp.$2, RegExp.$1);
-				} catch (ex) { alert('Invalid end-date'); return 0; }
+				v_txtAjaxMdSelectDate1 = dateFromString(v_txtAjaxMdSelectDate1);
+				if (!v_txtAjaxMdSelectDate1) { alert('Invalid end-date'); return; }
 			}
  
 			for (var upload in o.iUploads) {
@@ -939,8 +971,8 @@ window.VisualFileChange = {
 					var isMatch = {};
 					curUpld = o.iUploads[upload];
 					// yyyy    mm     dd
-					/(\d{4})-(\d\d)-(\d\d)T(\d\d:\d\d:\d\d)Z/.exec(curUpld.time);
-					curUpldDate = new Date(RegExp.$1, RegExp.$2, RegExp.$3);
+					/(\d{4})-(\d\d)-(\d\d)T(?:(\d\d):(\d\d):(\d\d))Z/.exec(curUpld.time);
+					curUpldDate = new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6);
 					$curThmb = $('input[value="' + upload.replace('"', '\\"') + '"]');
  
 					if ( '' != v_txtAjaxMdSelectCat ) {
@@ -970,37 +1002,88 @@ window.VisualFileChange = {
 					} else {isMatch.date1 = true;}
  
 					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 == $curThmb.length) ) $curThmb[0].checked = newVal;
-				} catch (ex) { if ('undefined' != typeof(console)) console.log('Error: ' + err); }
+				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + err); }
 			}
+			updateSelectedCount();
 		};
  
 		appendCSS('.numbersOnly { text-align:right; }');
  
 		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } )
+		$AjaxMdCuteSelect
+			.append(this.i18n.mdCuteSelect.intro)
+			.append($('<table>').append(
+				$('<tr>').append(
+					$('<td>').append($('<label>', { 'for': 'chkAjaxMdSelect', text: this.i18n.mdCuteSelect.select })),
+					$('<td>').append($('<input>', { type: 'checkbox', id: 'chkAjaxMdSelect', 'value': 1, 'checked': '' }))),
+				$('<tr>').append(
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectCat', text: this.i18n.mdCuteSelect.inCat })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), this.i18n.mdCuteSelect.and)),
+				$('<tr>').append(
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)
+						.placeholder()),
+				$('<tr>').append(
+					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
+					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
+						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }))),
+				$('<tr>').append(
+					$('<td>').append(this.i18n.mdCuteSelect.date),
+					$('<td>').append(
+						$('<label>', { 'for': 'txtAjaxMdSelectDate0', text: this.i18n.mdCuteSelect.between }),
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 50, 'class': 'dateOnly', 'size': 19, maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+							.placeholder()
+							.datepicker( {
+								changeYear: true,
+								changeMonth: true,
+								'dateFormat': 'yy-mm-dd 12:00:00',
+								showWeek: true,
+								firstDay: 1
+							} )
+							.tipsy({
+								trigger: 'focus',
+								gravity: 's',
+								html: true,
+								title: function() {
+									return o.i18n.optStartAtHowTo;
+							} }),
+						$('<label>', { 'for': 'txtAjaxMdSelectDate1', text: this.i18n.mdCuteSelect.and }),
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 50, 'class': 'dateOnly', 'size': 19, maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+							.datepicker( {
+								changeYear: true,
+								changeMonth: true,
+								'dateFormat': 'yy-mm-dd 12:00:00',
+								showWeek: true,
+								firstDay: 1
+							} )
+							.tipsy({
+								trigger: 'focus',
+								gravity: 's',
+								html: true,
+								title: function() {
+									return o.i18n.optStartAtHowTo;
+							} })
+					))
+			)
+			);
+ 
 		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
 			closeOnEscape: true,
 			position: 'center',
 			title: 'Cute-Selection: Specify the options, please',
-			height: Math.min($(window).height(), 320),
+			height: 'auto',
 			width: Math.min($(window).width(), 600),
 			buttons: dlgSelectButtons,
 			show: 'slide',
 			hide: 'fade',
 			autoOpen: false
 		});
-		$AjaxMdCuteSelect
-			.append(this.i18n.mdCuteSelect.intro + '<table><tr><td><label for="chkAjaxMdSelect">' + this.i18n.mdCuteSelect.select + '</label></td><td><input type="checkbox" id="chkAjaxMdSelect" value="1" checked=""/></td></tr>'
-			+ '<tr><td><label for="txtAjaxMdSelectCat">' + this.i18n.mdCuteSelect.inCat + ' </label></td><td><input type="text" id="txtAjaxMdSelectCat" size="40"/> ' + this.i18n.mdCuteSelect.and + '</td></tr>'
-			+ '<tr><td><label for="txtAjaxMdSelectTitle">' + this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr> </label></td><td><input type="text" id="txtAjaxMdSelectTitle" size="40"/> ' + this.i18n.mdCuteSelect.and + '</td></tr>'
-			+ '<tr><td>' + this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select></td><td><input type="text" class="numbersOnly" id="txtAjaxMdSelectSize" size="15"/><label for="txtAjaxMdSelectSize">KBytes</label> ' + this.i18n.mdCuteSelect.and + ' </td></tr>'
-			+ '<tr><td>' + this.i18n.mdCuteSelect.date + ' </td><td><label for="txtAjaxMdSelectDate0"> ' + this.i18n.mdCuteSelect.between + ' </label><input type="text" id="txtAjaxMdSelectDate0" class="dateOnly" size="10" maxlength="10"/><label for="txtAjaxMdSelectDate1"> ' + this.i18n.mdCuteSelect.and + ' </label><input type="text" id="txtAjaxMdSelectDate1" class="dateOnly" size="10" maxlength="10"/></td></tr></table>');
- 
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
 		$('.dateOnly').keyup(function () { 
-			this.value = this.value.replace(/[^0-9\-]/g,'');
+			this.value = this.value.replace(/[^0-9\-: ]/g,'');
 		});
 		// End of cute-selection dialog
  
@@ -2036,7 +2119,7 @@ window.VisualFileChange = {
 	},
 	
 	/**
-	** Method to catch errors and report where they occured
+	** Method to catch errors and report where they occurred
 	**/
 	mdSecureCall: function(stFunction) {
 		var o = this;
@@ -2191,7 +2274,7 @@ window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.6.1.0',
+	mdScriptRevision: '0.6.2.0',
  
    // Translatable strings
 	i18n: {
@@ -2217,12 +2300,12 @@ window.VisualFileChange = {
 		mdNoResult: "Script cannot find any file / initial upload in / by %TARGET%.",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
 		mdExecutingTask: "Executing your requested task.",
-		mdSelectButtonLabel: "Select",
-		mdDelContribsButtonLabel: "Toggle cached deleted uploads",
-		mdSelectApplyButtonLabel: "Apply to selection",
+		mdCuteSelectLabel: "Cute Select Files",
+		mdDelContribsButtonLabel: "Cached deleted uploads",
 		mdRevertButtonLabel: "Revert images",
-		submitButtonLabel: 'Proceed',
-		cancelButtonLabel: 'Cancel',
+		nextButtonLabel: "Proceed",
+		submitButtonLabel: "Execute",
+		cancelButtonLabel: "Cancel",
 		mdPleaseWait: "Please wait.",
 		
 		optStartAt: "Start listing from a specific date",
@@ -2235,8 +2318,11 @@ window.VisualFileChange = {
 			'inCat': "In Category",
 			'title': "Title matches",
 			'size': "Size",
-			'date': "Date (DD-MM-YYYY)",
-			'between': "between"
+			'date': "<abbr title=\"Only one date is required. But the first date (start date) must be before the second date (end date).\">Date</abbr> (time is optional)",
+			'between': "between",
+			'titleplaceholder': "(Reg)(?:ular )?(Exp)(?:ression)?",
+			'dateplaceholder': "YYYY-MM-DD hh:mm:ss",
+			'button': "Apply"
 		},
 		
 		mdNoFilesSelected: {
@@ -2292,7 +2378,7 @@ window.VisualFileChange = {
 			mdFindCatMembersCB: "There is something wrong with the file-list (cat)",
 			mdGenIGallery: "An error occurred setting up the selection dialog.",
 			mdSendNextQueries: "An error occurred preparing to query file-information.",
-			mdCreateGalleryBox: "While creating the HTML for a gallerybox, an error occured.",
+			mdCreateGalleryBox: "While creating the HTML for a gallerybox, an error occurred.",
 			mdCreateDelUploadItem: "Creating an entry in the deleted-upload-list failed.",
 			mdExtractTags: "An error occurred while extracting tags from the page's content.",
 			mdQueriedFile: "An error occurred after gathering file information and inserting them into the dialog.",
@@ -2308,13 +2394,14 @@ window.VisualFileChange = {
 			mdPrependText: 'There was an error prepending free-text to files.',
 			mdAppendText: 'There was an error appending free-text to files.',
 			mdTemplateAdded: "An error occurred after a template has been added to a description page.",
+			mdNotifyUploaders: "An error occurred while notifying uploaders.",
 			mdRvGenOGallery: "An error occurred setting up the selection-revert dialog.",
 			mdRvQueriedFile: "An error occurred after gathering revert-file information and inserting them into the dialog.",
 			mdRvCreateImgRevisionMatrix: "An error occurred trying to obtain image revisions.",
 			mdRvEvalSelction: "An error occurred processing selected files.",
 			mdRevertImage: "There was an error before or while posting the revert-request.",
 			mdReverted: "An error occurred after posting the revert-request.",
-			mdExecuteReady: 'And error occured after all sheduled tasks are done.'
+			mdExecuteReady: 'And error occurred after all sheduled tasks are done.'
 		}
 	}
 };
