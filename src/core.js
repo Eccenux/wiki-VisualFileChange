@@ -1021,8 +1021,7 @@ window.VisualFileChange = {
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
-					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)
-						.placeholder()),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
@@ -1032,7 +1031,6 @@ window.VisualFileChange = {
 					$('<td>').append(
 						$('<label>', { 'for': 'txtAjaxMdSelectDate0', text: this.i18n.mdCuteSelect.between }),
 						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 50, 'class': 'dateOnly', 'size': 19, maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
-							.placeholder()
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -1066,14 +1064,16 @@ window.VisualFileChange = {
 					))
 			)
 			);
- 
+		
+		var pbWidth = (this.pb.isHidden() ? 0 : 250)
+		var dlgWidth = Math.min(600, $(window).width() - pbWidth);
 		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
 			closeOnEscape: true,
-			position: 'center',
+			position: [($(window).width() - dlgWidth - pbWidth) / 2 + pbWidth, ($(window).height() - 250) / 2 ],
 			title: 'Cute-Selection: Specify the options, please',
 			height: 'auto',
-			width: Math.min($(window).width(), 600),
+			width: dlgWidth,
 			buttons: dlgSelectButtons,
 			show: 'slide',
 			hide: 'fade',
@@ -2274,7 +2274,7 @@ window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.6.2.0',
+	mdScriptRevision: '0.6.2.1',
  
    // Translatable strings
 	i18n: {
