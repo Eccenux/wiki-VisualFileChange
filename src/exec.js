@@ -5,7 +5,6 @@ if (window.VisualFileChange)
 $.extend(window.VisualFileChange,
 {
 	editComponents: true,
-	
 	/**  
 	**  Reads user's input to the thumbnail-dialog; Called when user clicked next
 	**/
@@ -220,7 +219,99 @@ $.extend(window.VisualFileChange,
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
- 
+
+	cleanUp: function(text) {
+		// FIXME: Do not use hardcoded strings as replacement vars. This is exploitable.
+		// The following code is part of User:Magog the Ogre/cleanup.js
+		/**********************
+		 * Function which removes <nowiki> and <!--...--> from the text, and replaces them with a set of 
+		 *   temporary strings. This is necessary, because functions which change text will may to leave the 
+		 *   nowikis/comments intact. The temporary strings function as "markers", so that 
+		 *   rebuild_comments_nowikis() can later be called and the nowikis/comments will return to the correct 
+		 *   position, untouched. 
+		 * Returns: An array, whose 0th element contains the altered string, and whose 1st element contains 
+		 *   another array which will focus as a set "tokens", which should be kept unaltered and passed to 
+		 *   rebuild_comments_nowikis() later.
+		 **********************/
+		var parse_comments_nowikis = function (text) {
+			//constants
+			nw_regex = /<nowiki>((?:.|\n)*?)<\/nowiki>/;
+			c_regex = /<!\-\-((?:.|\n)*?)\-\->/;
+			cs_regex = /<\!\-\-(\s*categories\s*by\s*commonsense\s*)\-\->/i; /* special one for CommonSense.... causing grouping headaches */
+
+			//variables
+			var comments = [];
+			var nowikis = [];
+			var comments_cs = [];
+			var nw_com_order = [];
+			while (1) {
+				next_nw = text.search(nw_regex);
+				next_c = text.search(c_regex);
+				next_cs = text.search(cs_regex);
+				if (next_nw === -1 && next_c === -1) break; /* cs_regex will be -1 if c_regex is -1 */
+
+				if (next_nw === -1 || (next_c !== -1 && next_c < next_nw)) {
+					if (next_cs === next_c) {
+						var index = comments_cs.length;
+						comments_cs.push(cs_regex.exec(text)[1]);
+						text = text.replace(c_regex, "%%%MTOCSCOMMENT" + index + "%%%");
+						nw_com_order.push('s');
+					} else {
+						var index = comments.length;
+						comments.push(c_regex.exec(text)[1]);
+						text = text.replace(c_regex, "%%%MTOCOMMENT" + index + "%%%");
+						nw_com_order.push('c');
+					}
+				} else {
+					var index = nowikis.length;
+					nowikis.push(nw_regex.exec(text)[1]);
+					text = text.replace(nw_regex, "%%%MTONOWIKI" + index + "%%%");
+					nw_com_order.push('n');
+				}
+			}
+			return [text, [comments, nowikis, comments_cs, nw_com_order]];
+		}
+		/**********************
+		 * See function immediately above for explanation
+		 * remove_whitespace: when rebuilding nowikis, remove unnecessary whitespace (not shown in final version anyway)
+		 * Returns: Rebuilt text.
+		 **********************/
+		var = rebuild_comments_nowikis
+		function (text, tokens, remove_whitespace) {
+			comments = tokens[0];
+			nowikis = tokens[1];
+			comments_cs = tokens[2];
+			nw_com_order = tokens[3];
+
+			while (nw_com_order.length > 0) {
+				var next = nw_com_order.pop();
+				if (next === 's') {
+					text = text.replace("%%%MTOCSCOMMENT" + (comments_cs.length - 1) + "%%%", "<!--" + comments_cs.pop() + "-->");
+				} else if (next === 'c') {
+					text = text.replace("%%%MTOCOMMENT" + (comments.length - 1) + "%%%", "<!--" + comments.pop() + "-->");
+				} else /* i.e., nw_com_order.pop was 'n'; also, mediawiki registers all whitespace inside nw's as just one space */
+				{
+					text_tmp = nowikis.pop();
+					if (remove_whitespace) {
+						text_tmp = text_tmp.replace(/\s+/g, ' ');
+					}
+					text = text.replace("%%%MTONOWIKI" + (nowikis.length) + "%%%", "<nowiki>" + text_tmp + "</" + "nowiki>");
+				}
+			}
+			return text;
+		}
+		
+		var cnwt = parse_comments_nowikis(text);
+		var cleanup = cnwt[0];
+		var tokens = cnwt[1];
+		
+		cleanup = cleanup.replace('== Summary ==', '== {{int:summary}} ==')
+				.replace('== Licensing ==', '== {{int:license-header}} ==').replace('== License ==', '== {{int:license-header}} ==').replace('== Lizenz ==', '== {{int:license-header}} ==');
+		
+		cleanup = rebuild_comments_nowikis(cleanup, tokens, true);
+		return cleanup;
+	},
+
 	mdInsertPermission: function () {
 		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', this]);
 		this.pb.setCurrentTaskDone();
@@ -255,9 +346,8 @@ $.extend(window.VisualFileChange,
 				}
 				page.text = page.text.replace(tmpRegEx, this.mdReplaceText);
 			}
- 
-			page.text = page.text.replace('== Summary ==', '== {{int:summary}} ==')
-				.replace('== Licensing ==', '== {{int:license-header}} ==').replace('== License ==', '== {{int:license-header}} ==').replace('== Lizenz ==', '== {{int:license-header}} ==');
+			
+			page.text = this.cleanUp(page.text);
  
 			page.editType = 'text';
 			if (window.AjaxDeleteWatchFile && ('c_replace' !== this.mdTaskToPerform)) {
