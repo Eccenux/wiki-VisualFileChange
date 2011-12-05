@@ -276,8 +276,7 @@ $.extend(window.VisualFileChange,
 		 * remove_whitespace: when rebuilding nowikis, remove unnecessary whitespace (not shown in final version anyway)
 		 * Returns: Rebuilt text.
 		 **********************/
-		var = rebuild_comments_nowikis
-		function (text, tokens, remove_whitespace) {
+		var  rebuild_comments_nowikis = function (text, tokens, remove_whitespace) {
 			comments = tokens[0];
 			nowikis = tokens[1];
 			comments_cs = tokens[2];
