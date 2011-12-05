@@ -122,49 +122,6 @@ $.extend(window.VisualFileChange,
 			this.nextTask();
 		}
 	},
- 
-	/**  
-	**  Method to securely close (you may call it "nuke") the dialog, even if there were errors; called on button cancel and by several methods
-	**/
- 	mdDlgThumbDlgClose: function () {
-		var o = VisualFileChange;
-		$(document).triggerHandler('vFC', ['closing dialog', o, o.dlg]);
-		
-		if ( o.mdBusy ) {     // Call myself later if script is busy
-			setTimeout(o.mdDlgThumbDlgClose(), 10);
-			return true;
-		}
-		
-		// Re-desplay the page's content
-		$('body').css('overflow', 'visible');
-		
-		if ('object' === typeof(o.dlg)) {
-			o.dlg.dialog("destroy");
-			o.dlg.remove();
-			document.body.style.cursor = 'auto';
-			o.context = 'MD-postDlg';
-			try {
-				delete o.dlg;
-			}
-			catch (ex) {
-				o.dlg = 0;
-			}
-			try {
-				o.mdCuteSelectDlg.dialog("destroy");
-				o.mdCuteSelectDlg.remove();
-			} catch (ex) {}
-		} else if ( 'AjaxMdContainer' === $(this).children('div').eq(0).attr('id') ) {
-			this.dialog("destroy");
-			this.parent.remove();
-			document.body.style.cursor = 'auto';
-			o.context = 'MD-postDlg';
-		}
-	},
-	
-	mdCloseAndContinue: function() {
-		this.mdDlgThumbDlgClose();
-		this.nextTask();
-	},
 	
 	mdParseReason: function(r, cb, obj) {
 		var _this = this;
