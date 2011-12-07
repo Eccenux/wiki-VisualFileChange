@@ -279,6 +279,9 @@ window.VisualFileChange = {
 								this.mdTarget = mw.util.getParamValue('page').replace("User:", "");
 							}
 						}
+						if ( -1 !== location.href.indexOf("\/Special:Log\/") ) {
+							this.mdTarget = decodeURI(location.href.match(/Special\:Log\/(.*?)$/)[1]);
+						}
 					}
 				} catch (ex) { }
 				break;
