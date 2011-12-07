@@ -233,7 +233,7 @@ $.extend(window.VisualFileChange,
 		this.dlg.dialog( 'option', 'position', 'right' );
 		this.dlg.dialog( 'option', 'modal', 'false' );
 		$(window).resize(function() {
-			o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
+			if (o && o.dlg) o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
 		});
 
 		$('#AjaxMdContainer').text('');
