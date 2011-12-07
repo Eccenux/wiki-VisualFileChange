@@ -221,7 +221,7 @@ window.VisualFileChange = {
 				}
 				break;
 		}
-		window.importScriptURI(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=0');
+		window.importScriptURI(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + this.mdScriptRevision);
 	},
 	
 	mdCancel: function () {
@@ -698,6 +698,7 @@ window.VisualFileChange = {
 			this.currentTask = o.mdSecureCall.arguments[0];
 			return o[stFunction].apply(this, Array.prototype.slice.call(o.mdSecureCall.arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
 		} catch (ex) {
+		console.log('failure at ' & stFunction)
 			o.fail(ex);
 		}
 	},
@@ -845,7 +846,7 @@ window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.0.0',
+	mdScriptRevision: '0.7.0.1',
  
    // Translatable strings
 	i18n: {
