@@ -777,20 +777,27 @@ $.extend(window.VisualFileChange,
 		if ( (o.iiUploads > (o.iCurrentIId + 1))  || !o.mdNoMoreFiles) {
 			var $mdQueryMore = $('#mdQueryMoreBtn');
 			$mdQueryMore.removeClass('ui-state-disabled');
-			$('.ui-dialog > .ui-dialog-content').bind("scroll", function() {
+			$('.ui-dialog > .ui-dialog-content').bind('scroll', function() {
 				if ( $mdQueryMore.visible().length > 0 ) {
-					o.mdSecureCall("mdQueryMore");
+					o.mdSecureCall('mdQueryMore');
 				}
 			});
 		}
 		if (!o.mdNoMoreFiles) { // silently run the next upload-list-query in background
-			o.mdSecureCall("mdCreateList");
+			o.mdSecureCall('mdCreateList');
 		}
  
 		document.body.style.cursor = 'auto';
-		if (0 == o.mdActualResultCount) { // If there are no thumbs on the dialog, continue
-			if ('MD-RevertImage' != o.context) { // Don't shedule further tasks if called from revert part
-				if ("MD" == o.context) alert(o.i18n.mdNoResult.replace("%TARGET%", o.mdTarget));
+		if (0 === o.mdActualResultCount) { // If there are no thumbs on the dialog, continue
+			if ('MD-RevertImage' !== o.context) { // Don't shedule further tasks if called from revert part
+				if ('MD' === o.context) {
+					if (!o.mdModeCat && !o.mdNoMoreFiles) {	
+						o.mdSecureCall('mdQueryMore');
+						return;
+					} else {
+						alert(o.i18n.mdNoResult.replace("%TARGET%", o.mdTarget));
+					}
+				}
 				o.mdDlgThumbDlgClose(); // remove the dialog
 				if (!o.mdModeCat) o.addTask('mdRvGenOGallery');
 				o.addTask('mdExecuteReady');
@@ -800,13 +807,13 @@ $.extend(window.VisualFileChange,
 	},
  
 	/**  
-	**  Called when by scroll-event when the button more becomes visible (mdQueryFileDone binds the evt) or onClick on the button
+	**  Called by scroll-event when the button "more" becomes visible (mdQueryFileDone binds the evt) or onClick on the button
 	**/
 	mdQueryMore: function () {
-		if (0 == this.mdPendingBatchQueries) {
+		if (0 === this.mdPendingBatchQueries) {
 			this.mdUploadCt = 0;
 			this.addTask('mdQueryFileDone');
-			this.mdSecureCall("mdSendNextQueries");
+			this.mdSecureCall('mdSendNextQueries');
 		}
 	},
  
