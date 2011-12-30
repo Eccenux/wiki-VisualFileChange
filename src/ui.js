@@ -574,7 +574,10 @@ $.extend(window.VisualFileChange,
 			var _this = this;
 			
 			var sendReq = function (files) {
-				if (0 === files.length) return;
+				if (0 === files.length) { // no files in buffer, so re-query
+					if (!_this.mdNoMoreFiles) _this.mdSecureCall('mdCreateList');
+					return;
+				}
 				var query = {
 					action: 'query',
 					prop: 'imageinfo|info|revisions|categories',
@@ -608,7 +611,7 @@ $.extend(window.VisualFileChange,
 					collectedFiles = [];
 				}
 				this.iCurrentIId = this.iUploads[upload].iId;
-				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) == this.mdUploadCt) {
+				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) === this.mdUploadCt) {
 					break;
 				}
 			}
