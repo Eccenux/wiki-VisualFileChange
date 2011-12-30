@@ -57,6 +57,7 @@ $.extend(window.VisualFileChange,
 		var allFileChanges = result.query.logevents;
 		for (var id in allFileChanges) { // loop through all filechanges (array)
 			if ('upload' === allFileChanges[id].action) { // This file was initially uploaded by the user.
+				if (allFileChanges[id].title in this.iUploads) continue; // Do not mess-up numbers when a file was deleted and re-uploaded
 				this.iUploads[allFileChanges[id].title] = { uploader: [] };
 				this.iUploads[allFileChanges[id].title].iId = this.iiUploads;
 				this.iUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
