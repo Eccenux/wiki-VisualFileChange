@@ -77,7 +77,10 @@ $.extend(window.VisualFileChange,
 			this.mdFirstRun = false;
 			this.nextTask();
 		} else {
-			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].logevents.lestart;
+			if (!this.mdNoMoreFiles) {
+				this.mdLestart = result['query-continue'].logevents.lestart;
+				if (!this.mdActualResultCount) this.mdSecureCall('mdQueryMore');
+			}
 		}
 	},
 	
@@ -796,7 +799,6 @@ $.extend(window.VisualFileChange,
 			if ('MD-RevertImage' !== o.context) { // Don't shedule further tasks if called from revert part
 				if ('MD' === o.context) {
 					if (!o.mdModeCat && !o.mdNoMoreFiles) {	
-						o.mdSecureCall('mdQueryMore');
 						return;
 					} else {
 						alert(o.i18n.mdNoResult.replace("%TARGET%", o.mdTarget));
