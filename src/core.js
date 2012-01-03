@@ -22,7 +22,7 @@
 /*global jQuery:false, mediaWiki:false, appendCSS:false, addPortletLink:false */
 /*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
 (function ($, mw) {
-'use strict';
+// 'use'' strict'; find a workaround for arguments[]
 if (window.VisualFileChange) return;
 
 window.VisualFileChange = 1;
@@ -852,7 +852,7 @@ var VisualFileChange = window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.0.4',
+	mdScriptRevision: '0.7.0.5',
  
    // Translatable strings
 	i18n: {
