@@ -1,7 +1,13 @@
 // Main script is at MediaWiki:VisualFileChange.js
 // These are the delayed loaded display components (UI) in order to speed up loading of the first UI
-if (window.VisualFileChange) 
-{
+
+/*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false */
+/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+(function ($, mw) {
+'use strict';
+
+if (!window.VisualFileChange) return;
+
 $.extend(window.VisualFileChange,
 {
 	displayComponents: true,
@@ -25,7 +31,7 @@ $.extend(window.VisualFileChange,
 		if (this.mdListUploadsPending > 0) { // If there are queries pendig continue later
 			var o = this;
 			setTimeout(function () { 
-				o.mdCreateList() 
+				o.mdCreateList();
 			}, 200); // See me later ...
 			return true;
 		}
@@ -190,11 +196,11 @@ $.extend(window.VisualFileChange,
 				var dlgWidth = Math.min(600, $(window).width() - 250);
 				dlg2Btns[o.i18n.mdNoFilesSelected.back] = function() {
 					$(this).dialog("close");
-				}
+				};
 				dlg2Btns[o.i18n.mdNoFilesSelected.proceed] = function() {
 					$(this).dialog("close");
 					o.mdSecureCall("mdExecute");
-				}
+				};
 				$('<div>').append($('<img>', { src: o.mdInfoIcon, height: 128, width: 128, style: 'float:left;' }), $('<div>', { style: 'margin-top: 30px' }).text(o.i18n.mdNoFilesSelected.text))
 					.dialog({
 						title: o.i18n.mdNoFilesSelected.title,
@@ -305,7 +311,7 @@ $.extend(window.VisualFileChange,
 		var timoutID = 0;
 		var updateSelectedCount = function () {
 			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $('input[name="mdCheckDelete"]:checked').length));
-		}
+		};
 		updateSelectedCount();
 		$('#AjaxMdIa').change( function (event) {
 			var tmpChecked = this.checked;
@@ -331,7 +337,7 @@ $.extend(window.VisualFileChange,
 		$AjaxMdType.change( function (event) {
 			var optConfig = o.mdOpt[$(this).val()];
 			if (!optConfig) return;
-			if ('del' == $(this).val()) { 
+			if ('del' === $(this).val()) { 
 				$('#mdRequestPageTitle').show(); 
 			} else { 
 				$('#mdRequestPageTitle').hide(); 
@@ -389,8 +395,8 @@ $.extend(window.VisualFileChange,
 		});
 		$AjaxMdType.val(this.mdOptDefault);
 		$AjaxMdType.change();
-		$AjaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation() });
-		$('#AjaxMdIa').bind('click mousedown mouseup', function(e) { e.stopPropagation() });
+		$AjaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
+		$('#AjaxMdIa').bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
 		$mdDeleteReason.keyup();
  
  
@@ -403,9 +409,9 @@ $.extend(window.VisualFileChange,
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, ""));
 			var v_txtAjaxMdSelectTitle = $.trim($('#txtAjaxMdSelectTitle').val().replace(/^File\:/, ""));
-			if ( '' != v_txtAjaxMdSelectTitle ) v_txtAjaxMdSelectTitle = new RegExp(v_txtAjaxMdSelectTitle, '');
+			if ( v_txtAjaxMdSelectTitle ) v_txtAjaxMdSelectTitle = new RegExp(v_txtAjaxMdSelectTitle, '');
 			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
-			var vl_selAjaxMdSelectSize = ( $('#selAjaxMdSelectSize').val() == 'l' );
+			var vl_selAjaxMdSelectSize = ( ($('#selAjaxMdSelectSize').val() + '') === 'l' );
 			var v_txtAjaxMdSelectDate0 = $('#txtAjaxMdSelectDate0').val();
 			var dateFromString = function(st) {
 				try {
@@ -414,13 +420,13 @@ $.extend(window.VisualFileChange,
 				} catch (ex) {
 					return 0;
 				}
-			}
-			if ( '' != v_txtAjaxMdSelectDate0 ) {
+			};
+			if ( v_txtAjaxMdSelectDate0 ) {
 				v_txtAjaxMdSelectDate0 = dateFromString(v_txtAjaxMdSelectDate0);
 				if (!v_txtAjaxMdSelectDate0) { alert('Invalid start-date'); return; }
 			}
 			var v_txtAjaxMdSelectDate1 = $('#txtAjaxMdSelectDate1').val();
-			if ( '' != v_txtAjaxMdSelectDate1 ) {
+			if ( '' !== v_txtAjaxMdSelectDate1 ) {
 				v_txtAjaxMdSelectDate1 = dateFromString(v_txtAjaxMdSelectDate1);
 				if (!v_txtAjaxMdSelectDate1) { alert('Invalid end-date'); return; }
 			}
@@ -431,44 +437,44 @@ $.extend(window.VisualFileChange,
 					curUpld = o.iUploads[upload];
 					// yyyy    mm     dd
 					/(\d{4})-(\d\d)-(\d\d)T(?:(\d\d):(\d\d):(\d\d))Z/.exec(curUpld.time);
-					curUpldDate = new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6);
+					var curUpldDate = new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6);
 					$curThmb = $('input[value="' + upload.replace('"', '\\"') + '"]');
  
-					if ( '' != v_txtAjaxMdSelectCat ) {
+					if ( v_txtAjaxMdSelectCat ) {
 						for (var ct in curUpld.categories) {
-							if (curUpld.categories[ct].title.replace("Category:", "") == v_txtAjaxMdSelectCat) { 
+							if (curUpld.categories[ct].title.replace("Category:", "") === v_txtAjaxMdSelectCat) { 
 								isMatch.cat = true;
 							}
 						}
 					} else {isMatch.cat = true;}
  
-					if ( 'object' == typeof(v_txtAjaxMdSelectTitle) ) {
+					if ( 'object' === typeof(v_txtAjaxMdSelectTitle) ) {
 						if ( v_txtAjaxMdSelectTitle.test(upload.replace("File:", "")) ) {
 							isMatch.title = true;
 						}
 					} else {isMatch.title = true;}
  
-					if ( '' != v_txtAjaxMdSelectSize ) {
+					if ( '' !== v_txtAjaxMdSelectSize ) {
 						if ( (vl_selAjaxMdSelectSize && (curUpld.size < v_txtAjaxMdSelectSize)) || (!vl_selAjaxMdSelectSize && (curUpld.size > v_txtAjaxMdSelectSize)) ) isMatch.size = true;
 					} else {isMatch.size = true;}
  
-					if ( 'object' == typeof(v_txtAjaxMdSelectDate0) ) { // between -> start date -> must be in the past
+					if ( 'object' === typeof(v_txtAjaxMdSelectDate0) ) { // between -> start date -> must be in the past
 						if (curUpldDate >= v_txtAjaxMdSelectDate0) isMatch.date0 = true;
 					} else {isMatch.date0 = true;} 
  
-					if ( 'object' == typeof(v_txtAjaxMdSelectDate1) ) { // and -> end date -> must be in the future
+					if ( 'object' === typeof(v_txtAjaxMdSelectDate1) ) { // and -> end date -> must be in the future
 						if (curUpldDate <= v_txtAjaxMdSelectDate1) isMatch.date1 = true;
 					} else {isMatch.date1 = true;}
  
-					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 == $curThmb.length) ) $curThmb[0].checked = newVal;
-				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + err); }
+					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
+				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + ex); }
 			}
 			updateSelectedCount();
 		};
  
 		appendCSS('.numbersOnly { text-align:right; }');
  
-		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } )
+		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
 			.append(this.i18n.mdCuteSelect.intro)
 			.append($('<table>').append(
@@ -489,7 +495,7 @@ $.extend(window.VisualFileChange,
 					$('<td>').append(this.i18n.mdCuteSelect.date),
 					$('<td>').append(
 						$('<label>', { 'for': 'txtAjaxMdSelectDate0', text: this.i18n.mdCuteSelect.between }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 50, 'class': 'dateOnly', 'size': 19, maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 50, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -505,7 +511,7 @@ $.extend(window.VisualFileChange,
 									return o.i18n.optStartAtHowTo;
 							} }),
 						$('<label>', { 'for': 'txtAjaxMdSelectDate1', text: this.i18n.mdCuteSelect.and }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 50, 'class': 'dateOnly', 'size': 19, maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 50, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -524,7 +530,7 @@ $.extend(window.VisualFileChange,
 			)
 			);
 		
-		var pbWidth = (this.pb.isHidden() ? 0 : 250)
+		var pbWidth = (this.pb.isHidden() ? 0 : 250);
 		var dlgWidth = Math.min(600, $(window).width() - pbWidth);
 		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
@@ -586,7 +592,7 @@ $.extend(window.VisualFileChange,
 					action: 'query',
 					prop: 'imageinfo|info|revisions|categories',
 					rvprop: 'timestamp|content',
-					intoken: ('undefined' == typeof(_this.edittoken)) ? 'edit' : '',
+					intoken: ('undefined' === typeof _this.edittoken) ? 'edit' : '',
 					iiprop: 'url|size',
 					iiurlwidth: 120,
 					iiurlheight: 120,
@@ -628,14 +634,15 @@ $.extend(window.VisualFileChange,
 	
 	/** Helper function: Creating a gallery box **/
 	mdCreateGalleryBox: function (img, txt, height) {
-		$ih = $('<div>', { style: 'margin:15px auto;', name: 'mdImageHere' } );
-		$th = $('<div>', { 'class': 'gallerytext', name: 'mdTextHere' });
-		var $galleryBox = $('<li>', { style: 'width: 155px', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
+		var $ih = $('<div>', { style: 'margin:15px auto;', name: 'mdImageHere' } ),
+			$th = $('<div>', { 'class': 'gallerytext', name: 'mdTextHere' }),
+			$galleryBox = $('<li>', { style: 'width: 155px', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th)),
+			id;
 
-		for (var id in img) {
+		for (id in img) {
 			$ih.append(img[id]);
 		}
-		for (var id in txt) {
+		for (id in txt) {
 			$th.append(txt[id]);
 		}
 		return $galleryBox;
@@ -649,35 +656,35 @@ $.extend(window.VisualFileChange,
 	
 	/**  Helper function: Extracs categories from the list of those.  **/
 	mdExtractTags: function (mdCats) {
-		var mdTags = '';
-		if ('object' != typeof(mdCats)) return mdTags;
+		var mdTags = '', c, thiscat, id;
+		if ('object' !== typeof mdCats) return mdTags;
 		mdTags += '<i>';
  
 		// First the licenses (hidden):
 		catloop: // Using a label for this loop
-		for (var ct in mdCats) {
-			if ( "string" == typeof (mdCats[ct].hidden) ) {
-				var thiscat = mdCats[ct].title;
-				for (var id in this.mdLicenseRecognization) {
+		for (c in mdCats) {
+			if ( "string" === typeof mdCats[c].hidden ) {
+				thiscat = mdCats[c].title;
+				for (id in this.mdLicenseRecognization) {
 					if ( this.mdLicenseRecognization[id][0].test(thiscat) ) {
-						if ('' != this.mdLicenseRecognization[id][1]) mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdLicenseRecognization[id][1] + '</abbr> ';
+						if (this.mdLicenseRecognization[id][1]) mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdLicenseRecognization[id][1] + '</abbr> ';
 						continue catloop;
 					}
 				}
 				// This will be only executed if there was no match
-				mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">U</abbr> '
+				mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">U</abbr> ';
 			}
 		}
 		mdTags += '</i> <span style="background-color:#FC9;">';
  
 		// Then, deletion tags:
 		catloop2: // Using another label for this loop
-		for (var ct in mdCats) {
-			var thiscat = mdCats[ct].title;
-			for (var id in this.mdTagRecognization) {
-				thistag = this.mdTagRecognization[id];
+		for (c in mdCats) {
+			thiscat = mdCats[c].title;
+			for (id in this.mdTagRecognization) {
+				var thistag = this.mdTagRecognization[id];
 				if ( thistag[0].test(thiscat) ) {
-					if ('' != thistag[1]) mdTags += (thistag[2] ? '<span style="background-color:#' + thistag[2] + ';">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdTagRecognization[id][1] + '</abbr>' + (thistag[2] ? '</span>' : '');
+					if (thistag[1]) mdTags += (thistag[2] ? '<span style="background-color:#' + thistag[2] + ';">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdTagRecognization[id][1] + '</abbr>' + (thistag[2] ? '</span>' : '');
 					continue catloop2;
 				}
 			}
@@ -695,7 +702,7 @@ $.extend(window.VisualFileChange,
 		
 		$(document).triggerHandler('vFC', ['got detail-info', this, result]);
 		
-		if ('MD-Error' == this.context || 'MD-postDlg' == this.context) return; // don't try to add something if there was an error.
+		if ('MD-Error' === this.context || 'MD-postDlg' === this.context) return; // don't try to add something if there was an error.
 		var pages = result.query.pages;
 		for (var id in pages) {
 			var pg = pages[id],
@@ -708,7 +715,7 @@ $.extend(window.VisualFileChange,
 			this.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (this.mdUploadCt) + 
 			' uploads left on this batch of queries. ' + (this.iiUploads) + ' cached uploads current image: ' + dirtyTitle); 
 
-			if ('undefined' == typeof(pg.imageinfo)) { try { 
+			if ('undefined' === typeof pg.imageinfo) { try { 
 				this.$AjaxDeletedUploads.append(this.mdSecureCall("mdCreateDelUploadItem", dirtyTitle));
 				} catch (e) {} continue; 
 			} // The file has been deleted
@@ -722,9 +729,7 @@ $.extend(window.VisualFileChange,
 				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
 					if (ii.sha1) {
-						if (seenHash[ii.sha1]) {
-							// do nothing
-						} else {
+						if (!seenHash[ii.sha1]) {
 							seenHash[ii.sha1] = true;
 							// Admins can hide usernames. Make sure not pushing undefined.
 							if (ii.user) uItem.uploader.push(ii.user);
@@ -895,31 +900,31 @@ $.extend(window.VisualFileChange,
  
 	mdRvQueriedFile: function (result) {
 		this.mdUploadCt--;
-		if ('MD-Error' == this.context || 'MD-postDlg' == this.context) {
+		if ('MD-Error' === this.context || 'MD-postDlg' === this.context) {
 			this.mdRvAllFilesQueried();
 			return;
 		}
 		var parsedDOM = $(result);
 		var pageTitle = $('#firstHeading', parsedDOM).contents().eq(0).text();
-		if (pageTitle && -1 != pageTitle.indexOf('File:')) {
+		if (pageTitle && -1 !== pageTitle.indexOf('File:')) {
 			$('#AjaxMdNotReady').contents().eq(0).replaceWith('Querying detailed information and obtaining edittoken. Pending ' + (this.mdUploadCt) + 
 			' of ' + (this.ioUploads) + ' total uploads current image: ' + pageTitle); 
 			var rvMatrix = this.mdSecureCall("mdRvCreateImgRevisionMatrix", parsedDOM);
 			var preVandalRv = 0;
-			if (0 == rvMatrix.length || 'object' != typeof(rvMatrix[0]) || rvMatrix[0].user != this.mdTarget) { 
+			if (0 === rvMatrix.length || 'object' !== typeof rvMatrix[0] || rvMatrix[0].user !== this.mdTarget) { 
 				this.mdRvAllFilesQueried();
 				return;
 			}
 			for (var rv in rvMatrix) {
-				if (rvMatrix[rv].user != this.mdTarget) { // Find the first revision of another user
+				if (rvMatrix[rv].user !== this.mdTarget) { // Find the first revision of another user
 					preVandalRv = rvMatrix[rv];
 					break;
 				}
 			}
-			if ('object' == typeof(preVandalRv)) {
-				if ('object' != typeof(this.oUploads[pageTitle])) { // Is this upload in the list?
+			if ('object' === typeof(preVandalRv)) {
+				if ('object' !== typeof(this.oUploads[pageTitle])) { // Is this upload in the list?
 					var pageTitleR = $('#contentSub > a', parsedDOM).eq(0).attr('title'); // Redirect
-					if ('' == pageTitleR || 'object' != typeof(this.oUploads[pageTitleR])) {
+					if ('' === pageTitleR || 'object' !== typeof this.oUploads[pageTitleR]) {
 						this.mdRvAllFilesQueried();
 						return;
 					}
@@ -936,12 +941,12 @@ $.extend(window.VisualFileChange,
  
 				var imgDescrPageLink = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", pageTitle.replace(/ /g, '_'));
  
-				$galleryBox = this.mdCreateGalleryBox(
+				var $galleryBox = this.mdCreateGalleryBox(
 					[ $('<a>', { href: imgDescrPageLink, target: '_blank', 'class': 'image' })
-						.append( $('<img>', { style: 'vertical-align:top', src: rvMatrix[0].img, width: (0 != rvMatrix[0].imgWidth ? rvMatrix[0].imgWidth : ''), height: (0 != rvMatrix[0].imgHeight ? rvMatrix[0].imgHeight : ''), alt: pageTitle })), 
+						.append( $('<img>', { style: 'vertical-align:top', src: rvMatrix[0].img, width: (0 !== rvMatrix[0].imgWidth ? rvMatrix[0].imgWidth : ''), height: (0 !== rvMatrix[0].imgHeight ? rvMatrix[0].imgHeight : ''), alt: pageTitle })), 
 					('<p style="vertical-align:middle">revert to ' + preVandalRv.user + '</p>'), 
 					$('<a>', { href: preVandalRv.href, target: '_blank', 'class': 'image' })
-						.append( $('<img>', { style: 'vertical-align:bottom', src: preVandalRv.img, width: (0 != preVandalRv.imgWidth ? preVandalRv.imgWidth : ''), height: (0 != preVandalRv.imgHeight ? preVandalRv.imgHeight : ''), alt: pageTitle }) ) ],
+						.append( $('<img>', { style: 'vertical-align:bottom', src: preVandalRv.img, width: (0 !== preVandalRv.imgWidth ? preVandalRv.imgWidth : ''), height: (0 !== preVandalRv.imgHeight ? preVandalRv.imgHeight : ''), alt: pageTitle }) ) ],
 					[ ('<i>' + this.oUploads[pageTitle].iId + ': </i>'),
 					$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: pageTitle } ),
 					('<a' + imgDescrPageLink + '>' + pageTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</a>') ],
@@ -962,7 +967,7 @@ $.extend(window.VisualFileChange,
 			this.context = "MD-RevertImage";
 			$('#AjaxMdNotReady').hide();
 			document.body.style.cursor = 'auto';
-			if (0 == this.mdActualResultCount) {
+			if (0 === this.mdActualResultCount) {
 				this.mdQueryFileDone();
 			}
 		}
@@ -975,21 +980,23 @@ $.extend(window.VisualFileChange,
 		$('table.filehistory  > tbody > tr > td', parsedDOM).each(function(index, val) {
 			try { // silently fail - result will be checked
 				iCell++;
-				if ('object' != typeof(revArray[Math.floor(iCell/cols)]) && Math.floor(iCell/cols) >= 0) revArray[Math.floor(iCell/cols)] = {}
+				if ('object' !== typeof(revArray[Math.floor(iCell/cols)]) && Math.floor(iCell/cols) >= 0) revArray[Math.floor(iCell/cols)] = {};
 				if ( $(val).children('a').length ) {
-					var aNode = $(val).children('a').eq(0);
-					if ( -1 != $(aNode).attr('href').indexOf("wpEditToken=") ) {
-						var hrefContent = $(aNode).attr('href'); // with (revArray[Math.floor(iCell/cols)]) { - why it doesn't work?
-						revArray[Math.floor(iCell/cols)].editToken = hrefContent.match(/wpEditToken=[a-fA-F0-9]{32}\%2B\%5C/)[0].replace('wpEditToken=', '').replace('\%2B\%5C', '\+\\');
-						revArray[Math.floor(iCell/cols)].oldImage = hrefContent.match(/oldimage=\d+\%21/)[0].replace('oldimage=', '').replace('\%21', '');
+					var aNode = $(val).children('a').eq(0),
+						hrefContent;
+
+					if ( -1 !== $(aNode).attr('href').indexOf("wpEditToken=") ) {
+						hrefContent = $(aNode).attr('href'); // with (revArray[Math.floor(iCell/cols)]) { - why it doesn't work?
+						revArray[Math.floor(iCell/cols)].editToken = hrefContent.match(/wpEditToken=[a-fA-F0-9]{32}\%2B\%5C/)[0].replace('wpEditToken=', '').replace('%2B%5C', '+\\');
+						revArray[Math.floor(iCell/cols)].oldImage = hrefContent.match(/oldimage=\d+\%21/)[0].replace('oldimage=', '').replace('%21', '');
 						return true;
 					}
-					if ( -1 != $(aNode).attr('class').indexOf("mw-userlink") ) {
+					if ( -1 !== $(aNode).attr('class').indexOf("mw-userlink") ) {
 						revArray[Math.floor(iCell/cols)].user = $(aNode).contents().eq(0).text();
 						return true; // skip the other tests, like continue in a loop
 					}
-					if ( -1 != $(aNode).attr('href').indexOf("//upload.wikimedia.org/wikipedia/")) {
-						var hrefContent = $(aNode).attr('href');
+					if ( -1 !== $(aNode).attr('href').indexOf("//upload.wikimedia.org/wikipedia/")) {
+						hrefContent = $(aNode).attr('href');
 						var imgNode = $(aNode).children('img').eq(0);
 						if ( $(aNode).children('img').length ) {
 							revArray[Math.floor(iCell/cols)].href = hrefContent;
@@ -1018,7 +1025,7 @@ $.extend(window.VisualFileChange,
 				o.mdSecureCall("mdRevertImage", this.value);
 			}
 		});
-		if (0 == this.mdUploadCt) {
+		if (0 === this.mdUploadCt) {
 			this.mdDlgThumbDlgClose();
 			this.nextTask();
 		}
@@ -1038,9 +1045,10 @@ $.extend(window.VisualFileChange,
  
 	mdReverted: function (result) {
 		this.mdUploadCt--;
-		if (!$('#mw-returnto', $(result)).children().length) { // Error!
+		if (!$('#mw-returnto', $(result)).children().length) { 
+			// Error!
 		}
-		if (0 == this.mdUploadCt) {
+		if (0 === this.mdUploadCt) {
 			this.mdDlgThumbDlgClose();
 			this.nextTask();
 		}
@@ -1055,15 +1063,16 @@ $.extend(window.VisualFileChange,
 		}
 		
 		if ( this.mdInsertedTag ) {
+			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
 				// navigating to the new created deletion request
-				var encTitle = this.requestPage;
+				encTitle = this.requestPage;
 				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
 				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			}
 			else if (-1 === mw.config.get('wgNamespaceNumber') && ( 'c_replace' !== this.mdTaskToPerform && 'OTRS' !== this.mdTaskToPerform && 'other' !== this.mdTaskToPerform )) {
 				// navigating to the user-discussion-page
-				var encTitle = this.mdUserTalkPrefix + this.mdTarget;
+				encTitle = this.mdUserTalkPrefix + this.mdTarget;
 				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
 				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			} else {
@@ -1081,4 +1090,5 @@ $.extend(window.VisualFileChange,
 	}
 });
 $(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
-}
+
+}(jQuery, mediaWiki));
