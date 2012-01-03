@@ -1,7 +1,13 @@
 // Main script is at MediaWiki:VisualFileChange.js
 // These are the delayed loaded edit components in order to speed up loading of the first UI
-if (window.VisualFileChange) 
-{
+
+/*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false, console:false */
+/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+(function ($, mw) {
+'use strict';
+
+if (!window.VisualFileChange) return;
+
 $.extend(window.VisualFileChange,
 {
 	editComponents: true,
@@ -16,7 +22,7 @@ $.extend(window.VisualFileChange,
 		if (0 !== o.mdNumberOfExecs || 0 !== o.mdListUploadsPending) return; // refuse futher exec request
 		if (0 !== o.mdPendingBatchQueries) { // call me later
 			setTimeout(function () { 
-				o.mdExecute() 
+				o.mdExecute();
 			}, 1000);
 			return;
 		}
@@ -47,7 +53,7 @@ $.extend(window.VisualFileChange,
 		});
  
 		if (0 === filesToTag) {
-			if ( ('other' != $('#AjaxMdType').val() ) && ('otrs' != $('#AjaxMdType').val()) && (0 < o.ioUploads) ) {
+			if ( ('other' !== $('#AjaxMdType').val() ) && ('otrs' !== $('#AjaxMdType').val()) && (0 < o.ioUploads) ) {
 				o.addTask('mdRvGenOGallery');
 			}
 			o.addTask('mdExecuteReady');
@@ -112,8 +118,10 @@ $.extend(window.VisualFileChange,
 		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
 		
 		this.uploaders = {};
+		var upload;
+		
 		// Reverse-mapping: files-uploader --- > uploader-files
-		for (var upload in this.iUploads) {
+		for (upload in this.iUploads) {
 			var uItem = this.iUploads[upload];
 			if ( -2 === uItem.iId )  {
 				if (this.mdModeCat) {
@@ -160,8 +168,8 @@ $.extend(window.VisualFileChange,
 		
 		// Prepare for createRequestSubpage
 		this.requestPageContents = this.reason;
-		for (var upload in this.iUploads) {
-			if ( -2 == this.iUploads[upload].iId )  { this.requestPageContents += '\n* [[:' + upload + ']]'; }
+		for (upload in this.iUploads) {
+			if ( -2 === this.iUploads[upload].iId )  { this.requestPageContents += '\n* [[:' + upload + ']]'; }
 		}
 				
 		// Task sheduling
@@ -206,7 +214,7 @@ $.extend(window.VisualFileChange,
 		this.mdUploadCt = 0;
  
 		for (var upload in this.iUploads) {
-			if (-2 != this.iUploads[upload].iId) continue;
+			if (-2 !== this.iUploads[upload].iId) continue;
  
 			var page = [];
 			page.title = upload;
@@ -224,63 +232,66 @@ $.extend(window.VisualFileChange,
 		// FIXME: Do not use hardcoded strings as replacement vars. This is exploitable.
 		// The following code is part of User:Magog the Ogre/cleanup.js
 		/**********************
-		 * Function which removes <nowiki> and <!--...--> from the text, and replaces them with a set of 
-		 *   temporary strings. This is necessary, because functions which change text will may to leave the 
-		 *   nowikis/comments intact. The temporary strings function as "markers", so that 
-		 *   rebuild_comments_nowikis() can later be called and the nowikis/comments will return to the correct 
-		 *   position, untouched. 
-		 * Returns: An array, whose 0th element contains the altered string, and whose 1st element contains 
-		 *   another array which will focus as a set "tokens", which should be kept unaltered and passed to 
-		 *   rebuild_comments_nowikis() later.
-		 **********************/
+		* Function which removes <nowiki> and <!--...--> from the text, and replaces them with a set of 
+		*   temporary strings. This is necessary, because functions which change text will may to leave the 
+		*   nowikis/comments intact. The temporary strings function as "markers", so that 
+		*   rebuild_comments_nowikis() can later be called and the nowikis/comments will return to the correct 
+		*   position, untouched. 
+		* Returns: An array, whose 0th element contains the altered string, and whose 1st element contains 
+		*   another array which will focus as a set "tokens", which should be kept unaltered and passed to 
+		*   rebuild_comments_nowikis() later.
+		**********************/
 		var parse_comments_nowikis = function (text) {
 			//constants
-			nw_regex = /<nowiki>((?:.|\n)*?)<\/nowiki>/;
-			c_regex = /<!\-\-((?:.|\n)*?)\-\->/;
-			cs_regex = /<\!\-\-(\s*categories\s*by\s*commonsense\s*)\-\->/i; /* special one for CommonSense.... causing grouping headaches */
+			var nw_regex = /<nowiki>((?:.|\n)*?)<\/nowiki>/,
+				c_regex = /<!\-\-((?:.|\n)*?)\-\->/,
+				cs_regex = /<\!\-\-(\s*categories\s*by\s*commonsense\s*)\-\->/i; /* special one for CommonSense.... causing grouping headaches */
 
 			//variables
-			var comments = [];
-			var nowikis = [];
-			var comments_cs = [];
-			var nw_com_order = [];
-			while (1) {
-				next_nw = text.search(nw_regex);
-				next_c = text.search(c_regex);
-				next_cs = text.search(cs_regex);
-				if (next_nw === -1 && next_c === -1) break; /* cs_regex will be -1 if c_regex is -1 */
+			var comments = [],
+				nowikis = [],
+				comments_cs = [],
+				nw_com_order = [];
 
+			while (1) {
+				var next_nw = text.search(nw_regex),
+					next_c = text.search(c_regex),
+					next_cs = text.search(cs_regex);
+
+				if (next_nw === -1 && next_c === -1) break; /* cs_regex will be -1 if c_regex is -1 */
+				
+				var index;
 				if (next_nw === -1 || (next_c !== -1 && next_c < next_nw)) {
 					if (next_cs === next_c) {
-						var index = comments_cs.length;
+						index = comments_cs.length;
 						comments_cs.push(cs_regex.exec(text)[1]);
 						text = text.replace(c_regex, "%%%MTOCSCOMMENT" + index + "%%%");
 						nw_com_order.push('s');
 					} else {
-						var index = comments.length;
+						index = comments.length;
 						comments.push(c_regex.exec(text)[1]);
 						text = text.replace(c_regex, "%%%MTOCOMMENT" + index + "%%%");
 						nw_com_order.push('c');
 					}
 				} else {
-					var index = nowikis.length;
+					index = nowikis.length;
 					nowikis.push(nw_regex.exec(text)[1]);
 					text = text.replace(nw_regex, "%%%MTONOWIKI" + index + "%%%");
 					nw_com_order.push('n');
 				}
 			}
 			return [text, [comments, nowikis, comments_cs, nw_com_order]];
-		}
+		};
 		/**********************
-		 * See function immediately above for explanation
-		 * remove_whitespace: when rebuilding nowikis, remove unnecessary whitespace (not shown in final version anyway)
-		 * Returns: Rebuilt text.
-		 **********************/
-		var  rebuild_comments_nowikis = function (text, tokens, remove_whitespace) {
-			comments = tokens[0];
-			nowikis = tokens[1];
-			comments_cs = tokens[2];
-			nw_com_order = tokens[3];
+		* See function immediately above for explanation
+		* remove_whitespace: when rebuilding nowikis, remove unnecessary whitespace (not shown in final version anyway)
+		* Returns: Rebuilt text.
+		**********************/
+		var rebuild_comments_nowikis = function (text, tokens, remove_whitespace) {
+			var comments = tokens[0],
+				nowikis = tokens[1],
+				comments_cs = tokens[2],
+				nw_com_order = tokens[3];
 
 			while (nw_com_order.length > 0) {
 				var next = nw_com_order.pop();
@@ -290,7 +301,7 @@ $.extend(window.VisualFileChange,
 					text = text.replace("%%%MTOCOMMENT" + (comments.length - 1) + "%%%", "<!--" + comments.pop() + "-->");
 				} else /* i.e., nw_com_order.pop was 'n'; also, mediawiki registers all whitespace inside nw's as just one space */
 				{
-					text_tmp = nowikis.pop();
+					var text_tmp = nowikis.pop();
 					if (remove_whitespace) {
 						text_tmp = text_tmp.replace(/\s+/g, ' ');
 					}
@@ -298,7 +309,7 @@ $.extend(window.VisualFileChange,
 				}
 			}
 			return text;
-		}
+		};
 		
 		var cnwt = parse_comments_nowikis(text);
 		var cleanup = cnwt[0];
@@ -405,9 +416,9 @@ $.extend(window.VisualFileChange,
 	},
 	
 	/**
-	 ** Transclude the nomination page onto today's DR log page, creating it if necessary.
-	 ** The log page will never be watchlisted (unless the user is already watching it).
-	 **/
+	** Transclude the nomination page onto today's DR log page, creating it if necessary.
+	** The log page will never be watchlisted (unless the user is already watching it).
+	**/
 	mdListRequestSubpage: function () {
 		$(document).triggerHandler('vFC', ['creating request subpage', this]);
 		this.pb.setCurrentTaskDone();
@@ -504,5 +515,7 @@ $.extend(window.VisualFileChange,
 		}
 	}
 });
+
 $(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'EditComponents']);
-}
+
+}(jQuery, mediaWiki));
