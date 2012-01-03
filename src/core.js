@@ -19,25 +19,32 @@
 		console.log('VisualFileChange> ' + p1);
 	});
 ***************************************************/
-if (!window.VisualFileChange) {
+/*global jQuery:false, mediaWiki:false, appendCSS:false, addPortletLink:false */
+/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+(function ($, mw) {
+'use strict';
+if (window.VisualFileChange) return;
+
+window.VisualFileChange = 1;
 
 /**
  * Create a progress-box object.
  * @constructor
  *
  * @example
- *      new progressBox( 150, this );
+ *      new ProgressBox( 150, this );
  *
  * @param width {Number} The initial width of the panal.
  * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like .mdThisTaskIcon
  */
-function progressBox(width, o) {
+function ProgressBox(width, o) {
+	/*jshint validthis:true*/
 	this.w = (width || 250);
 	this.t = {};
 	this.ct = 0;
 	this.usingObj = o;
 	
-	_this = this;
+	var _this = this;
 	this.$cont = $('<div>', { 
 		style: 'display:none; overflow:hidden; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
 	}).dblclick(function() { _this.$cmd.focus(); });
@@ -118,60 +125,60 @@ function progressBox(width, o) {
 		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
 	);
 }
-progressBox.prototype.show = function () {
+ProgressBox.prototype.show = function () {
 	this.$cont.show();
-}
-progressBox.prototype.hide = function () {
+};
+ProgressBox.prototype.hide = function () {
 	this.$cont.hide();
-}
-progressBox.prototype.remove = function () {
+};
+ProgressBox.prototype.remove = function () {
 	this.$cont.remove();
-}
-progressBox.prototype.addTask = function (task) {
+};
+ProgressBox.prototype.addTask = function (task) {
 	var n = $('<div>', { text: this.usingObj.i18n.task[task], 'class': 'md-notdone' });
 	this.t[task] = n;
 	this.$tasklist.append( n );
-}
-progressBox.prototype.setCurrentTaskState = function (state) {
+};
+ProgressBox.prototype.setCurrentTaskState = function (state) {
 	if (this.ct) this.ct.removeClass('md-notdone md-doing md-done md-attention').addClass(state);
-}
-progressBox.prototype.setCurrentTaskDone = function () {
+};
+ProgressBox.prototype.setCurrentTaskDone = function () {
 	if (this.ct && this.ct.hasClass('md-doing')) this.ct.removeClass('md-doing').addClass('md-done');
-}
-progressBox.prototype.setTaskState = function (taskname, state) {
+};
+ProgressBox.prototype.setTaskState = function (taskname, state) {
 	this.t[taskname].removeClass('md-notdone md-doing md-done md-attention').addClass(state);
 	this.ct = this.t[taskname];
-}
-progressBox.prototype.setHelp = function (help) {
+};
+ProgressBox.prototype.setHelp = function (help) {
 	this.$aHelpHead.text(help);
-}
-progressBox.prototype.setHelp2 = function (help, html) {
+};
+ProgressBox.prototype.setHelp2 = function (help, html) {
 	if (html) {
 		this.$aHelpCont.html(help);
 	} else {
 		this.$aHelpCont.text(help);
 	}
-}
-progressBox.prototype.setHelp3 = function (help) {
+};
+ProgressBox.prototype.setHelp3 = function (help) {
 	this.$aHelpCont2.text(help);
-}
-progressBox.prototype.setError = function (err) {
+};
+ProgressBox.prototype.setError = function (err) {
 	this.$error.text(err);
 	this.$errorCont.show();
-}
-progressBox.prototype.setZIndex = function (zIndex) {
+};
+ProgressBox.prototype.setZIndex = function (zIndex) {
 	this.$cont.css('z-index', zIndex);
-}
-progressBox.prototype.isHidden = function () {
-	return ('none' === this.$cont.css('display'))
-}
+};
+ProgressBox.prototype.isHidden = function () {
+	return ('none' === this.$cont.css('display'));
+};
 
 /**
  * Create a new VisualFileChange-literal-Object.
  *
  * @context {window}
  */
-window.VisualFileChange = {
+var VisualFileChange = window.VisualFileChange = {
 	/**
 	** Set up the VisualFileChange object and add the toolbox link.  Called via $(document).ready() during page loading.
 	**/
@@ -179,8 +186,8 @@ window.VisualFileChange = {
 		// Don't install link if the user opted out
 		if (window.AjaxDeleteOptOut) return;
 
-		$tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand")
-		if ( 1 == $tAjaxQuickDeleteOnDemand.length ) {
+		var $tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand");
+		if ( 1 === $tAjaxQuickDeleteOnDemand.length ) {
 			// User is using the load on demand feature. 
 			// Replace the link
 			$tAjaxQuickDeleteOnDemand.remove();
@@ -236,7 +243,7 @@ window.VisualFileChange = {
 		
 		$(document).triggerHandler('vFC', ['starting procedure', this]);
 
-		pb = this.pb = new progressBox(undefined, this);
+		pb = this.pb = new ProgressBox(undefined, this);
 		pb.addTask('start');
 		pb.addTask('target');
 		pb.addTask('list');
@@ -369,14 +376,14 @@ window.VisualFileChange = {
 	},
 
 	/**
-	 ** Pseudo-Modal JS windows.
-	 ** Needs to be converted into a class
-	 **/
+	** Pseudo-Modal JS windows.
+	** Needs to be converted into a class
+	**/
 	promptForTarget: function (prefill, minlen, o) {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $targetinput,
+			$submitButton, $targetinput, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var getMwDate = function(dateX) {
@@ -393,7 +400,7 @@ window.VisualFileChange = {
 			if (confirmed) return;
 			confirmed = true;
 			// Reading input
-			o.mdTarget = o.cleanReason($targetinput.val())
+			o.mdTarget = o.cleanReason($targetinput.val());
 			$('#AjaxMdContainer').text(o.i18n.mdPleaseWait);
 			if (mwDateRx.test($gStartAt.val())) o.mdLestart = $gStartAt.val();
 			switch ($gSortBy.val()) {
@@ -431,7 +438,7 @@ window.VisualFileChange = {
 							o.nextTask();
 						}
 					}}
-				})
+				});
 				
 			}
 			else {
@@ -466,9 +473,9 @@ window.VisualFileChange = {
 		$submitButton = $('.ui-dialog-buttonpane button:first');
 		$targetinput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 98%;', 'value': prefill });
 		
-		 // Start date
+		// Start date
 		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get('wgUserLanguage') ] );
-		var $gStartAt = o.$gStartAt = $('<input>', {
+		$gStartAt = o.$gStartAt = $('<input>', {
 				id: 'gStartAt',
 				type: 'text',
 				title: o.i18n.optStartAt,
@@ -498,13 +505,13 @@ window.VisualFileChange = {
 					return o.i18n.optStartAtHowTo;
 				} })
 			.placeholder();
-		var $gStartAtL = $('<label>', {
+		$gStartAtL = $('<label>', {
 				'for': 'gStartAt',
 				title: o.i18n.optStartAt,
 				html: " &nbsp;Start&nbsp;at&nbsp;"
 			} );
 			
-		var $gSortBy = $('<select>', {
+		$gSortBy = $('<select>', {
 				id: 'gSortBy'
 			} )
 			.append( $('<option>', { 'value': 'default' }).text('default')
@@ -513,7 +520,7 @@ window.VisualFileChange = {
 				,$('<option>', { 'value': 'ca' }).text('category only: asc')
 				,$('<option>', { 'value': 'cd' }).text('category only: desc')
 			);
-		var $gSortByL = $('<label>', {
+		$gSortByL = $('<label>', {
 				'for': 'gSortBy',
 				title: 'Sorting',
 				text: 'Sorting'
@@ -552,7 +559,7 @@ window.VisualFileChange = {
 	/**  
 	**  Method to securely close (you may call it "nuke") the dialog, even if there were errors; called on button cancel and by several methods
 	**/
- 	mdDlgThumbDlgClose: function () {
+	mdDlgThumbDlgClose: function () {
 		var o = VisualFileChange;
 		$(document).triggerHandler('vFC', ['closing dialog', o, o.dlg]);
 		
@@ -610,7 +617,7 @@ window.VisualFileChange = {
             if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
  
             // In case we get the mysterious 231 unknown error, just try again
-            if (result.error && result.error.info.indexOf('231') != -1) return setTimeout(function () {
+            if (result.error && result.error.info.indexOf('231') !== -1) return setTimeout(function () {
                o.doAPICall(params, callback);
             }, 500);
             if (result.error) {
@@ -672,7 +679,7 @@ window.VisualFileChange = {
 	fail: function (err) {
 		err = err.toString();
 		document.body.style.cursor = 'auto';
-		if ('undefined' != typeof(console)) console.log('Error: ' + err);
+		if ('undefined' !== typeof(console)) console.log('Error: ' + err);
 		var msg = this.i18n.taskFailure[this.currentTask] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
  
 		var reportPage = '';
@@ -682,7 +689,6 @@ window.VisualFileChange = {
  
 		if ( 'MD' === this.context || 'MD-RevertImage' === this.context || 'MD-postDlg' === this.context ) {
 			reportPage = this.mdErrReportPath;
-			fix = '';
 
 			this.context = 'MD-Error';
 		}
@@ -698,7 +704,7 @@ window.VisualFileChange = {
 			this.currentTask = o.mdSecureCall.arguments[0];
 			return o[stFunction].apply(this, Array.prototype.slice.call(o.mdSecureCall.arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
 		} catch (ex) {
-		console.log('failure at ' & stFunction)
+			//console.log('failure at ' & stFunction)
 			o.fail(ex);
 		}
 	},
@@ -729,20 +735,20 @@ window.VisualFileChange = {
 	/**                                                    **
 	*************** SETTINGS / CONFIGURATION ****************
 	**                                                    **/
-	mdOpt: { // 		0	1						2					3						4		5		6		7												8																									9											10
-		// key, minLenReq, acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
+	mdOpt: {	//		0	1						2					3						4		5		6		7												8																									9											10
+	// key,		minLenReq,	acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
 		'c_replace':[false,	'mdInsertPattern',		'',					'',						false,	true,	false,	"",												'Replacing "%pattern%" with "%replace%"', 															'',											''],
 		'prepend':  [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
 		'append':   [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
-		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{copyvio|1=%REASON%}}\n",					'%cv% %REASON%', 																					'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
-		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{Derivative|1=%REASON%}}\n",					'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{\{subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
-		'cv-fu':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{Fair use}}\n",								'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{\{subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
-		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{\{Logo}}\n",									'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
-		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{\{Nonderivative}}\n",							'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{\{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
-		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{\{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 														'{\{subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
-		'np':		[false,	false,					'',					'',						true,	false,	false,	"{\{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{\{subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
-		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{\{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{\{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
-		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{\{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{\{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
+		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"copyvio|1=%REASON%}}\n",					'%cv% %REASON%', 																					'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
+		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"Derivative|1=%REASON%}}\n",				'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{{'+'subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
+		'cv-fu':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"Fair use}}\n",							'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{{'+'subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
+		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"Logo}}\n",								'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
+		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"Nonderivative}}\n",						'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
+		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 													'{{'+'subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
+		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:npd}}\n",							'Missing [[COM:PERMISSION|permission]].', 															'{{'+'subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
+		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:nsd}}\n",							'File has no [[COM:Source|source]].', 																'{{'+'subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
+		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:Dw-nsd}}\n",						'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{'+'subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
 		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
 		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											'']
 	},
@@ -782,7 +788,7 @@ window.VisualFileChange = {
 		[/\{\{[Dd]erivative[\|.*]?\}\}/g],
 		[/\{\{[Ss]creenshot.*\}\}/g],
 		[/\{\{[Nn]oncommercial.*\}\}/g],
-		[/\{\{[Nn]onderivative.*\}\}/g],
+		[/\{\{[Nn]onderivative.*\}\}/g]
 	],
  
 	mdTagRecognization: [
@@ -797,20 +803,20 @@ window.VisualFileChange = {
 		[/OTRS pending.*/,									'on',  'ddf'],
 		[/Items with OTRS permission confirmed.*/,			'opm', 'bcf'],
 		[/OTRS received.*/,									'or',  'cdf'],
-		[/[Aa]dmin[- ]reviewed [licenses|Flickr images]/,	'lrd', '8fa'],
+		[/[Aa]dmin[\- ]reviewed [licenses|Flickr images]/,	'lrd', '8fa'],
 		[/Flickr images needing human review/,				'frR', 'af8'],
-		[/License review needed/,							'lrR', 'af8'],
+		[/License review needed/,							'lrR', 'af8']
 	],
  
 	mdLicenseRecognization: [
 		// RegExp for the tag			note to add to the thumb-page
-		[/Category:CC[- _]BY-SA.*/i,	'CC-By-SA'],
-		[/Category:CC[- _]BY.*/i,		'CC-By'],
-		[/Category:CC[- _]Zero.*/i,		'CC0'],
+		[/Category:CC[\- _]BY-SA.*/i,	'CC-By-SA'],
+		[/Category:CC[\- _]BY.*/i,		'CC-By'],
+		[/Category:CC[\- _]Zero.*/i,		'CC0'],
 		[/Category:GFDL.*/i,			'GFDL'],
-		[/Category:PD[- _]Old.*/i,		'PD-old'],
-		[/Category:PD[- _]self.*/i,		'PD-self'],
-		[/Category:PD[- _]author.*/i, 	'PD-author'],
+		[/Category:PD[\- _]Old.*/i,		'PD-old'],
+		[/Category:PD[\- _]self.*/i,		'PD-self'],
+		[/Category:PD[\- _]author.*/i, 	'PD-author'],
 		[/Category:PD.*/i, 				'PDx'],
 		[/Category:FAL/i, 				'LibreA'],
 		[/Category:Images requiring attribution/i, 				'Attrib'],
@@ -818,12 +824,12 @@ window.VisualFileChange = {
 		[/Category:Mozilla Public License/i, 					'MPL'],
 		[/Category:GPL/i, 										'GPL'],
 		[/Category:Free screenshot.*/i, 						'free-Screenshot'],
-		[/Category:Self[- _]published[- _]work/i, 				'<b>self</b>'],  // rm the next tags from being shown
-		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[- _]received/, ''], [/Items[- _]with[- _]OTRS[- _]permission/, ''], [/OTRS[- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
+		[/Category:Self[\- _]published[ß\- _]work/i, 				'<b>self</b>'],  // rm the next tags from being shown
+		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
  
-	mdOTRSprefill: "{{PermissionOTRS|id=%ID|\~\~\~\~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}",
-	mdOTRSTicketPrefill: "{{PermissionOTRS|ticket=%URL|\~\~\~\~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}",
+	mdOTRSprefill: "{{"+"PermissionOTRS|id=%ID|~~"+"~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}",
+	mdOTRSTicketPrefill: "{{"+"PermissionOTRS|ticket=%URL|~~"+"~~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}",
 	mdPermissionPattern: /(\|Permission\s*\=)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
@@ -846,7 +852,7 @@ window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.0.3',
+	mdScriptRevision: '0.7.0.4',
  
    // Translatable strings
 	i18n: {
@@ -991,7 +997,7 @@ mediaWiki.loader.using([
 'jquery.placeholder',
 'mediawiki.html',
 'mediawiki.user',
-'mediawiki.util',
+'mediawiki.util'
 ], function () {
 	$(document).ready(function () {
 		this.context = "QD";
@@ -1044,4 +1050,4 @@ September 2, 2010
     $.extend($.expr[':'], { "in-view": function(a, i, m) { return $(a).visible().length > 0; } });
 })(jQuery); 
  
-} // end if (guard) </nowiki>
+}(jQuery, mediaWiki));
