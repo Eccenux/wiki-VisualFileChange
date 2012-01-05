@@ -375,14 +375,17 @@ $.extend(window.VisualFileChange,
 	mdInsertOTRS: function (sitetext, insert) {
 		if (this.mdPermissionPattern.test(sitetext)) {
 			if (this.mdReplacePermission) {
-				this.mdPermissionPattern.exec(sitetext);
-				var pos = sitetext.search(this.mdPermissionPattern);
-				var posstring = sitetext.substr(pos);
-				sitetext = sitetext.substr(0, pos) + RegExp.$1 + insert + posstring.substr(Math.min( posstring.indexOf('\n|'), posstring.indexOf('\n}}') ));
+				var texparts = sitetext.match(this.mdPermissionPattern);
+				// in rare cases [3] is undefined in other cases [3] contains the next param of {{information}}
+				if (texparts[3] && mdNextParamPattern.test(texparts[3])) {
+					sitetext = texparts[1] + texparts[2] + insert + texparts[3] + texparts[4];
+				} else {
+					sitetext = texparts[1] + texparts[2] + insert + texparts[4];
+				}
 			} else {
 				// Do we need this for Safari?
-				this.mdPermissionPattern.exec(sitetext);
-				sitetext = sitetext.replace(this.mdPermissionPattern, '$1' + insert);
+				this.mdSimplePermissionPattern.exec(sitetext);
+				sitetext = sitetext.replace(this.mdSimplePermissionPattern, '$1' + insert);
 			}
 		} else { // if no description template is available, prepend
 			sitetext = insert + '\n' + sitetext;
