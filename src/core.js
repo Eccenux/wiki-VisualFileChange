@@ -830,7 +830,9 @@ var VisualFileChange = window.VisualFileChange = {
  
 	mdOTRSprefill: "{{"+"PermissionOTRS|id=%ID|~~"+"~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}",
 	mdOTRSTicketPrefill: "{{"+"PermissionOTRS|ticket=%URL|~~"+"~~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}",
-	mdPermissionPattern: /(\|Permission\s*\=)/i,
+	mdSimplePermissionPattern: /(\|\s*Permission\s*\=)/i,
+	mdPermissionPattern: /^((?:.|\n)+?)(\|\s*Permission\s*\=)((?:.|\n)+?)?((?:\n\s*\}\}|\n\s*\|)(?:.|\n)*)$/i,
+	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
@@ -852,7 +854,7 @@ var VisualFileChange = window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.0.5',
+	mdScriptRevision: '0.7.0.7',
  
    // Translatable strings
 	i18n: {
