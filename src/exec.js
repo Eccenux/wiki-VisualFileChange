@@ -377,7 +377,7 @@ $.extend(window.VisualFileChange,
 			if (this.mdReplacePermission) {
 				var texparts = sitetext.match(this.mdPermissionPattern);
 				// in rare cases [3] is undefined in other cases [3] contains the next param of {{information}}
-				if (texparts[3] && mdNextParamPattern.test(texparts[3])) {
+				if (texparts[3] && this.mdNextParamPattern.test(texparts[3])) {
 					sitetext = texparts[1] + texparts[2] + insert + texparts[3] + texparts[4];
 				} else {
 					sitetext = texparts[1] + texparts[2] + insert + texparts[4];
