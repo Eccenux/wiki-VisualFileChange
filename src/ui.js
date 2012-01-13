@@ -2,11 +2,24 @@
 // These are the delayed loaded display components (UI) in order to speed up loading of the first UI
 
 /*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false */
-/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+/*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
 (function ($, mw) {
 'use strict';
 
 if (!window.VisualFileChange) return;
+
+appendCSS( ' .rgallery { background-color:#FFF !important; }\n'
+	+ ' .numbersOnly { text-align:right; }\n'
+	+ ' .md-collapse-closed { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/closed-ltr.png) no-repeat center left }\n'
+	+ ' .md-collapse-open { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/open.png) no-repeat center left }\n'
+	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
+	+ ' a:link.md-loglink { color:#BB6!important; display:inline-block; }\n'
+	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; }\n'
+	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; }\n'
+	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
+	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
+	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
+);
 
 $.extend(window.VisualFileChange,
 {
@@ -61,20 +74,27 @@ $.extend(window.VisualFileChange,
 		this.pb.setCurrentTaskDone();
 		
 		var allFileChanges = result.query.logevents;
-		for (var id in allFileChanges) { // loop through all filechanges (array)
-			if ('upload' === allFileChanges[id].action) { // This file was initially uploaded by the user.
-				if (allFileChanges[id].title in this.iUploads) continue; // Do not mess-up numbers when a file was deleted and re-uploaded
-				this.iUploads[allFileChanges[id].title] = { uploader: [] };
-				this.iUploads[allFileChanges[id].title].iId = this.iiUploads;
-				this.iUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
-				this.iiUploads++;
-			} else if ('overwrite' === allFileChanges[id].action) {
-				this.oUploads[allFileChanges[id].title] = {};
-				this.oUploads[allFileChanges[id].title].iId = this.ioUploads;
-				this.oUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
-				this.ioUploads++;
+		var _this = this;
+		$.each(allFileChanges, function(id, fc) { // loop through all filechanges (upload-events) (array)
+		
+			// This file was initially uploaded by the user.
+			if ('upload' === fc.action) { 
+				// Do not mess-up numbers when a file was deleted and re-uploaded
+				if (fc.title in _this.iUploads) return; 
+				_this.iUploads[fc.title] = { uploader: [] };
+				_this.iUploads[fc.title].iId = _this.iiUploads;
+				_this.iUploads[fc.title].time = fc.timestamp;
+				_this.iiUploads++;
+			// User overwrote file.
+			} else if ('overwrite' === fc.action) {
+				_this.oUploads[fc.title] = {};
+				_this.oUploads[fc.title].iId = _this.ioUploads;
+				_this.oUploads[fc.title].time = fc.timestamp;
+				_this.ioUploads++;
 			}
-		}
+			
+		});
+		
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
@@ -113,13 +133,15 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['got catmembers', this, result]);
 		this.pb.setCurrentTaskDone();
 		
-		var allFileChanges = result.query.categorymembers;
-		for (var id in allFileChanges) { // loop through all category-members (object)
-			this.iUploads[allFileChanges[id].title] = { uploader: [] };
-			this.iUploads[allFileChanges[id].title].iId = this.iiUploads;
-			this.iUploads[allFileChanges[id].title].time = allFileChanges[id].timestamp;
-			this.iiUploads++;
-		}
+		var _this = this;
+		
+		// loop through all category-members (object)
+		$.each(result.query.categorymembers, function(id, fc) {
+			_this.iUploads[fc.title] = { uploader: [] };
+			_this.iUploads[fc.title].iId = _this.iiUploads;
+			_this.iUploads[fc.title].time = fc.timestamp;
+			_this.iiUploads++;
+		});
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
@@ -179,15 +201,27 @@ $.extend(window.VisualFileChange,
 		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
 
 		var o = this;
+		
+		// Tipsy-tooltips for metadata and categories
+		$('.tipsymetadata').die();
+		$('.tipsymetadata').tipsy( {
+			title: function() {
+				return o.mdSecureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), o);
+			},
+			live: true,
+			html: true,
+			gravity: $.fn.tipsy.autoNS
+		} );
+		$('.tipsycategory').die();
+		$('.tipsycategory').tipsy( {
+			title: function() { return o.mdSecureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), o, false).html(); },
+			live: true,
+			html: true,
+			gravity: $.fn.tipsy.autoNS
+		} );
 
 		/*  The UI  */
 		this.mdMinLenRequired = true;     // Is a reason required?
-
-		appendCSS( '.rgallery { background-color:#FFF !important; } '
-			+ '.md-collapse-closed { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/closed-ltr.png) no-repeat center left } '
-			+ '.md-collapse-open { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/open.png) no-repeat center left } '
-			+ '.md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; } '
-		);
 
 		var dlgButtons = {};
 		dlgButtons[this.i18n.submitButtonLabel] = function() {
@@ -222,9 +256,9 @@ $.extend(window.VisualFileChange,
 
 		var getSelect = function() {
 			var sel = '<select size="1" id="AjaxMdType">';
-			for (var id in o.mdOpt) {
+			$.each(o.mdOpt, function(id, opt) {
 				sel += '<option value="' + id + '">' + o.i18n.mdOptions[id] + '</option>';
-			}
+			});
 			sel += '</select>';
 			return sel;
 		};
@@ -404,7 +438,6 @@ $.extend(window.VisualFileChange,
 		// cute-selection dialog
 		var dlgSelectButtons = {};
 		dlgSelectButtons[this.i18n.mdCuteSelect.button] = function () { 
-			var curUpld = '';
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, ""));
@@ -430,11 +463,10 @@ $.extend(window.VisualFileChange,
 				v_txtAjaxMdSelectDate1 = dateFromString(v_txtAjaxMdSelectDate1);
 				if (!v_txtAjaxMdSelectDate1) { alert('Invalid end-date'); return; }
 			}
- 
-			for (var upload in o.iUploads) {
+
+			$.each(o.iUploads, function(upload, curUpld) {
 				try {
 					var isMatch = {};
-					curUpld = o.iUploads[upload];
 					// yyyy    mm     dd
 					/(\d{4})-(\d\d)-(\d\d)T(?:(\d\d):(\d\d):(\d\d))Z/.exec(curUpld.time);
 					var curUpldDate = new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6);
@@ -442,7 +474,7 @@ $.extend(window.VisualFileChange,
  
 					if ( v_txtAjaxMdSelectCat ) {
 						for (var ct in curUpld.categories) {
-							if (curUpld.categories[ct].title.replace("Category:", "") === v_txtAjaxMdSelectCat) { 
+							if (curUpld.categories.hasOwnProperty(ct) && (curUpld.categories[ct].title.replace("Category:", "") === v_txtAjaxMdSelectCat)) { 
 								isMatch.cat = true;
 							}
 						}
@@ -468,11 +500,9 @@ $.extend(window.VisualFileChange,
  
 					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
 				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + ex); }
-			}
+			});
 			updateSelectedCount();
 		};
- 
-		appendCSS('.numbersOnly { text-align:right; }');
  
 		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
@@ -495,7 +525,7 @@ $.extend(window.VisualFileChange,
 					$('<td>').append(this.i18n.mdCuteSelect.date),
 					$('<td>').append(
 						$('<label>', { 'for': 'txtAjaxMdSelectDate0', text: this.i18n.mdCuteSelect.between }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 50, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 22, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -511,7 +541,7 @@ $.extend(window.VisualFileChange,
 									return o.i18n.optStartAtHowTo;
 							} }),
 						$('<label>', { 'for': 'txtAjaxMdSelectDate1', text: this.i18n.mdCuteSelect.and }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 50, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 22, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -593,7 +623,7 @@ $.extend(window.VisualFileChange,
 					prop: 'imageinfo|info|revisions|categories',
 					rvprop: 'timestamp|content',
 					intoken: ('undefined' === typeof _this.edittoken) ? 'edit' : '',
-					iiprop: 'url|size',
+					iiprop: 'url|size|metadata',
 					iiurlwidth: 120,
 					iiurlheight: 120,
 					titles: files.join('|'),
@@ -611,8 +641,8 @@ $.extend(window.VisualFileChange,
 				_this.doAPICall(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
 			};
 
-			for (var upload in this.iUploads) {
-				if ((this.iCurrentIId + 1) > this.iUploads[upload].iId) continue;
+			$.each(this.iUploads, function(upload, upli) {
+				if ((_this.iCurrentIId + 1) > upli.iId) return;
 				collectedFiles.push(upload);
 				collectedCount++;
 				if (collectedCount > 9) {  // only 10 at once
@@ -620,11 +650,11 @@ $.extend(window.VisualFileChange,
 					sendReq(collectedFiles);
 					collectedFiles = [];
 				}
-				this.iCurrentIId = this.iUploads[upload].iId;
-				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) === this.mdUploadCt) {
-					break;
+				_this.iCurrentIId = upli.iId;
+				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) === _this.mdUploadCt) {
+					return false;
 				}
-			}
+			});
 			sendReq(collectedFiles);
 		}
 		
@@ -632,19 +662,20 @@ $.extend(window.VisualFileChange,
 		$('#mdQueryMoreBtn').addClass('ui-state-disabled');
 	},
 	
-	/** Helper function: Creating a gallery box **/
-	mdCreateGalleryBox: function (img, txt, height) {
-		var $ih = $('<div>', { style: 'margin:15px auto;', name: 'mdImageHere' } ),
-			$th = $('<div>', { 'class': 'gallerytext', name: 'mdTextHere' }),
-			$galleryBox = $('<li>', { style: 'width: 155px', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th)),
-			id;
-
-		for (id in img) {
-			$ih.append(img[id]);
-		}
-		for (id in txt) {
-			$th.append(txt[id]);
-		}
+	/* Helper function: Creating a gallery box for gallery view */
+	mdCreateGalleryBox: function( img, txt, height, style, imgTitle, imgH ) {
+		var id,
+			$ih = $('<div>', { style: 'margin:' + (imgH ? (Math.round((height - imgH) / 2) + 'px auto;') : '15px auto;') } ),
+			$th = $('<div>', { 'class': 'gallerytext', 'tipsy-title': imgTitle }),
+			$galleryBox = $('<li>', { style: 'width:155px; background:#f8f8f8;', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
+		if ('string' === typeof style) $th.attr('style', style);
+		
+		$.each(img, function(id, imgi) {
+			$ih.append(imgi);
+		});
+		$.each(txt, function(id, txti) {
+			$th.append(txti);
+		});
 		return $galleryBox;
 	},
 	
@@ -654,46 +685,132 @@ $.extend(window.VisualFileChange,
 			.append($('<a>', { href: mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", 'Special:Undelete/' + img), target: '_blank' }).append(" (undel)"));
 	},
 	
-	/**  Helper function: Extracs categories from the list of those.  **/
-	mdExtractTags: function (mdCats) {
-		var mdTags = '', c, thiscat, id;
-		if ('object' !== typeof mdCats) return mdTags;
+	/** Called by Tipsy on hovering. Get a list of cats for a specific file. 
+		@param {string} revision-identifier
+		@param {object} reference to JSONListUploads 
+		@param {boolean} render as flickr-like tags?
+	**/
+	mdGetCatTable: function( rv, o, asTags ) {
+		var cats = o.iUploads[rv].categories,
+			$catWrap = $('<div>'),
+			$catsList = $('<ul>');
+		
+		if (asTags) {
+			$catsList.addClass('j-cat-wrap');
+		} else {
+			$catWrap.html('<b><i>Categories:</i></b><br/><br/>');
+		}
+		$catWrap.append($catsList);
+		
+		$.each(cats, function(id, tCat) {
+			if ('undefined' === typeof cats[id].hidden) $catsList.append( 
+				$('<li>', { 'class': (asTags ? ' j-cat-label' : '') }).append($('<a>', 
+					{	'class': (asTags ? ' j-cat-label' : ''), 
+						href: mw.util.wikiGetlink(tCat.title), 
+						target: '_blank' 
+					}).text(tCat.title.replace('Category:', '')), ' ') );
+		});
+		return $catWrap;
+	},
+	
+	/* Helper function: Called by QueryIICB. Get model info from Image-Metadata */
+	mdGetCamModel: function( uItem ) {
+		var model = '';
+		var mdata = uItem.metadata;
+		if ('object' !== typeof mdata) return '';
+		$.each(mdata, function(id, mdatai) {
+			if ('Model' === mdatai.name) {
+				model = $.trim(mdatai.value) + ' ';
+				return false;
+			}
+		});
+		return model;
+	},
+	
+	/* Called by Tipsy on hovering. Get a list of cats for a specific file */
+	mdGetMetaTable: function( rv, o ) {
+		var	id, val,
+			mdata = o.iUploads[rv].metadata,
+			fRestr = (mdata.length > 6),
+			stMdat = '<b><i>File-Metadata:</i></b><br/><br/>',
+			restrArr = ["ImageDescription", "Make", "Model", "Copyright", "DateTime", "Artist", "Title", "Author", "Creator", "CreationDate"];
+			
+		$.each(mdata, function(id, mdatai) {
+			if ('string' !== typeof mdatai.value) return;
+			try {
+				val = mw.html.escape(mdatai.value).slice(0, 200);
+			} catch (ex) {
+				val = mdatai.value;
+			}
+			stMdat += ((fRestr && (-1 === $.inArray(mdatai.name, restrArr))) ? '' : '<i>' + mdatai.name + '</i><br/>' + val + '<br/><br/>');
+		});
+		return stMdat;
+	},
+	
+	/* Helper function: Extract categories from the list of those. */
+	mdExtractTags: function( mdCats ) {
+		var	thiscat,
+			mdTags = '',
+			_this = this,
+			skip = false;
+			
+		if ( typeof mdCats !== 'object' ) return mdTags;
 		mdTags += '<i>';
- 
+
 		// First the licenses (hidden):
-		catloop: // Using a label for this loop
-		for (c in mdCats) {
-			if ( "string" === typeof mdCats[c].hidden ) {
-				thiscat = mdCats[c].title;
-				for (id in this.mdLicenseRecognization) {
-					if ( this.mdLicenseRecognization[id][0].test(thiscat) ) {
-						if (this.mdLicenseRecognization[id][1]) mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdLicenseRecognization[id][1] + '</abbr> ';
-						continue catloop;
+		$.each(mdCats, function(i, cati) {
+			if ( 'string' === typeof cati.hidden ) { // it is an empty string if true
+				thiscat = cati.title;
+				skip = false;
+				$.each(_this.mdLicenseRecognization, function(id, recogi) {
+					if ( recogi[0].test(thiscat) ) {
+						if ( recogi[1] !== '' ) {
+							mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">' + recogi[1] + '</abbr> ';
+						}
+						skip = true;
+						return false;
 					}
-				}
+				});
+				if (skip) return;
+				
 				// This will be only executed if there was no match
 				mdTags += '<abbr title="' + thiscat.replace('Category:', '') + '">U</abbr> ';
 			}
-		}
+		});
+		
 		mdTags += '</i> <span style="background-color:#FC9;">';
- 
+
 		// Then, deletion tags:
-		catloop2: // Using another label for this loop
-		for (c in mdCats) {
-			thiscat = mdCats[c].title;
-			for (id in this.mdTagRecognization) {
-				var thistag = this.mdTagRecognization[id];
+		$.each(mdCats, function(i, cati) {
+			thiscat = cati.title;
+			skip = false;
+			$.each(_this.mdTagRecognization, function(id, thistag) {
 				if ( thistag[0].test(thiscat) ) {
-					if (thistag[1]) mdTags += (thistag[2] ? '<span style="background-color:#' + thistag[2] + ';">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + this.mdTagRecognization[id][1] + '</abbr>' + (thistag[2] ? '</span>' : '');
-					continue catloop2;
+					if ( thistag[1] !== '' ) {
+						mdTags += (thistag[2] ? '<span style="background-color:#' + thistag[2] + ';">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + thistag[1] + '</abbr>' + (thistag[2] ? '</span>' : '');
+					}
+					skip = true;
+					return false;
 				}
-			}
-		}
-		mdTags+= '</span>';
- 
+			});
+			if (skip) return;
+		});
+		
+		mdTags += '</span>';
+
 		return mdTags;
 	},
- 
+	
+	/* Format a number > 1 (1000 --> 1 000) */
+	mdFormattNumber: function( iNr ) {
+		iNr += '';
+		var rx = /(\d+)(\d{3})/;
+		while (rx.test(iNr)) {
+			iNr = iNr.replace(rx, '$1' + '<span style="font-size:40%;font-weight:100">&nbsp;</span>' + '$2');
+		}
+		return iNr;
+	},
+
 	/**  
 	**  API-Call-back method to eval the queried file and add a thumb
 	**/
@@ -704,28 +821,30 @@ $.extend(window.VisualFileChange,
 		
 		if ('MD-Error' === this.context || 'MD-postDlg' === this.context) return; // don't try to add something if there was an error.
 		var pages = result.query.pages;
-		for (var id in pages) {
-			var pg = pages[id],
-				dirtyTitle = pg.title,
-				cleanTitle = mw.html.escape(dirtyTitle),
-				uItem = this.iUploads[dirtyTitle],
+		
+		var o = this;
+
+		$.each(pages, function(id, pg) {
+			var dirtyTitle = pg.title,
+				uItem = o.iUploads[dirtyTitle],
 				i, ii,
 				seenHash = {};
 			
-			this.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (this.mdUploadCt) + 
-			' uploads left on this batch of queries. ' + (this.iiUploads) + ' cached uploads current image: ' + dirtyTitle); 
+			o.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (o.mdUploadCt) + 
+			' uploads left on this batch of queries. ' + (o.iiUploads) + ' cached uploads current image: ' + dirtyTitle); 
 
-			if ('undefined' === typeof pg.imageinfo) { try { 
-				this.$AjaxDeletedUploads.append(this.mdSecureCall("mdCreateDelUploadItem", dirtyTitle));
-				} catch (e) {} continue; 
+			if ('undefined' === typeof pg.imageinfo) { 
+				try { 
+					o.$AjaxDeletedUploads.append(o.mdSecureCall('mdCreateDelUploadItem', dirtyTitle));
+				} catch (e) {} 
+				return; 
 			} // The file has been deleted
 
 			/*  Adding a thumbnail to the dialog  */
-			this.mdBusy = true;
-			this.mdActualResultCount++;
+			o.mdBusy = true;
+			o.mdActualResultCount++;
 			
-			if (this.mdModeCat) {
-				iiloop:
+			if (o.mdModeCat) {
 				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
 					if (ii.sha1) {
@@ -738,27 +857,48 @@ $.extend(window.VisualFileChange,
 				}
 			}
 			
-			var $galleryBox = this.mdCreateGalleryBox(
-				[ $('<a>', { href: pg.imageinfo[0].descriptionurl, target: '_blank', 'class': 'image' })
-					.append( $('<img>', { src: pg.imageinfo[0].thumburl, width: pg.imageinfo[0].thumbwidth, height: pg.imageinfo[0].thumbheight, alt: dirtyTitle }) ) ],
+			ii = pg.imageinfo[0];
+
+			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage
+			uItem.categories = pg.categories;     // save cats for cute-selection
+			uItem.metadata = ii.metadata;         // save Exif and other for cute-selection
+			uItem.size = (ii.size >> 10);         // for cute-selection
+			
+			var camModel = o.mdSecureCall('mdGetCamModel', uItem);
+			var loglink = mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=Special:Log&page=' + mw.util.wikiUrlencode(dirtyTitle);
+			
+			var $galleryBox = o.mdCreateGalleryBox(
+				[ $('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image' })
+					.append( $('<img>', { src: ii.thumburl, width: ii.thumbwidth, height: ii.thumbheight, alt: dirtyTitle }) ) ],
 				[ ('<i>' + uItem.iId + ': </i>'),
 				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: dirtyTitle } ),
-				(this.mdSecureCall("mdExtractTags", pg.categories) + '<br/>'),
-				(cleanTitle  + '<br/>'),
-				(uItem.time.replace(/[T|Z]/g, " ") +  '<br/>'),
-				((pg.imageinfo[0].size >> 10) + '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>') ],
-				150
+				$('<span>', { 'class': 'tipsycategory' }).text('c'), ' ',
+				($.isArray(ii.metadata) ? 
+					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm') : 
+					''), 
+				$('<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' }), '<br/>',
+				(o.mdSecureCall('mdExtractTags', pg.categories)), ' ',
+				$('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image jFileTitle' })
+					.text(dirtyTitle),
+				$('<div>', { 'class': 'jFileTime' }).text(uItem.time.replace(/[T|Z]/g, " ")),
+				$('<div>', { 'class': 'jFileSize' }).html(
+					o.mdSecureCall('mdFormattNumber', uItem.size) 
+					+ '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>&nbsp; '
+					+ (o.mdSecureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + o.mdSecureCall('mdFormattNumber', ii.height)) 
+					+ 'px')
+				],
+				150,
+				'',
+				dirtyTitle,
+				ii.thumbheight
 			);
-			this.gbs[dirtyTitle] = $galleryBox;
-			this.mdBusy = false;
+			o.gbs[dirtyTitle] = $galleryBox;
+			o.mdBusy = false;
  
 			if ( pg.edittoken ) { // prevent assigning an empty edit token
-				this.edittoken = pg.edittoken; 
+				o.edittoken = pg.edittoken; 
 			} 
-			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage
-			uItem.categories = pg.categories;     // save cats for selector
-			uItem.size = pg.imageinfo[0].size / 1024; // for selector
-		}
+		});
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
  
@@ -766,24 +906,24 @@ $.extend(window.VisualFileChange,
 	**  Called when a batch of files has been queried  
 	**/
 	mdQueryFileDone: function () {
+		var o = this;
+		
 		// Append all queried files to the screen-container
-		for (var id in this.iUploads) {
-			var uItem = this.iUploads[id];
+		$.each(this.iUploads, function(id, uItem) {
 			if (!uItem.gbInUse) {
 				uItem.gbInUse = true;
-				var $galleryBox = this.gbs[id];
+				var $galleryBox = o.gbs[id];
 				if ($galleryBox) {
-					this.$AjaxMdUlContainer.append($galleryBox);
+					o.$AjaxMdUlContainer.append($galleryBox);
 				}
 			}
-		}
+		});
 
 		this.mdBusy = false;
 		this.mdPendingBatchQueries--;
 		$('#AjaxMdNotReady').hide();
 		this.pb.setCurrentTaskDone();
 		
-		var o = this;
 		$(document).triggerHandler('vFC', ['detail-info processed', o]);
  
 		if ( (o.iiUploads > (o.iCurrentIId + 1))  || !o.mdNoMoreFiles) {
@@ -886,13 +1026,15 @@ $.extend(window.VisualFileChange,
 			});
 			$('#AjaxMdContainer').append('<div id="AjaxMdNotReady">Please wait while enumerating overwritten files ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
 			for (var upload in this.oUploads) {
-				var query = {
-					action: 'view',
-					title: upload
-				};
-				$('#AjaxMdNotReady').contents().eq(0).replaceWith("Obtaining information from index.php for " + upload);
-				this.doHTTPRequest(query, 'mdRvQueriedFile', 'GET');
-				this.mdUploadCt++;
+				if (this.oUploads.hasOwnProperty(upload)) {
+					var query = {
+						action: 'view',
+						title: upload
+					};
+					$('#AjaxMdNotReady').contents().eq(0).replaceWith("Obtaining information from index.php for " + upload);
+					this.doHTTPRequest(query, 'mdRvQueriedFile', 'GET');
+					this.mdUploadCt++;
+				}
 			}
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
@@ -916,7 +1058,8 @@ $.extend(window.VisualFileChange,
 				return;
 			}
 			for (var rv in rvMatrix) {
-				if (rvMatrix[rv].user !== this.mdTarget) { // Find the first revision of another user
+				// Find the first revision of another user
+				if (rvMatrix.hasOwnProperty(rv) && (rvMatrix[rv].user !== this.mdTarget)) {
 					preVandalRv = rvMatrix[rv];
 					break;
 				}
@@ -950,7 +1093,10 @@ $.extend(window.VisualFileChange,
 					[ ('<i>' + this.oUploads[pageTitle].iId + ': </i>'),
 					$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: pageTitle } ),
 					('<a' + imgDescrPageLink + '>' + pageTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</a>') ],
-					310
+					310,
+					'',
+					pageTitle,
+					rvMatrix[0].imgHeight
 				);
 				$('#AjaxMdUlContainer').append($galleryBox);
  
@@ -1066,14 +1212,12 @@ $.extend(window.VisualFileChange,
 			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
 				// navigating to the new created deletion request
-				encTitle = this.requestPage;
-				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
+				encTitle = mw.util.wikiUrlencode(this.requestPage);
 				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			}
 			else if (-1 === mw.config.get('wgNamespaceNumber') && ( 'c_replace' !== this.mdTaskToPerform && 'OTRS' !== this.mdTaskToPerform && 'other' !== this.mdTaskToPerform )) {
 				// navigating to the user-discussion-page
-				encTitle = this.mdUserTalkPrefix + this.mdTarget;
-				encTitle = encodeURIComponent(encTitle.replace(/ /g, '_')).replace(/%2F/ig, '/').replace(/%3A/ig, ':');
+				encTitle = mw.util.wikiUrlencode(this.mdUserTalkPrefix + this.mdTarget);
 				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
 			} else {
 				this.mdGoToSite(location.href);
@@ -1089,6 +1233,9 @@ $.extend(window.VisualFileChange,
 		}
 	}
 });
-$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
+
+mw.loader.using('jquery.tipsy', function() {
+	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
+});
 
 }(jQuery, mediaWiki));
