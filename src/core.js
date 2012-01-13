@@ -327,13 +327,15 @@ var VisualFileChange = window.VisualFileChange = {
 		var pages = result.query.pages,
 			info, content, i;
 		for (var id in pages) { // there should be only one, but we don't know its ID
-			this.edittoken = pages[id].edittoken; // The edittoken only changes on session loss
-			info = pages[id].imageinfo;
-			content = pages[id].revisions[0]['*'];
-			i =info.length - 1;
-			// Now exclude bots which only reupload a new version:
-			if (-1 === this.excludedBots.indexOf(info[i].user)) {
-				this.mdTarget = info[i].user;
+			if (pages.hasOwnProperty(id)) {
+				this.edittoken = pages[id].edittoken; // The edittoken only changes on session loss
+				info = pages[id].imageinfo;
+				content = pages[id].revisions[0]['*'];
+				i =info.length - 1;
+				// Now exclude bots which only reupload a new version:
+				if (-1 === this.excludedBots.indexOf(info[i].user)) {
+					this.mdTarget = info[i].user;
+				}
 			}
 		}
 		this.nextTask();
@@ -854,7 +856,7 @@ var VisualFileChange = window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.0.7',
+	mdScriptRevision: '0.7.1.0',
  
    // Translatable strings
 	i18n: {
