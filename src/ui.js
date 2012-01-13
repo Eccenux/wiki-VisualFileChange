@@ -108,8 +108,8 @@ $.extend(window.VisualFileChange,
 		} else {
 			if (!this.mdNoMoreFiles) {
 				this.mdLestart = result['query-continue'].logevents.lestart;
-				if (!this.mdActualResultCount) this.mdSecureCall('mdQueryMore');
 			}
+			if (!this.mdActualResultCount) this.mdSecureCall('mdQueryMore');
 		}
 	},
 	
