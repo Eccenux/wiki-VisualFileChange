@@ -875,7 +875,7 @@ $.extend(window.VisualFileChange,
 				[ ('<i>' + uItem.iId + ': </i>'),
 				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: dirtyTitle } ),
 				$('<span>', { 'class': 'tipsycategory' }).text('c'), ' ',
-				($.isArray(ii.metadata) ? 
+				(($.isArray(ii.metadata) && !!ii.metadata.length) ? 
 					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm') : 
 					''), 
 				$('<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' }), '<br/>',
