@@ -6,7 +6,10 @@
 (function ($, mw) {
 'use strict';
 
+// Return if Main Script is not loaded
 if (!window.VisualFileChange) return;
+// Return if this script is already loaded
+if (window.VisualFileChange.editComponents) return;
 
 $.extend(window.VisualFileChange,
 {
