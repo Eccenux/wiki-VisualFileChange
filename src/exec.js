@@ -2,7 +2,7 @@
 // These are the delayed loaded edit components in order to speed up loading of the first UI
 
 /*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false, console:false */
-/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+/*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
 (function ($, mw) {
 'use strict';
 
@@ -118,38 +118,35 @@ $.extend(window.VisualFileChange,
 		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
 		
 		this.uploaders = {};
-		var upload;
+		var _this = this;
 		
 		// Reverse-mapping: files-uploader --- > uploader-files
-		for (upload in this.iUploads) {
-			var uItem = this.iUploads[upload];
+		$.each(this.iUploads, function(upload, uItem) {
 			if ( -2 === uItem.iId )  {
-				if (this.mdModeCat) {
+				if (_this.mdModeCat) {
 					// Remember: u is just an index of an array
-					for (var u in uItem.uploader) {
-						var ul = uItem.uploader[u];
-						if (!this.uploaders[ul]) {
-							this.uploaders[ul] = { uploads: {} };
+					$.each(uItem.uploader, function(u, ul) {
+						if (!_this.uploaders[ul]) {
+							_this.uploaders[ul] = { uploads: {} };
 						}
-						this.uploaders[ul].uploads[upload] = true;
-					}
+						_this.uploaders[ul].uploads[upload] = true;
+					});
 				} else {
-					if (!this.uploaders[this.mdTarget]) {
-						this.uploaders[this.mdTarget] = { uploads: {} };
+					if (!_this.uploaders[_this.mdTarget]) {
+						_this.uploaders[_this.mdTarget] = { uploads: {} };
 					}
-					this.uploaders[this.mdTarget].uploads[upload] = true;
+					_this.uploaders[_this.mdTarget].uploads[upload] = true;
 				}
 			}
-		}
+		});
 		
-		for (var uploader in this.uploaders) {
-			var uploaderItem = this.uploaders[uploader];
+		$.each(this.uploaders, function(uploader, uploaderItem) {
 			uploadCt = 0;
 			
 			uploaderItem.talk_tag = optConfig[9].replace('%REQUESTPAGE%', mdRequestPage);
-			uploaderItem.talk_summary = optConfig[10].replace('%FULLREQUESTPAGE%', this.requestPage);
+			uploaderItem.talk_summary = optConfig[10].replace('%FULLREQUESTPAGE%', _this.requestPage);
 			if (/\%FILE\%/.test(uploaderItem.talk_tag)) {
-				for (var userUpload in uploaderItem.uploads) {
+				$.each(uploaderItem.uploads, function(userUpload, unused) {
 					if ( 0 === uploadCt ) {
 						uploaderItem.talk_tag = uploaderItem.talk_tag.replace('%FILE%', userUpload);
 						uploaderItem.talk_summary = uploaderItem.talk_summary.replace('%FILE%', userUpload);
@@ -159,26 +156,27 @@ $.extend(window.VisualFileChange,
 						uploaderItem.talk_tag += '\n* [[:' + userUpload + ']] '; 
 					}
 					uploadCt++;
-				}
+				});
 			}
 			if (optConfig[4]) {
-				if ( this.mdTalkNote ) uploaderItem.talk_tag += '\n\n' + this.mdTalkNote;
+				if ( _this.mdTalkNote ) uploaderItem.talk_tag += '\n\n' + _this.mdTalkNote;
 			}
-		}
+		});
 		
 		// Prepare for createRequestSubpage
 		this.requestPageContents = this.reason;
-		for (upload in this.iUploads) {
-			if ( -2 === this.iUploads[upload].iId )  { this.requestPageContents += '\n* [[:' + upload + ']]'; }
-		}
+		$.each(this.iUploads, function(upload, upli) {
+			if ( _this.iUploads.hasOwnProperty(upload) && (-2 === upli.iId) )  { 
+				_this.requestPageContents += '\n* [[:' + upload + ']]'; 
+			}
+		});
 				
 		// Task sheduling
-		for (var id in cmdConfig.tasks) {
-			var task = cmdConfig.tasks[id];
-			if ('mdRvGenOGallery' === task && 0 === this.ioUploads) continue;
-			this.addTask(task);
-			if (task in this.i18n.task) this.pb.addTask(task);
-		}
+		$.each(cmdConfig.tasks, function(id, task) {
+			if ('mdRvGenOGallery' === task && 0 === _this.ioUploads) return;
+			_this.addTask(task);
+			if (task in _this.i18n.task) _this.pb.addTask(task);
+		});
 		this.addTask('mdExecuteReady');
 		this.nextTask();
 	},
@@ -214,16 +212,16 @@ $.extend(window.VisualFileChange,
 		this.mdUploadCt = 0;
  
 		for (var upload in this.iUploads) {
-			if (-2 !== this.iUploads[upload].iId) continue;
- 
-			var page = [];
-			page.title = upload;
-			page.text = this.tag;
-			page.editType = edittype;
-			if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
- 
-			this.mdUploadCt++;
-			this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
+			if (this.iUploads.hasOwnProperty(upload) && (-2 === this.iUploads[upload].iId)) {
+				var page = [];
+				page.title = upload;
+				page.text = this.tag;
+				page.editType = edittype;
+				if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
+				
+				this.mdUploadCt++;
+				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
+			}
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
@@ -327,48 +325,49 @@ $.extend(window.VisualFileChange,
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdInsertPermission', 'md-doing');
 		this.mdUploadCt = 0;
- 
-		for (var upload in this.iUploads) {
-			if (-2 !== this.iUploads[upload].iId) continue;
+
+		var _this = this;
+		$.each(this.iUploads, function(upload, upli) {
+			if (!_this.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
  
 			var page = {};
 			page.title = upload;
-			page.text = this.iUploads[upload].content;
+			page.text = upli.content;
 			page.watchlist = 'nochange';
  
-			if ('otrs' === this.mdTaskToPerform) { // drop out other permission templates
+			if ('otrs' === _this.mdTaskToPerform) { // drop out other permission templates
 				var iCt = 0;
-				mdTagLoop:
-				for (var id in this.mdTagRemoval) {
+				$.each(_this.mdTagRemoval, function(id, tri) {
 					iCt++;
-					if (1 === iCt) continue mdTagLoop; // Skip first pattern
-					page.text = page.text.replace(this.mdTagRemoval[id][0], '');
-				}
+					if (1 === iCt) return; // Skip first pattern
+					page.text = page.text.replace(tri[0], '');
+				});
 			}
-			if ('c_replace' !== this.mdTaskToPerform) {
-				page.text = this.mdSecureCall( "mdInsertOTRS", page.text, this.reason );
+			if ('c_replace' !== _this.mdTaskToPerform) {
+				page.text = _this.mdSecureCall( "mdInsertOTRS", page.text, _this.reason );
 			} else {
-				if ('' === this.reason) continue;
-				var m, tmpRegEx = this.reason;
-				if (this.mdMatchRegExp) {
+				if ('' === _this.reason) return;
+				var m, tmpRegEx = _this.reason;
+				if (_this.mdMatchRegExp) {
 					m = tmpRegEx.match(/\/(.+)\/(.*)/);
 					if (m && m[0] && m[1]) tmpRegEx = new RegExp(m[1], m[2]);
 				}
-				page.text = page.text.replace(tmpRegEx, this.mdReplaceText);
+				page.text = page.text.replace(tmpRegEx, _this.mdReplaceText);
 			}
 			
-			page.text = this.cleanUp(page.text);
+			page.text = _this.cleanUp(page.text);
  
 			page.editType = 'text';
-			if (window.AjaxDeleteWatchFile && ('c_replace' !== this.mdTaskToPerform)) {
+			if (window.AjaxDeleteWatchFile && ('c_replace' !== _this.mdTaskToPerform)) {
 				page.watchlist = 'watch';
 			}
  
-			if (this.iUploads[upload].content !== page.text) {
-				this.mdUploadCt++;
-				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
+			if (upli.content !== page.text) {
+				_this.mdUploadCt++;
+				_this.mdSavePage(page, _this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 			}
-		}
+		});
+		
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
  
@@ -466,18 +465,19 @@ $.extend(window.VisualFileChange,
 		this.pb.setTaskState('mdNotifyUploaders', 'md-doing');
 		
 		this.uploadersToNotify = 0;
-		for (var user in this.uploaders) {
-			if (-1 !== this.excludedBots.indexOf(user)) continue;
+		var _this = this;
+		$.each(this.uploaders, function(user, upli) {
+			if (-1 !== _this.excludedBots.indexOf(user)) return;
 			var page = [];
-			page.title = this.mdUserTalkPrefix + user;
-			page.text = "\n" + this.uploaders[user].talk_tag + " ~~" + "~~\n";
+			page.title = _this.mdUserTalkPrefix + user;
+			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
 			if (window.AjaxDeleteWatchUserTalk) page.watchlist = 'watch';
-			this.mdSavePage(page, this.uploaders[user].talk_summary, 'mdUploaderNotified');
+			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
-			this.uploadersToNotify++;
-		}
+			_this.uploadersToNotify++;
+		});
 		if (this.uploadersToNotify === 0) this.nextTask();
 	},
 
