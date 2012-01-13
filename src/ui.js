@@ -6,7 +6,10 @@
 (function ($, mw) {
 'use strict';
 
+// Return if Main Script is not loaded
 if (!window.VisualFileChange) return;
+// Return if this script is already loaded
+if (window.VisualFileChange.displayComponents) return;
 
 appendCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
@@ -30,6 +33,13 @@ $.extend(window.VisualFileChange,
 	**  Calls the appropriate method (uploads of cats)
 	**/
 	mdCreateList: function () {
+		if (this.mdListUploadsPending > 0) { // If there are queries pendig continue later
+			var o = this;
+			setTimeout(function () { 
+				o.mdCreateList();
+			}, 200); // See me later ...
+			return true;
+		}
 		$(document).triggerHandler('vFC', ['preparing querying the filelist', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'list', 'md-doing' );
@@ -41,16 +51,9 @@ $.extend(window.VisualFileChange,
 		this.mdModeCat = /^Category\:/.test(this.mdTarget);
 		
 		if (this.context !== 'MD') return;
-		if (this.mdListUploadsPending > 0) { // If there are queries pendig continue later
-			var o = this;
-			setTimeout(function () { 
-				o.mdCreateList();
-			}, 200); // See me later ...
-			return true;
-		}
 		this.mdListUploadsPending++;
 		
-		if (this.mdModeCat) this.mdSecureCall("mdFindCatMembers"); else this.mdSecureCall("mdFindUploads");
+		if (this.mdModeCat) this.mdSecureCall('mdFindCatMembers'); else this.mdSecureCall('mdFindUploads');
 	},
 	
 	mdFindUploads: function () {
@@ -597,7 +600,7 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['initial uploads dialog', this, this.dlg]);
  
 		this.iCurrentIId = -1;     // Last queried file to continue obtaining detail-info
-		this.mdSecureCall("mdSendNextQueries");
+		this.mdSecureCall('mdSendNextQueries');
 	},
  
 	/**  
