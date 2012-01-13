@@ -33,7 +33,8 @@ $.extend(window.VisualFileChange,
 	**  Calls the appropriate method (uploads of cats)
 	**/
 	mdCreateList: function () {
-		if (this.mdListUploadsPending > 0) { // If there are queries pendig continue later
+		if (this.mdListUploadsPending > 0) {
+			$(document).triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
 			var o = this;
 			setTimeout(function () { 
 				o.mdCreateList();
@@ -45,10 +46,9 @@ $.extend(window.VisualFileChange,
 		this.pb.setTaskState( 'list', 'md-doing' );
 		if (this.mdFirstRun) { // First time only
 			this.pb.setHelp(this.i18n.mdPleaseWait);
+			this.mdTarget = $.trim(this.mdTarget.replace(/^User\:/, '')); // WARNING: INPUT IS UNCHECKED
+			this.mdModeCat = /^Category\:/.test(this.mdTarget);
 		}
-		
-		this.mdTarget = $.trim(this.mdTarget.replace(/^User\:/, '')); // WARNING: INPUT IS UNCHECKED
-		this.mdModeCat = /^Category\:/.test(this.mdTarget);
 		
 		if (this.context !== 'MD') return;
 		this.mdListUploadsPending++;
@@ -200,6 +200,8 @@ $.extend(window.VisualFileChange,
 		this.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
 		this.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
 		this.mdNumberOfExecs = 0;         // Is Execute called already?
+		this.mdThumbsOnDlg = 0;           // How many thumbs on the dialog?
+		
 		if (mw.user && mw.user.tokens && mw.user.tokens.get) this.edittoken = mw.user.tokens.get('editToken');
 		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
 
@@ -617,8 +619,7 @@ $.extend(window.VisualFileChange,
 			var _this = this;
 			
 			var sendReq = function (files) {
-				if (0 === files.length) { // no files in buffer, so re-query
-					if (!_this.mdNoMoreFiles) _this.mdSecureCall('mdCreateList');
+				if (0 === files.length) {
 					return;
 				}
 				var query = {
@@ -654,7 +655,7 @@ $.extend(window.VisualFileChange,
 					collectedFiles = [];
 				}
 				_this.iCurrentIId = upli.iId;
-				if ((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) === _this.mdUploadCt) {
+				if (Math.round((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) / 10) === _this.mdUploadCt) {
 					return false;
 				}
 			});
@@ -916,10 +917,11 @@ $.extend(window.VisualFileChange,
 		// Append all queried files to the screen-container
 		$.each(this.iUploads, function(id, uItem) {
 			if (!uItem.gbInUse) {
-				uItem.gbInUse = true;
 				var $galleryBox = o.gbs[id];
 				if ($galleryBox) {
+					uItem.gbInUse = true;
 					o.$AjaxMdUlContainer.append($galleryBox);
+					o.mdThumbsOnDlg++;
 				}
 			}
 		});
