@@ -715,7 +715,7 @@ $.extend(window.VisualFileChange,
 	
 	/* Helper function: Called by QueryIICB. Get model info from Image-Metadata */
 	mdGetCamModel: function( uItem ) {
-		if (!uItem) return;
+		if (!uItem || !uItem.metadata) return '';
 		
 		var model = '';
 		var mdata = uItem.metadata;
