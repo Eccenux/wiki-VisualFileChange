@@ -213,7 +213,7 @@ $.extend(window.VisualFileChange,
  
 		for (var upload in this.iUploads) {
 			if (this.iUploads.hasOwnProperty(upload) && (-2 === this.iUploads[upload].iId)) {
-				var page = [];
+				var page = {};
 				page.title = upload;
 				page.text = this.tag;
 				page.editType = edittype;
@@ -397,7 +397,7 @@ $.extend(window.VisualFileChange,
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdCreateRequestSubpage', 'md-doing');
 		
-		var page = [];
+		var page = {};
 		page.title = this.requestPage;
 		page.text = "\n\n=== " + this.mdDeleteHeading + " ===\n\n" + this.requestPageContents + "\n~~" + "~~\n";
 		page.watchlist = 'watch';
@@ -425,7 +425,7 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['creating request subpage', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdListRequestSubpage', 'md-doing');
-		var page = [];
+		var page = {};
 		page.title = this.dailyLogPage;
 
 		page.text = "\n{{" + this.requestPage + "}}\n";
@@ -468,7 +468,7 @@ $.extend(window.VisualFileChange,
 		var _this = this;
 		$.each(this.uploaders, function(user, upli) {
 			if (-1 !== _this.excludedBots.indexOf(user)) return;
-			var page = [];
+			var page = {};
 			page.title = _this.mdUserTalkPrefix + user;
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
