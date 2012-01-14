@@ -856,7 +856,7 @@ var VisualFileChange = window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.1.0',
+	mdScriptRevision: '0.7.1.1',
  
    // Translatable strings
 	i18n: {
