@@ -856,7 +856,7 @@ var VisualFileChange = window.VisualFileChange = {
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.1.1',
+	mdScriptRevision: '0.7.1.2',
  
    // Translatable strings
 	i18n: {
@@ -999,7 +999,6 @@ mediaWiki.loader.using([
 'jquery.ui.datepicker',
 'jquery.tipsy',
 'jquery.placeholder',
-'mediawiki.html',
 'mediawiki.user',
 'mediawiki.util'
 ], function () {
