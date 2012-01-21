@@ -51,6 +51,7 @@ $.extend(window.VisualFileChange,
 						'width': 120, 
 						'height': 120
 					}).css('height', 120).css('width', 120);
+					$gb.find('div.thumb > div').css('margin', '15px auto');
 				}
 			}
 		});
@@ -116,7 +117,9 @@ $.extend(window.VisualFileChange,
 		var cmdConfig = this.mdCommands[this.mdTaskToPerform];
 		this.tag = optConfig[7].replace('%REASON%', this.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', this.formatDate('year=YYYY|month=MON|day=DAY'));
 		
-		this.img_summary = (this.mdAddEditSummary ? (this.mdAddEditSummary + ' - ') : '') + optConfig[8].replace('%pattern%', this.reason).replace('%replace%', this.mdReplaceText) + ' Using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
+		this.img_summary = (this.mdAddEditSummary ? (this.mdAddEditSummary + ' - ') : '') + 
+			optConfig[8].replace('%pattern%', this.reason).replace('%replace%', this.mdReplaceText).replace('%REASON%', this.reason) + 
+			' Using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
 		var r = this.img_summary.match(/\%(.{1,9})\%/);
 		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
 		
