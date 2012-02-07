@@ -1,1 +1,1 @@
-mw.util.addPortletLink('p-tb', 'javascript:{importScript(\'MediaWiki:VisualFileChange.js\'); void(0);}', "Perform batch task", 't-AjaxQuickDeleteOnDemand', null);
+mw.util.addPortletLink('p-tb', 'javascript:importScript("MediaWiki:VisualFileChange.js");', 'Perform batch task', 't-AjaxQuickDeleteOnDemand');
