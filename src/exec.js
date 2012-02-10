@@ -537,7 +537,7 @@ $.extend(window.VisualFileChange,
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
-			if (this.mdSettings.watchUserTalk) page.watchlist = 'watch';
+			if (_this.mdSettings.watchUserTalk) page.watchlist = 'watch';
 			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
 			_this.uploadersToNotify++;
