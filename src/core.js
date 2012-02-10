@@ -186,7 +186,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.8.0.0',
+	mdScriptRevision: '0.8.0.1',
 	
 
 	/**
