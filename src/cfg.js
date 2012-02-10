@@ -11,6 +11,7 @@ if (!window.VisualFileChange) return;
 // Return if this script is already loaded
 if (window.VisualFileChange.ConfigManager) return;
 
+mw.util.addCSS( ' .vFCConfigRequired { visibility:visible !important; }\n' );
 
 $.extend(window.VisualFileChange,
 {
@@ -19,8 +20,9 @@ $.extend(window.VisualFileChange,
 	mdConfig: function () {
 		var o = this,
 			cfg = this.mdDefaults,
-			$dlgNode = $('<div>');
-		
+			$dlgNode = $('<div>', { style: 'overflow:auto; max-height:' + (Math.round($(window).height()) - 150) + 'px;' });
+
+		$('<p>', { text: 'Ok and save will apply settings. If you permanently save the settings they will be visible for each user. Do not insert private data here.' }).appendTo($dlgNode);
 		$.each(cfg, function(i, el) {
 			var $elDiv = $('<div>', { id: 'mdCfg_' + el.v + '_wrap' }).data('cfg', el);
 			var $valEl, $valEl2, vl = (el.controls ? $(el.controls).val() : '') || o.mdSettings[el.v];
@@ -61,9 +63,9 @@ $.extend(window.VisualFileChange,
 						$('<input>', { type: 'text', id: 'mdCfg' + el.v, style: 'width:99%' }).val(vl).appendTo($elDiv);
 					}
 					break;
-				case 'bool':
+				case 'boolean':
 					$valEl = $('<input>', { type: 'checkbox', id: 'mdCfg' + el.v }).appendTo($elDiv);
-					if (vl) $valEl[0].attr('checked', 'checked');
+					if (vl) $valEl[0].checked = true;
 					break;
 				case 'function':
 					$valEl = $(el.controls).clone().attr('id', 'mdCfg' + el.v);
@@ -95,7 +97,7 @@ $.extend(window.VisualFileChange,
 			title: 'Advanced settings',
 			modal: true,
 			resizable: false,
-			width: Math.min(500, $(window).width()),
+			width: Math.min(550, $(window).width()),
 			close: function () {
 				$(this).remove();
 			},
@@ -106,7 +108,12 @@ $.extend(window.VisualFileChange,
 	mdPublishSettings: function(dlgNode, cfg) {
 		var o = this;
 		$.each(cfg, function(i, el) {
-			var val = $('#mdCfg'+el.v).val();
+			var val; 
+			if ('boolean' === typeof el['default']) {
+				val = $('#mdCfg'+el.v)[0].checked;
+			} else {
+				val = $('#mdCfg'+el.v).val();
+			}
 			o.mdSettings[el.v] = val;
 			window.vFCSettings[el.v] = val;
 			if (el.old) window[el.old] = val;
@@ -134,7 +141,7 @@ $.extend(window.VisualFileChange,
 		$(document).bind('vFC_S', function(e, p1, p2, p3, p4) {
 			$dlgNode.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
 			if (p4) {
-				$dlgNode.append($('<div>', { text: ' ' + p1 }).prepend($('<img>', { src: o[p4], height: 16, width: 16, alt: '(i): ' })));
+				$dlgNode.append($('<div>', { text: ' ' + p1, 'class': p4 }));
 			} else {
 				$dlgNode.append($('<div>', { text: '(i): ' + p1 }));
 			}
@@ -152,7 +159,7 @@ $.extend(window.VisualFileChange,
 					var rx = new RegExp('[\\t ]*(?:var\\s+|window.)' + $.escapeRE(el.old) + '\\s*\\=.+', 'g'),
 						rxN = new RegExp('[\\t ]*(?:var\\s+|window.)' + $.escapeRE(el.old) + '\\s*\\=.+(?:\\n\\s*)?\\+');
 					if (rxN.test(text)) {
-						$(document).triggerHandler('vFC_S', ['WARNING: Could not remove ' + el.old + ' from ' + jsPath, o, el, 'mdFailedTaskIcon']);
+						$(document).triggerHandler('vFC_S', ['WARNING: Could not remove ' + el.old + ' from ' + jsPath, o, el, 'md-attention']);
 						return;
 					}
 					text = text.replace(rx, '');
@@ -214,7 +221,7 @@ $.extend(window.VisualFileChange,
 				o.settingSaves++;
 				o.mdSavePage(page, '[[' + o.mdSelfPath + '|VisualFileChange.js]] is updating configuration', 'mdSaveSettingsCB', 'mdSaveSettingsCB');
 			}
-			if (0 === o.settingSaves) $(document).triggerHandler('vFC_S', ['Nothing to change. You can close this dialog now.', o, '', 'mdDoneTaskIcon']);
+			if (0 === o.settingSaves) $(document).triggerHandler('vFC_S', ['Nothing to change. You can close this dialog now.', o, '', 'md-done']);
 		};
 		
 		var getJS = function(jsfile) {
@@ -232,7 +239,7 @@ $.extend(window.VisualFileChange,
 						return;
 					}
 					o.fail(o.i18n.mdConfig.getScriptErr);
-					$(document).triggerHandler('vFC_S', [o.i18n.mdConfig.getScriptErr, this, error, 'mdFailedTaskIcon']);
+					$(document).triggerHandler('vFC_S', [o.i18n.mdConfig.getScriptErr, this, error, 'md-failed']);
 				},
 				success: function(res) {
 					gotJS(res, jsfile);
@@ -250,13 +257,42 @@ $.extend(window.VisualFileChange,
 		this.settingSaves--;
 		var pgTitle = (result.requestid || query.title);
 		if (err) {
-			$(document).triggerHandler('vFC_S', ['Updated ' + pgTitle + ' failded. ERROR: ' + err, this, err, 'mdFailedTaskIcon']);
+			$(document).triggerHandler('vFC_S', ['Updated ' + pgTitle + ' failded. ERROR: ' + err, this, err, 'md-failed']);
 		} else {
-			$(document).triggerHandler('vFC_S', [pgTitle + ' successfully updated', this, result, 'mdDoneTaskIcon']);
+			$(document).triggerHandler('vFC_S', [pgTitle + ' successfully updated', this, result, 'md-done']);
 		}
 		if (0 === this.settingSaves) {
 			$(document).triggerHandler('vFC_S', ['Ready. You can close this dialog now.', this]);
 		}
+	},
+	
+	mdProfile: function () {
+		var $dlgNode, $profileSelect, $descSave, $addNameL, $addName, $addButtonCookie, $addButtonJS, $descLoad, $loadButton, $cmdSection;
+		
+		$dlgNode = $('<div>', { text: 'Sorry this is still under construction and does not work. Wait for version 0.9.0.0. Save the current input state into a profile or load a profile.' });
+		$profileSelect = $('<select>', { size: 10 });
+		$descSave = $('<div>', { text: 'Save current inputs into' });
+		$addNameL = $('<label>', { 'for': 'mdProfileName', text: 'Use the same name again to override a profile.' });
+		$addName = $('<input>', { id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block;' });
+		$addButtonCookie = $('<button>', { text: 'a Cookie'});
+		$addButtonJS = $('<button>', { text: 'your JavaScript', disabled: 'disabled' });
+		
+		$descLoad = $('<div>', { text: 'Load a profile. Caution: Your current inputs will be lost.' });
+		$loadButton = $('<button>', { text: 'Load', disabled: 'disabled' });
+		
+		$cmdSection = $('<div>', { style: 'display:inline-block; margin:4px;' }).append($addNameL, $addName, $descSave, $addButtonCookie, $addButtonJS, $descLoad, $loadButton);
+		
+		$dlgNode.append($('<br>'), $profileSelect, $cmdSection);
+		
+		$dlgNode.dialog({
+			title: 'Profile manager',
+			modal: true,
+			resizable: false,
+			width: Math.min(550, $(window).width()),
+			close: function () {
+				$(this).remove();
+			}
+		});
 	},
 	
 	mdConfigInstall: function () {
@@ -264,12 +300,16 @@ $.extend(window.VisualFileChange,
 		this.pb.$cfg.click(function(e) {
 			e.preventDefault();
 			o.mdSecureCall('mdConfig');
-		}).show();
+		});
+		this.pb.$profile.click(function(e) {
+			e.preventDefault();
+			o.mdSecureCall('mdProfile');
+		});
 	}
 });
 
 
-mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'mediawiki.user'], function() {
+mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.cookie', 'jquery.placeholder', 'mediawiki.user'], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'ConfigManager']);
 	window.VisualFileChange.mdConfigInstall();
 });
