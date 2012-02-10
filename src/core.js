@@ -5,7 +5,7 @@
 //   http://svn.wikimedia.org/viewvc/mediawiki/trunk/phase3/includes/api/ApiFileRevert.php?view=log
 //   action=filerevert&filename=File:MassDeleteOTRS.png&comment=TestingBryanTongMinhRevert&archivename=20110429234711!Wiki.png&token=+\\
 // TODO AJAX userlist-dropdown / verification
-// Depends on MediaWiki:VisualFileChange.js/exec.js and MediaWiki:VisualFileChange.js/ui.js
+// Depends on MediaWiki:VisualFileChange.js/exec.js, /ui.js, /cfg.js
 /***************************************************
 	Event-System:
 	Event: 'vFC' with parameters
@@ -19,8 +19,8 @@
 		console.log('VisualFileChange> ' + p1);
 	});
 ***************************************************/
-/*global jQuery:false, mediaWiki:false, appendCSS:false, addPortletLink:false */
-/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, bitwise:false,*/
+/*global jQuery:false, mediaWiki:false, Geo:false */
+/*jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
 (function ($, mw) {
 // 'use'' strict'; find a workaround for arguments[]
 if (window.VisualFileChange) return;
@@ -46,7 +46,7 @@ function ProgressBox(width, o) {
 	
 	var _this = this;
 	this.$cont = $('<div>', { 
-		style: 'display:none; overflow:hidden; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
+		style: 'display:none; overflow:hidden; left:0px; width:' + this.w + 'px; height:100%; z-index: 1000; top:0pt; position:fixed; font:15px sans-serif; background-color: #cde; background-image: -moz-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -ms-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -o-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-linear-gradient(top, #cde, #eee 100px, #eee); background-image: -webkit-gradient(linear, left top, left bottom, from(#cde), to(#eee), color-stop(100px, #eee));' 
 	}).dblclick(function() { _this.$cmd.focus(); });
 	this.$cmd = $('<input>', {
 		'id': 'mdCMD',
@@ -96,10 +96,12 @@ function ProgressBox(width, o) {
 		style: 'font:small-caps 1.5em sans-serif; text-align:center; padding:10px; margin-top:10px;',
 		text: 'VisualFileChange.js'
 	});
+	this.$cfg = $('<a>', { href: '#', text: ' >> advanced configuration', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' });
+	this.$profile = $('<a>', { href: '#', text: ' >> profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' });
 	this.$subheading = $('<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.mdScriptRevision
-	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.');
+	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), this.$cfg, $('<br>'), this.$profile);
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: 'Tasks:'
@@ -119,7 +121,7 @@ function ProgressBox(width, o) {
 	}).append(this.$error);
 	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$aHelp, this.$errorCont);
 	$('body').append(this.$cont);
-	appendCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
+	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
 		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
 		+ '.md-failed { padding-left:16px; background:url(\'' + o.mdFailedTaskIcon + '\') no-repeat left; } '
 		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
@@ -173,25 +175,43 @@ ProgressBox.prototype.isHidden = function () {
 	return ('none' === this.$cont.css('display'));
 };
 
+var isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
+
 /**
  * Create a new VisualFileChange-literal-Object.
  *
  * @context {window}
  */
 var VisualFileChange = window.VisualFileChange = {
+
+
+	/** REVISION CONTROL **/ //(x.major.minor.bug)
+	mdScriptRevision: '0.8.0.0',
+	
+
 	/**
 	** Set up the VisualFileChange object and add the toolbox link.  Called via $(document).ready() during page loading.
 	**/
 	mdInstall: function () {
-		// Don't install link if the user opted out
-		if (window.AjaxDeleteOptOut) return;
+		var o = this;
+
+
+		// Initialize the settings
+		if (!window.vFCSettings) window.vFCSettings = {};
+		
+		$.each(this.mdDefaults, function(i, el) {
+			o.mdSettings[el.v] = (el.old ? window[el.old] : '') || el['default'];
+		});
+		// Merge the user's settings
+		$.extend(this.mdSettings, window.vFCSettings);
+
 
 		var $tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand");
 		if ( 1 === $tAjaxQuickDeleteOnDemand.length ) {
 			// User is using the load on demand feature. 
 			// Replace the link
 			$tAjaxQuickDeleteOnDemand.remove();
-			addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2', null);
+			mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
 			
 			// Immedately start Md
 			this.mdStartMd();
@@ -202,7 +222,7 @@ var VisualFileChange = window.VisualFileChange = {
  
 			} else if (mw.config.get('wgNamespaceNumber') !== 14) {
 				// Set up toolbox link
-				addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2', null);
+				mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', this.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
 			}
 		}
 		$(document).triggerHandler('vFC', ['installed', this]);
@@ -227,8 +247,13 @@ var VisualFileChange = window.VisualFileChange = {
 					return;
 				}
 				break;
+			case 'cfg.js':
+				if (this.ConfigManager) {
+					this.mdConfigInstall();
+					return;
+				}
 		}
-		window.importScriptURI(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + this.mdScriptRevision);
+		mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + this.mdScriptRevision);
 	},
 	
 	mdCancel: function () {
@@ -251,6 +276,8 @@ var VisualFileChange = window.VisualFileChange = {
 		pb.setTaskState( 'start', 'md-doing' );
 		pb.show();
 		
+		this.oldDocTitle = document.title;
+		this.apiEditFirstTestCountDown = this.mdSettings.firstTest-1;
 		this.context = "MD"; // The error handler should know what we are performing
 		this.mdBusy = false; // indicate that any dialog can be closed
 		this.tasks = []; // reset task list in case an earlier error left it non-empty
@@ -302,6 +329,11 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		// Load the Execute/ Edit components
 		this.loadModule('exec.js');
+		// Load the configuration module
+		this.loadModule('cfg.js');
+		
+		if (mw.user && mw.user.tokens && mw.user.tokens.get) this.edittoken = mw.user.tokens.get('editToken');
+		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
 		
 		this.addTask('mdContinue');
 		this.nextTask();
@@ -358,6 +390,7 @@ var VisualFileChange = window.VisualFileChange = {
 		this.iiUploads = 0;   // Number of initially uploaded files in the list
 		this.oUploads = {};   // o-overwrite file list
 		this.ioUploads = 0;   // Number of overwriten files in the list
+		this.metaKeys = [];   // Contains all keys(names) of metadata available; building while processing quried files
 		this.gbs = {};        // File --> Gallery Box
 		this.mdLestart = '';  // important for continuing the query
 		this.mdLedir = 'older';      // in which direction to enumerate logevents: older/newer
@@ -385,11 +418,12 @@ var VisualFileChange = window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $targetinput, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
+			$submitButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var getMwDate = function(dateX) {
 			if ('string' !== typeof dateX) return dateX;
+			if ('' === dateX) return '';
 			if (mwDateRx.test(dateX)) return dateX;
 			var m1 = dateX.match(/(\d{4}).(\d{2}).(\d{2})\D*(\d{2}:\d{2}:\d{2})?/);
 			if (m1) return (m1[1] + '-' + m1[2] + '-' + m1[3] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
@@ -402,7 +436,7 @@ var VisualFileChange = window.VisualFileChange = {
 			if (confirmed) return;
 			confirmed = true;
 			// Reading input
-			o.mdTarget = o.cleanReason($targetinput.val());
+			o.mdTarget = o.cleanReason($targetSelect.val() + ':' + $targetInput.val());
 			$('#AjaxMdContainer').text(o.i18n.mdPleaseWait);
 			if (mwDateRx.test($gStartAt.val())) o.mdLestart = $gStartAt.val();
 			switch ($gSortBy.val()) {
@@ -453,6 +487,9 @@ var VisualFileChange = window.VisualFileChange = {
 
 		// Are there Contaminated Sites? Remove them now.
 		o.mdDlgThumbDlgClose();
+		
+		// Change the title of the browser tab/window
+		document.title = "VisualFileChange: Welcome, " + mw.user.name() || Geo.IP || "anonymous" + "!";
 
 		// Hide overlapping page (avoids scrolling)
 		$('body').css('overflow', 'hidden');
@@ -470,25 +507,77 @@ var VisualFileChange = window.VisualFileChange = {
 			buttons: dlgButtons,
 			close: o.mdCancel
 		});
-		o.pb.setZIndex($('.ui-widget-overlay').css('z-index') + 1);
+		o.pb.setZIndex($('.ui-widget-overlay').css('z-index')-0+1);
+		
+		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
+			nsUser = mw.config.get('wgFormattedNamespaces')[2],
+			rxCat = new RegExp('^' + nsCat + ':', 'i'),
+			rxUser = new RegExp('^' + nsUser + ':', 'i'),
+			lastXHR = 0,
+			pLastCB = 0,
+			delayXHR = 500;
 		
 		$submitButton = $('.ui-dialog-buttonpane button:first');
-		$targetinput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 98%;', 'value': prefill });
+		$targetSelect = $('<select>', { size: 1, id: 'mdTargetSelect' }).append(
+			$('<option>', { text: nsCat }),
+			$('<option>', { text: nsUser, selected: 'selected' })
+		);
+		var didXHR = function(result, pCallback) {
+			var searchTerms = [];
+			if (!result) {
+				if ('function' === typeof pCallback) pCallback(searchTerms);
+				return;
+			}
+			result = result.query.allusers || result.query.allcategories;
+			$.each(result, function(id, it) {
+				searchTerms.push( { 'value': (it.name || it['*']) } );
+			});
+			if ('function' === typeof pCallback) pCallback(searchTerms);
+			pLastCB = 0;
+		};
+		var doXHR = function(request, pCallback) {
+			var query = {
+				action: 'query'
+				,format: 'json'
+			};
+			var queryU = {
+				list: 'allusers'
+				,auprefix: request.term.replace(rxUser, '')
+			};
+			var queryC = {
+				list: 'allcategories'
+				,acprefix: request.term.replace(rxCat, '')
+			};
+			$.extend( query, (nsUser === $targetSelect.val()) ? queryU : queryC );
+			lastXHR = $.getJSON( mw.util.wikiScript('api'), query, function(r) { didXHR(r, pCallback); });
+		};
+		
+		$targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
+			minLength: 1,
+			delay: delayXHR,
+			source: function ( request, callback ) { 
+				if (pLastCB) pLastCB([]);
+				pLastCB = callback;
+				if (lastXHR) lastXHR.abort();
+				delayXHR += 100;
+				doXHR(request, callback);
+			}
+		});
 		
 		// Start date
 		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get('wgUserLanguage') ] );
 		$gStartAt = o.$gStartAt = $('<input>', {
-				id: 'gStartAt',
-				type: 'text',
-				title: o.i18n.optStartAt,
-				value: o.mdLestart,
-				placeholder: 'YYYY-MM-DD'
+				id: 'gStartAt'
+				,type: 'text'
+				,title: o.i18n.optStartAt
+				,value: o.mdLestart
+				,placeholder: 'YYYY-MM-DD'
 			} )
 			.datepicker( {
-				changeYear: true,
-				'dateFormat': 'yy-mm-ddT12:00:00Z',
-				showWeek: true,
-				firstDay: 1
+				changeYear: true
+				,'dateFormat': 'yy-mm-ddT12:00:00Z'
+				,showWeek: true
+				,firstDay: 1
 			} )
 			.blur( function( e ) {
 				$(this).val( getMwDate($(this).val()) );
@@ -500,17 +589,17 @@ var VisualFileChange = window.VisualFileChange = {
 				}
 			} )
 			.tipsy({
-				trigger: 'focus',
-				gravity: 's',
-				html: true,
-				title: function() {
+				trigger: 'focus'
+				,gravity: 's'
+				,html: true
+				,title: function() {
 					return o.i18n.optStartAtHowTo;
 				} })
 			.placeholder();
 		$gStartAtL = $('<label>', {
-				'for': 'gStartAt',
-				title: o.i18n.optStartAt,
-				html: " &nbsp;Start&nbsp;at&nbsp;"
+				'for': 'gStartAt'
+				,title: o.i18n.optStartAt
+				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} );
 			
 		$gSortBy = $('<select>', {
@@ -523,29 +612,56 @@ var VisualFileChange = window.VisualFileChange = {
 				,$('<option>', { 'value': 'cd' }).text('category only: desc')
 			);
 		$gSortByL = $('<label>', {
-				'for': 'gSortBy',
-				title: 'Sorting',
-				text: 'Sorting'
+				'for': 'gSortBy'
+				,title: 'Sorting'
+				,text: 'Sorting'
 			} );
+		$gMoreOptionsToggler = $('<a>', { text: o.i18n.optMore, href: '#', 'class': 'md-collapse-closed', style: 'display:block; margin:8px;' })
+			.click(function(e){
+				e.preventDefault();
+				$(this).next().slideToggle('fast');
+				if ($(this).hasClass('md-collapse-closed')) {
+					$(this).addClass('md-collapse-open');
+					$(this).removeClass('md-collapse-closed');
+				} else {
+					$(this).addClass('md-collapse-closed');
+					$(this).removeClass('md-collapse-open');
+				}
+			});
+		$gMoreOptions = $('<div>').append(
+			$gStartAtL
+			,$gStartAt
+			,' '
+			,$gSortByL
+			,$gSortBy
+		).hide();
 		
 		$('#AjaxMdContainer').append(
-			$('<label>', { 'for': 'mdTargetInput', text: o.i18n.mdTargetInput }),
-			$targetinput,
-			$('<br>'), $('<br>'),
-			$gStartAtL,
-			$gStartAt,
-			' ',
-			$gSortByL,
-			$gSortBy
+			$('<label>', { 'for': 'mdTargetInput', text: o.i18n.mdTargetInput })
+			,$('<br>')
+			,$targetSelect
+			,' '
+			,$targetInput
+			,$('<br>')
+			,$gMoreOptionsToggler
+			,$gMoreOptions
 		);
-		$targetinput.keyup(function(e) {
+		$targetInput.bind('input keyup change', function(e) {
+			var thisVal = $(this).val();
+			if (rxCat.test(thisVal)) {
+				$(this).val(thisVal.replace(rxCat, ''));
+				$targetSelect.val(nsCat);
+			} else if (rxUser.test(thisVal)) {
+				$(this).val(thisVal.replace(rxUser, ''));
+				$targetSelect.val(nsUser);
+			}
 			if ($(this).val().length < minlen) {
 				$submitButton.addClass('ui-state-disabled');
 			} else {
 				$submitButton.removeClass('ui-state-disabled');
 			}
-			if (13 === (e.keyCode - 0)) $submitButton.click();
-		}).focus();
+			if (e && e.keyCode && 13 === (e.keyCode - 0)) $submitButton.click();
+		}).keyup().focus();
 	},
 
 	cleanReason: function (uncleanReason) {
@@ -572,6 +688,8 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		// Re-desplay the page's content
 		$('body').css('overflow', 'visible');
+		// and restore title
+		document.title = this.oldDocTitle;
 		
 		if ('object' === typeof(o.dlg)) {
 			o.dlg.dialog("destroy");
@@ -600,55 +718,113 @@ var VisualFileChange = window.VisualFileChange = {
 		this.mdDlgThumbDlgClose();
 		this.nextTask();
 	},
+	
+	mdEditCountDialog: function(reason) {
+		var o = this;
+		o.$apiEditCountDlg = $('<div>', { text: reason + ' Close this dialog to continue! Close this tab/window to abort.' });
+		o.$apiEditCountDlg.dialog({
+			title: 'Close to continue',
+			close: function() {
+				o.$apiEditCountDlg.remove();
+				o.$apiEditCountDlg = 0;
+				o.apiEditCount = 0;
+				o.apiEditFirstTestCountDown--;
+				var i = Math.min(o.mdSettings.maxSimultaneousReq - o.apiRunningRequests, o.apiRequestQueue.length);
+				for (;i>0;i--) {
+					o.doAPICall.apply(o, o.apiRequestQueue.shift());
+				}
+			}
+		});
+	},
 
-   /**
-    ** Does a MediaWiki API request and passes the result to the supplied callback (method name).
-    ** Uses POST requests for everything for simplicity.
-    **/
-   doAPICall: function (params, callback, errCallBack) {
-      var o = this;
- 
-      params.format = 'json';
-      $.ajax({
-         url: mw.util.wikiScript('api'),
-         cache: false,
-         dataType: 'json',
-         data: params,
-         type: 'POST',
-         success: function (result, status, x) {
-            if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
- 
-            // In case we get the mysterious 231 unknown error, just try again
-            if (result.error && result.error.info.indexOf('231') !== -1) return setTimeout(function () {
-               o.doAPICall(params, callback);
-            }, 500);
-            if (result.error) {
+	/**
+	 ** Does a MediaWiki API request and passes the result to the supplied callback (method name).
+	 ** Uses POST requests for everything for simplicity.
+	 **/
+	apiRequestQueue: [],
+	apiRunningRequests: 0,
+	apiEditCount: 0,
+	apiEditFirstTestCountDown: 0,
+	$apiEditCountDlg: 0,
+	doAPICall: function (params, callback, errCallBack) {
+		var o = this;
+		
+		if (o.mdSettings.maxSimultaneousReq > 0 && (o.apiRunningRequests >= o.mdSettings.maxSimultaneousReq)) {
+			o.apiRequestQueue.push([ params, callback, errCallBack ]);
+			return;
+		}
+
+		if (params.action && 'edit' === params.action) {
+			if (o.mdSettings.testEdits > 0 && o.apiEditCount >= o.mdSettings.testEdits) {
+				o.apiRequestQueue.push([ params, callback, errCallBack ]);
+				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits done as specified in the advanced settings.');
+				return;
+			}
+			if (0 === o.apiEditFirstTestCountDown) {
+				o.apiRequestQueue.push([ params, callback, errCallBack ]);
+				if (!o.$apiEditCountDlg) o.mdEditCountDialog('First batch of edits done as specified in the advanced settings.');
+				return;
+			}
+			o.apiEditFirstTestCountDown--;
+			o.apiEditCount++;
+		}
+		
+		o.apiRunningRequests++;
+		
+		var always = function() {
+			o.apiRunningRequests--;
+			var i = Math.min(o.mdSettings.maxSimultaneousReq - o.apiRunningRequests, o.apiRequestQueue.length);
+			for (;i>0;i--) {
+				o.doAPICall.apply(o, o.apiRequestQueue.shift());
+			}
+		};
+
+		params.format = 'json';
+		$.ajax({
+			url: mw.util.wikiScript('api'),
+			cache: false,
+			dataType: 'json',
+			data: params,
+			type: 'POST',
+			success: function (result, status, x) {
+				// Call always first; jQuery complete-evt is called after that
+				always();
+				if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
+
+				// In case we get the mysterious 231 unknown error, just try again
+				if (result.error && result.error.info.indexOf('231') !== -1) return setTimeout(function () {
+					o.doAPICall(params, callback);
+				}, 500);
+				if (result.error) {
+					if (errCallBack && $.isFunction(o[errCallBack])) {
+						this.mdWasAPIError = true;
+						return o[errCallBack](result, params, result.error.code + ': ' + result.error.info);
+					} else {
+						return o.fail("API request failed (" + result.error.code + "): " + result.error.info);
+					}
+				}
+				if (result.edit && result.edit.spamblacklist) {
+					return o.fail("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
+				}
+				try {
+					o[callback](result);
+				} catch (e) {
+					return o.fail(e);
+				}
+			},
+			error: function (x, status, error) {
+				// Call always first; jQuery complete-evt is called after that
+				always();
+				
 				if (errCallBack && $.isFunction(o[errCallBack])) {
 					this.mdWasAPIError = true;
-					o[errCallBack](result, params, result.error.code + ': ' + result.error.info);
+					o[errCallBack]('', params, 'Server status: ' + x.status + ' - Error:' + error);
 				} else {
-					return o.fail("API request failed (" + result.error.code + "): " + result.error.info);
+					return o.fail("Server returned code " + x.status + " " + status + "Error code is " + error);
 				}
-            }
-            if (result.edit && result.edit.spamblacklist) {
-                 return o.fail("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
-            }
-            try {
-               o[callback](result);
-            } catch (e) {
-               return o.fail(e);
-            }
-         },
-         error: function (x, status, error) {
-			if (errCallBack && $.isFunction(o[errCallBack])) {
-				this.mdWasAPIError = true;
-				o[errCallBack]('', params, 'Server status: ' + x.status + ' - Error:' + error);
-			} else {
-				return o.fail("Server returned code " + x.status + " " + status + "Error code is " + error);
 			}
-         }
-      });
-   },
+		});
+	},
  
 	/**
 	** Does a HTTP request and passes the result to the supplied callback (method name).
@@ -739,23 +915,23 @@ var VisualFileChange = window.VisualFileChange = {
 	**                                                    **/
 	mdOpt: {	//		0	1						2					3						4		5		6		7												8																									9											10
 	// key,		minLenReq,	acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
-		'c_replace':[false,	'mdInsertPattern',		'',					'',						false,	true,	false,	"",												'Replacing "%pattern%" with "%replace%"', 															'',											''],
+		'c_replace':[false,	false,					'',					'',						false,	true,	false,	"",												'Doing %replacementcount% replacements.', 															'',											''],
 		'prepend':  [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
 		'append':   [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
-		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"copyvio|1=%REASON%}}\n",					'%cv% %REASON%', 																					'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
-		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"Derivative|1=%REASON%}}\n",				'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{{'+'subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
-		'cv-fu':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"Fair use}}\n",							'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{{'+'subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
-		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"Logo}}\n",								'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
-		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"Nonderivative}}\n",						'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{{'+'subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
-		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{"+"delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 													'{{'+'subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
-		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:npd}}\n",							'Missing [[COM:PERMISSION|permission]].', 															'{{'+'subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
-		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:nsd}}\n",							'File has no [[COM:Source|source]].', 																'{{'+'subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
-		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{"+"subst:Dw-nsd}}\n",						'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{'+'subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
+		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{copyvio|1=%REASON%}}\n",						'%cv% %REASON%', 																					'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
+		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{Derivative|1=%REASON%}}\n",					'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{{subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
+		'cv-fu':	[false,	false,					'',					'',						true,	false,	false,	"{{Fair use}}\n",								'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{{subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
+		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{{Logo}}\n",									'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
+		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{{Nonderivative}}\n",							'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
+		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 														'{{subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
+		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{{subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
+		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
+		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
 		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
 		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											'']
 	},
 	mdCommands: {
-		'c_replace':{ tasks: ['mdInsertPermission'] },
+		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
 		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'] },
 		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'] },
 		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
@@ -767,13 +943,75 @@ var VisualFileChange = window.VisualFileChange = {
 		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
-		'otrs':		{ tasks: ['mdInsertPermission'] },
-		'other':	{ tasks: ['mdInsertPermission'] }
+		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
+		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'] }
 	},
 	mdOptDefault: 'del',
 	mdOptText: {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
 	},
+	
+	mdDefaults: [
+		{
+			'v': 'userNote', 
+			'old': 'AjaxMassDeleteUserNote',
+			'd': 'Additional note to leave on the user\'s talk page', 
+			'default': 'Yours sincerely',
+			'controls': '#mdTalkNote'
+		}, {
+			'v': 'testEdits', 
+			'd': 'Numbers of edits before prompting for continue', 
+			'default': 0,
+			'min': 0, 
+			'max': 500
+		}, {
+			'v': 'firstTest', 
+			'd': 'Stop once before doing edit number', 
+			'default': 0,
+			'min': 0, 
+			'max': 50
+		}, {
+			'v': 'defaultAction',
+			'd': 'Default action to perform',
+			'default': 'del',
+			'select': function() {
+				if ($(this.controls).length) {
+					return $(this.controls).clone();
+				} else {
+					var $sel = $('<select size="1"></select>');
+					$.each(VisualFileChange.i18n.mdOptions, function(i, el) {
+						$sel.append($('<option>', { text: el, value: i }));
+					});
+					return $sel;
+				}
+			},
+			'controls': '#AjaxMdType'
+		}, {
+			'v': 'watchUserTalk',
+			'd': 'Watch edited user talk pages',
+			'default': true
+		}, {
+			'v': 'watchFiles',
+			'd': 'Watch edited file pages (custom replace is not affected)',
+			'default': true
+		}, { 
+			'v': 'loadBatchSize', 
+			'old': 'AjaxMassDeleteInterval',
+			'd': 'Amount of files to be loaded when clicking on more or when scrolling down', 
+			'default': 30,
+			'min': 1, 
+			'max': (isSysop ? 1000 : 100)
+		}, {
+			'v': 'maxSimultaneousReq', 
+			'd': 'Maximum number of requests to send to the API simultaneously', 
+			'default': (isSysop ? 10 : (mw.user.anonymous() ? 1 : 5)),
+			'min': 1, 
+			'max': (isSysop ? 100 : (mw.user.anonymous() ? 2 : 50))
+		}
+	],
+	
+	// Will be filled while initializing
+	mdSettings: {},
  
 	mdTagRemoval: [
 		[/\{\{[Oo]TRS[ _][Pp]ending[^\}\n]*\}\}/g],
@@ -830,18 +1068,19 @@ var VisualFileChange = window.VisualFileChange = {
 		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
  
-	mdOTRSprefill: "{{"+"PermissionOTRS|id=%ID|~~"+"~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}",
-	mdOTRSTicketPrefill: "{{"+"PermissionOTRS|ticket=%URL|~~"+"~~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}",
+	mdOTRSprefill: '{{PermissionOTRS|id=%ID|~~'+'~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
+	mdOTRSTicketPrefill: '{{PermissionOTRS|ticket=%URL|~~'+'~~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}',
 	mdSimplePermissionPattern: /(\|\s*Permission\s*\=)/i,
 	mdPermissionPattern: /^((?:.|\n)+?)(\|\s*Permission\s*\=)((?:.|\n)+?)?((?:\n\s*\}\}|\n\s*\|)(?:.|\n)*)$/i,
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
+	mdRegExpPattern: /^\/.+\/[oigmx]{0,5}$/,
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
-	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ":",
-	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ":",
-	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ":Contributions/",
-	mdRequestPagePrefix: "Commons:Deletion requests/",
+	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ':',
+	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ':',
+	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
+	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
 	mdSuccessIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/120px-Crystal_Project_success.png',
 	mdDoingIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Quick_restart.png/120px-Quick_restart.png',
@@ -851,17 +1090,14 @@ var VisualFileChange = window.VisualFileChange = {
 	mdFailedTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
 	mdInfoIcon: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
 	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
-	mdErrorsReportPath: mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[3]) + ':Rillke',
-	mdHelpNode: '<a href="' + mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", mw.config.get('wgFormattedNamespaces')[12]) + ':VisualFileChange.js" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
+	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
+	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
-	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.7.1.2',
- 
-   // Translatable strings
+	// Translatable strings
 	i18n: {
 		mdButtonLabel: "Perform batch task",
-		mdPerformOnWhichTarget:  "What user or category is this action about? Please insert Category:-prefix if it's a cat. Other fields are optional. Empty or invalid fields will be ignored.",
+		mdPerformOnWhichTarget:  "What user or category is this action about?",
 		mdTargetInput: "User or category:",
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
@@ -869,7 +1105,6 @@ var VisualFileChange = window.VisualFileChange = {
 		mdInsertOther: "Please insert the OTRS (or other) text to add to the permission section",
 		mdInsertEditSummary: "An auto-edit summary for the file-pages will be created. Additionally add",
 		mdReplacePermissionText: "Clean permission-section?",
-		mdInsertPattern: "Please insert the text to be replaced.",
 		mdCustomReplaceText: "Please insert the text that should be inserted instead",
 		mdInsertGeneric: "Please insert the text to be added to each selected file.",
 		mdInsertTalkNote: "Please enter a note to add to the user\'s talk-page",
@@ -892,6 +1127,15 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		optStartAt: "Start listing from a specific date",
 		optStartAtHowTo: 'Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker',
+		optMore: "More options",
+		
+		mdConfig: {
+			getScriptErr: "Error getting your userscripts!",
+			okButton: 'Ok',
+			cancelButton: 'Cancel',
+			permaSaveButton: 'Save permanently',
+			defaultsButton: 'Defaults'
+		},
 		
 		mdCuteSelect: {
 			'and': "AND",
@@ -899,17 +1143,24 @@ var VisualFileChange = window.VisualFileChange = {
 			'select': "Select (/Deselect)",
 			'inCat': "In Category",
 			'title': "Title matches",
+			'matches': "matches",
 			'size': "Size",
 			'date': "<abbr title=\"Only one date is required. But the first date (start date) must be before the second date (end date).\">Date</abbr> (time is optional)",
 			'between': "between",
+			'before': "If only one date specified, match all before that date.",
+			'after': "If only one date specified, match all after that date.",
 			'titleplaceholder': "(Reg)(?:ular )?(Exp)(?:ression)?",
 			'dateplaceholder': "YYYY-MM-DD hh:mm:ss",
 			'button': "Apply"
 		},
 		
-		mdNoFilesSelected: {
-			'title': 'No files selected',
-			'text': 'It seems to me that you did not select any file to tag. Proceed?',
+		mdPotentialProblems: {
+			'titleNf': 'No files selected',
+			'textNf': 'It seems to me that you did not select any file to tag. Proceed?',
+			'titleRE': 'Regular expression?',
+			'textRE': 'The pattern to replace seems to be a Regular Expression but is not flagged as it (checkbox).',
+			'titleInvalidRE': 'Invalid Regular Expression',
+			'textInvalidRE': 'The regular expression is invalid. Maybe "//" are missing. Required syntax: /regexp/flags where flags can be i,g,m.',
 			'back': 'Oops forgot this.',
 			'proceed': 'Proceed anyway.'
 		},
@@ -941,6 +1192,7 @@ var VisualFileChange = window.VisualFileChange = {
 			mdAppendTemplate: 'Tagging files. (Append text)',
 			mdPrependText: 'Prepending text to files.',
 			mdAppendText: 'Appending text to files.',
+			mdRefreshCache: 'Refreshing cached file texts.',
 			mdInsertPermission: 'Inserting permission or custom replace.',
 			mdNotifyUploaders: 'Notifying uploaders.',
 			mdCreateRequestSubpage: 'Creating request subpage.',
@@ -969,6 +1221,7 @@ var VisualFileChange = window.VisualFileChange = {
 			mdQueryMore: "Attempting to continue querying script encountered an error.",
 			mdExecute: "An error occurred while fetching your input.",
 			mdExecuteContinue: "An error occurred while preparing the request.",
+			mdRefreshCache: "An error occurred while updating the cached wikitext.",
 			mdInsertPermission: "An error occurred while preparing the insertion of the permission.",
 			mdInsertOTRS: "An error occurred while preparing the page-content of the permission.",
 			mdCreateRequestSubpage: "An error occurred creating the deletion-request subpage.",
@@ -997,15 +1250,17 @@ var VisualFileChange = window.VisualFileChange = {
 mediaWiki.loader.using([
 'jquery.ui.dialog',
 'jquery.ui.datepicker',
+'jquery.ui.autocomplete',
 'jquery.tipsy',
 'jquery.placeholder',
+'mediawiki.html',
 'mediawiki.user',
 'mediawiki.util'
 ], function () {
 	$(document).ready(function () {
 		this.context = "QD";
 		$(document).bind('vFC', function(e, p1, p2, p3) {
-			if (window.VisualFileChangeDebug) console.log('VisualFileChange> ' + p1);
+			if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
 		});
 		VisualFileChange.mdInstall();
 	});
@@ -1054,3 +1309,4 @@ September 2, 2010
 })(jQuery); 
  
 }(jQuery, mediaWiki));
+// </nowiki>
