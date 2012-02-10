@@ -1,7 +1,7 @@
 // Main script is at MediaWiki:VisualFileChange.js
 // These are the delayed loaded display components (UI) in order to speed up loading of the first UI
 
-/*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false */
+/*global jQuery:false, mediaWiki:false, alert:false */
 /*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
 (function ($, mw) {
 'use strict';
@@ -11,17 +11,21 @@ if (!window.VisualFileChange) return;
 // Return if this script is already loaded
 if (window.VisualFileChange.displayComponents) return;
 
-appendCSS( ' .rgallery { background-color:#FFF !important; }\n'
+mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
 	+ ' .md-collapse-closed { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/closed-ltr.png) no-repeat center left }\n'
 	+ ' .md-collapse-open { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/open.png) no-repeat center left }\n'
 	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
 	+ ' a:link.md-loglink { color:#BB6!important; display:inline-block; }\n'
 	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; }\n'
-	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; }\n'
+	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
+	+ ' .md-re-escape-helper { position:absolute; color:#FFF; cursor:pointer; padding:2px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
+		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
+		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
+	+ ' .md-examine-contents { display:inline-block; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
 );
 
 $.extend(window.VisualFileChange,
@@ -63,7 +67,7 @@ $.extend(window.VisualFileChange,
 			leprop: 'title|type|timestamp',
 			letype: 'upload',
 			leuser: this.mdTarget,
-			lelimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
+			lelimit: this.mdSettings.loadBatchSize * 2,
 			ledir: this.mdLedir
 		};
 		if (this.mdLestart) query.lestart = this.mdLestart;
@@ -120,7 +124,7 @@ $.extend(window.VisualFileChange,
 			cmtitle: this.mdTarget,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
-			cmlimit: (window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) * 2,
+			cmlimit: Math.round(this.mdSettings.loadBatchSize * 1.1),
 			cmcontinue: this.mdLestart,
 			cmdir: this.mdCmdir,
 			cmsort: this.mdCmsort
@@ -164,6 +168,11 @@ $.extend(window.VisualFileChange,
 		_this.parsertimeout = _this.parsertimeout || 0;
 		if (_this.parserjqXHR) _this.parserjqXHR.abort();
 		
+		if ('' === r) {
+			cb.apply(obj, ['', true]);
+			return;
+		}
+		
 		var gotJSON = function(d) {
 			try {
 				cb.apply(obj, [d.parse.text['*'], true]);
@@ -189,6 +198,150 @@ $.extend(window.VisualFileChange,
 			maybeParse();
 		}, 1000);
 	},
+	
+	mdCreateExamineNode: function() {
+		var o = this;
+		var $examineToggler, $examineInput, $examineButton, $examineFirstDiv, $examineSecondDiv, $examineOuterDiv;
+		$examineToggler = $('<a>', { text: 'Examine', href: '#', 'class': 'md-collapse-closed', style: 'display:block;' })
+			.click(function(e){
+				e.preventDefault();
+				$(this).next().slideToggle('fast');
+				if ($(this).hasClass('md-collapse-closed')) {
+					$(this).addClass('md-collapse-open');
+					$(this).removeClass('md-collapse-closed');
+				} else {
+					$(this).addClass('md-collapse-closed');
+					$(this).removeClass('md-collapse-open');
+				}
+			});
+		$examineInput = $('<input>', { type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: 'file number' }).placeholder();
+		$examineButton = $('<button>', { text: 'Compare!' }).click(function() {
+			if (!$examineInput.val()) return;
+			$.each(o.iUploads, function(upload, curUpld) {
+				if (!curUpld.content || (($examineInput.val()-0) !== curUpld.iId)) return;
+
+				var newContent = curUpld.content;
+				$.each(o.mdReplacementMatrix, function(i, rObj) {
+					var match, m;
+					match = rObj.match.val();
+					if (rObj.regex[0].checked && match) {
+						m = match.match(/\/(.+)\/(.*)/);
+						if (m && m[0] && m[1]) {
+							match = new RegExp(m[1], m[2]);
+						} else {
+							match = '';
+						}
+					}
+					newContent = newContent.replace(match, rObj.replace.val());
+				});
+				$examineFirstDiv.text(curUpld.content);
+				$examineSecondDiv.text(newContent);
+			});
+		});
+		$examineFirstDiv = $('<div>', { 'class': 'md-examine-contents' });
+		$examineSecondDiv = $('<div>', { 'class': 'md-examine-contents' });
+		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $('<div>').append($examineFirstDiv, $examineSecondDiv));
+		
+		$('.numbersOnly').keyup(function () { 
+			this.value = this.value.replace(/[^0-9]/g,'');
+		});
+		return $('<div>').append($examineToggler, $examineOuterDiv.hide());
+	},
+	
+	mdCreateReplaceNode: function() {
+		var o = this;
+		var rowCount = 0;
+		var $lastBigArea = 0;
+		
+		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', text: 'R. → /R\\./g', title: 'Make a match-all-occurrences-RegExp from' }).click(function() {
+			var $serviceFor = $(this).data('mdServiceFor');
+			$serviceFor.val('/' + $.escapeRE($serviceFor.val()).replace(/\//g, '\\/') + '/g').keyup();
+		});
+		var $table = $('<table>', { width: '100%', cellspacing: 0, cellpadding: 0 });
+		var $thead = $('<thead>').append(
+			$('<th>', { text: 'Nr' }),
+			$('<th>', { text: 'RegExp?', abbr: 'Regular Expression. User full JavaScript RegExp-Syntax like /find.+/g' }),
+			$('<th>', { text: 'Pattern to match' }),
+			$('<th>', { text: 'Text to insert instead' })
+		).appendTo($table);
+		var $tbody = $('<tbody>', { id: 'mdRTableBody' }).appendTo($table);
+		var $desc = $('<p>', { text: 'Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped.' });
+		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, o.mdCreateExamineNode()));
+		
+		var regExTester = function($text, $cb, $replace) {
+			var testConditions = function() {
+				var isRE = o.mdRegExpPattern.test($text.val());
+				$cb.parent().css('background', '');
+				$text.css('background', '');
+				if (isRE && !$cb[0].checked) {
+					$cb.parent().css('background', '#F2CBCB');
+				} else if (!isRE && $cb[0].checked) {
+					$text.css('background', '#F2CBCB');
+				}
+			};
+			var testEmptyReplace = function() {
+				$replace.css('background', '');
+				if ($text.val() && !$replace.val()) {
+					$replace.css('background', '#FEB');
+				}
+			};
+			$text.bind('input keyup change', testConditions);
+			$text.bind('input keyup change', testEmptyReplace);
+			$cb.change(testConditions);
+			$replace.bind('input keyup change', testEmptyReplace);
+		};
+		var $newRow = function() {
+			rowCount++;
+			var $mA = $newMatchArea(),
+				$rA = $newReplaceArea(),
+				$rE = $newRegexCheckBox();
+			
+			o.mdReplacementMatrix.push({ match: $mA, replace: $rA, regex: $rE });
+			
+			$rE.click(function(e) {
+				e.stopPropagation();
+			});
+			regExTester($mA, $rE, $rA);
+			$('<tr>', { align: 'center' }).append(
+				$('<td>').append(rowCount + '.'),
+				$('<td>').append($rE).click(function() {
+					$rE[0].checked = !$rE[0].checked;
+					$rE.triggerHandler('change');
+				}),
+				$('<td>').append($mA),
+				$('<td>').append($rA)
+			).appendTo($tbody);
+		};
+		var resizeHandler = function($el) {
+			$el.focus(function() {
+				if ($lastBigArea) $lastBigArea.css('height', '');
+				$el.css('height', '5em');
+				$lastBigArea = $el;
+			});
+			return $el;
+		};
+		var $newMatchArea = function() {
+			return resizeHandler($('<textarea></textarea>', { id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%' }).bind('input.resize keyup.resize change.resize', function(e) {
+				var $el = $(this);
+				if (!$el.val()) return;
+				$el.unbind('input.resize keyup.resize change.resize');
+				$newRow();
+			})).focus(function() {
+				var $el = $(this);
+				var pos = $el.position();
+				$regExpEscapeHelper.show().css('top', pos.top).css('left', pos.left - $regExpEscapeHelper.width() - 4);
+				$regExpEscapeHelper.data('mdServiceFor', $el);
+			});
+		};
+		var $newReplaceArea = function() {
+			return resizeHandler($('<textarea></textarea>', { id: 'mdReplaceText'+rowCount, rows: 1, cols: 50, style: 'width:95%' }));
+		};		
+		var $newRegexCheckBox = function() {
+			return $('<input>', { type: 'checkbox', id: 'mdRRegEx'+rowCount });
+		};
+		$newRow();
+		return $rn;
+	},
  
 	/**  
 	**  Mammoth method to set up and manage the UserInterface (UI)
@@ -201,16 +354,16 @@ $.extend(window.VisualFileChange,
 		this.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
 		this.mdNumberOfExecs = 0;         // Is Execute called already?
 		this.mdThumbsOnDlg = 0;           // How many thumbs on the dialog?
+		this.mdReplacementMatrix = [];    // Contains pointers to jQuery-Array-Inputfields for the custom replace
+		this.mdDateOldestDataFetched = new Date();
 		
-		if (mw.user && mw.user.tokens && mw.user.tokens.get) this.edittoken = mw.user.tokens.get('editToken');
-		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
-
 		var o = this;
 		
 		// Tipsy-tooltips for metadata and categories
 		$('.tipsymetadata').die();
 		$('.tipsymetadata').tipsy( {
 			title: function() {
+				$('.tipsy').remove();
 				return o.mdSecureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), o);
 			},
 			live: true,
@@ -219,38 +372,49 @@ $.extend(window.VisualFileChange,
 		} );
 		$('.tipsycategory').die();
 		$('.tipsycategory').tipsy( {
-			title: function() { return o.mdSecureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), o, false).html(); },
+			title: function() { 
+				$('.tipsy').remove();
+				return o.mdSecureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), o, false).html(); 
+			},
 			live: true,
 			html: true,
+			delayOut: 1000,
 			gravity: $.fn.tipsy.autoNS
 		} );
 
 		/*  The UI  */
 		this.mdMinLenRequired = true;     // Is a reason required?
 
+		var confirmDlg = function(title, text, cancel, ignore, icon) {
+			var dlg2Btns = {};
+			var dlgWidth = Math.min(600, $(window).width() - 250);
+			dlg2Btns[cancel] = function() {
+				$(this).dialog("close");
+			};
+			dlg2Btns[ignore] = function() {
+				$(this).dialog("close");
+				o.mdSecureCall("mdExecute");
+			};
+			$('<div>').append($('<img>', { src: icon, height: 128, width: 128, style: 'float:left;' }), $('<div>', { style: 'margin-top: 30px' }).text(text))
+				.dialog({
+					title: title,
+					buttons: dlg2Btns,
+					modal: true,
+					position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
+					close: function() {
+						$(this).dialog("destroy");
+						$(this).remove();
+					}
+				});
+		};
+		
+		var $AjaxMdType;
+		
 		var dlgButtons = {};
 		dlgButtons[this.i18n.submitButtonLabel] = function() {
+			var pp = o.i18n.mdPotentialProblems;
 			if ($('input[name="mdCheckDelete"]:checked').length === 0) {
-				var dlg2Btns = {};
-				var dlgWidth = Math.min(600, $(window).width() - 250);
-				dlg2Btns[o.i18n.mdNoFilesSelected.back] = function() {
-					$(this).dialog("close");
-				};
-				dlg2Btns[o.i18n.mdNoFilesSelected.proceed] = function() {
-					$(this).dialog("close");
-					o.mdSecureCall("mdExecute");
-				};
-				$('<div>').append($('<img>', { src: o.mdInfoIcon, height: 128, width: 128, style: 'float:left;' }), $('<div>', { style: 'margin-top: 30px' }).text(o.i18n.mdNoFilesSelected.text))
-					.dialog({
-						title: o.i18n.mdNoFilesSelected.title,
-						buttons: dlg2Btns,
-						modal: true,
-						position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
-						close: function() {
-							$(this).dialog("destroy");
-							$(this).remove();
-						}
-					});
+				confirmDlg(pp.titleNf, pp.textNf, pp.back, pp.proceed, o.mdInfoIcon);
 			} else {
 				o.mdSecureCall("mdExecute");
 			}
@@ -268,6 +432,7 @@ $.extend(window.VisualFileChange,
 			return sel;
 		};
 
+		var dlgResizeTimeout = 0;
 		this.dlg.dialog({
 			modal: false,
 			title: this.mdHelpNode +
@@ -277,15 +442,24 @@ $.extend(window.VisualFileChange,
 			width: $(window).width() - 250,
 			height: $(window).height(),
 			buttons: dlgButtons,
-			resizeStop: function(event, ui) { $('.ui-dialog > .ui-dialog-content').eq(0).scroll(); } // Fire scroll evt on resize for (continue query if btn gets visible)
+			resizeStop: function(event, ui) { 
+				clearTimeout(dlgResizeTimeout);
+				dlgResizeTimeout = setTimeout(function() {
+					$('.ui-dialog > .ui-dialog-content').eq(0).scroll(); 
+				}, 500);
+			} // Fire scroll evt on resize for (continue query if btn gets visible)
 		});
 		this.dlg.dialog( 'option', 'position', 'right' );
 		this.dlg.dialog( 'option', 'modal', 'false' );
+		var windowRezizeTimeout = 0;
 		$(window).resize(function() {
-			if (o && o.dlg) o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
+			clearTimeout(windowRezizeTimeout);
+			windowRezizeTimeout = setTimeout(function() {
+				if (o && o.dlg) o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
+			}, 1000);
 		});
 
-		$('#AjaxMdContainer').text('');
+		var $AjaxMdContainer = $('#AjaxMdContainer').text('');
 
 		if (!this.dlg) return 0;
 		
@@ -294,23 +468,36 @@ $.extend(window.VisualFileChange,
 			o.mdCuteSelectDlg.dialog("open");
 		}).appendTo( $('#AjaxMdIa').parent() );
 
-		$('#AjaxMdContainer').append(
-			(this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -')
-			+ '<a href="' + mw.config.get('wgServer') + (this.mdModeCat ? mw.config.get('wgArticlePath').replace("$1", this.mdTarget) : (mw.config.get('wgArticlePath').replace("$1", o.mdUserTalkPrefix) + this.mdTarget)) + '" target="_blank">' + this.mdTarget +'</a>-. '
-			+ '<label id="mdTaskForUser" for="mdDeleteReason">' + this.i18n.mdInsertDeleteReasen + '</label>: <textarea id="mdDeleteReason" style="width: 99%; height: 40px;"></textarea>'
-			+ '<br/><label for="mdEditSummary">' + this.i18n.mdInsertEditSummary + '</label>: <input type="text" id="mdEditSummary" style="width: 70%;" maxlength="100"/>'
-			+ '<span id="mdReplacePermissionWrapper"><input type="checkbox" id="mdReplacePermission"/><label for="mdReplacePermission"> ' + this.i18n.mdReplacePermissionText + '</label></span>')
-			.append('<table width="100%"><tr id="mdRequestPageTitle"><td><label for="mdDeleteHeading">' + this.i18n.mdInsertDeleteHeading + ': </label></td>'
-				+ '<td width="70%"><input type="text" id="mdDeleteHeading" style="width: 99%;" value="'
-				+ (this.mdModeCat ? 'Files in [[:' + this.mdTarget + ']] ' : ('Files uploaded by [[' + this.mdUserPrefix + this.mdTarget + '|' + this.mdTarget + ']] '
-				+ '([[' + this.mdUserTalkPrefix + this.mdTarget + '|talk]] &#x00B7; [[' + this.mdContribPrefix + this.mdTarget + '|contribs]])')) + '"/></td></tr>'
-				+ '<tr id="mdTalkNoteNode"><td><label for="mdTalkNote">' + this.i18n.mdInsertTalkNote + ': </label></td>'
-				+ '<td width="70%"><input type="text" id="mdTalkNote" style="width: 99%;" value="'
-				+	(window.AjaxMassDeleteUserNote ? window.AjaxMassDeleteUserNote : 'Yours sincerely') + '"/></td></tr>'
-				+ '<tr id="mdReplaceTextNode"><td><label for="mdRRegEx">RegExp?</label><input type="checkbox" id="mdRRegEx"/><br/>'
-				+ '<label for="mdReplaceText">' + this.i18n.mdCustomReplaceText + ': </label></td>'
-				+ '<td width="70%"><textarea rows="3" cols="50" id="mdReplaceText"></textarea></td></tr></table>')
-			.append($('<a>', { text: this.i18n.mdDelContribsButtonLabel, href: '#', 'class': 'md-collapse-closed' })
+		var subHeading = this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -';
+		var targetHref = mw.util.wikiGetlink((this.mdModeCat ? '' : o.mdUserTalkPrefix) + this.mdTarget);
+		var defaultHeading = (this.mdModeCat ? 'Files in [[:' + this.mdTarget + ']] ' : ('Files uploaded by [[' + this.mdUserPrefix + this.mdTarget + '|' + this.mdTarget + ']] '
+				+ '([[' + this.mdUserTalkPrefix + this.mdTarget + '|talk]] · [[' + this.mdContribPrefix + this.mdTarget + '|contribs]])'));
+
+		// Change the title of the browser tab/window
+		document.title = "VisualFileChange: " + subHeading + this.mdTarget + "- ";
+		
+		// Append controls to the dialog
+		$AjaxMdContainer.append(
+			subHeading, $('<a>', { href: targetHref, target: '_blank', text: this.mdTarget }), "-. ",
+			$('<label>', { id: 'mdTaskForUser', 'for': 'mdDeleteReason', text: this.i18n.mdInsertDeleteReasen }), ": ",
+			$('<textarea></textarea>', { id: 'mdDeleteReason', style: 'width: 99%; height: 40px;' }), $('<br/>'),
+			$('<label>', { 'for': 'mdEditSummary', text: this.i18n.mdInsertEditSummary }), ": ",
+			$('<input>', { type: 'text', id: 'mdEditSummary', style: 'width: 70%;', maxlength: 100 }),
+			$('<span>', { id: 'mdReplacePermissionWrapper' }).append(
+				$('<input>', { type: 'checkbox', id: 'mdReplacePermission' }), 
+				$('<label>', { 'for': 'mdReplacePermission', text: ' ' + this.i18n.mdReplacePermissionText })
+			))
+			.append(
+			$('<table>', { width: '100%', cellspacing: 0, cellpadding: 0 })
+				.append($('<tr>', { id: 'mdRequestPageTitle' }).append(
+					$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: this.i18n.mdInsertDeleteHeading })),
+					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdDeleteHeading', style: 'width: 99%;', value: defaultHeading }))
+				)).append($('<tr>', { id: 'mdTalkNoteNode' }).append(
+					$('<td>').append($('<label>', { 'for': 'mdTalkNote', text: this.i18n.mdInsertTalkNote })),
+					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdTalkNote', style: 'width: 99%;', value: this.mdSettings.userNote }))
+				)).append(o.mdCreateReplaceNode())
+			)
+			.append($('<a>', { text: this.i18n.mdDelContribsButtonLabel, href: '#', 'class': 'md-collapse-closed', style: 'display:block;' })
 				.click(function(e){
 					e.preventDefault();
 					$(this).next().slideToggle();
@@ -334,10 +521,10 @@ $.extend(window.VisualFileChange,
 
 		$mdDeleteReason.keyup( function (event) {
 			if ( ($(this).val().length < 6 ) && o.mdMinLenRequired ) {
-				$submitButton.addClass('ui-state-disabled');
+				$submitButton.addClass('ui-state-disabled').attr('disabled', 'disabled');
 				o.pb.setHelp2(o.i18n.mdSpecifyReason);
 			} else {
-				$submitButton.removeClass('ui-state-disabled');
+				$submitButton.removeClass('ui-state-disabled').removeAttr('disabled');
 				o.pb.setHelp2($(this).val());
 				o.mdParseReason($(this).val(), o.pb.setHelp2, o.pb);
 			}
@@ -369,10 +556,13 @@ $.extend(window.VisualFileChange,
 		this.$AjaxDeletedUploads = $('#AjaxDeletedUploads'); // For later usage to speed up gallery-box creating
 		this.$AjaxMdUlContainer = $('#AjaxMdUlContainer');
 		this.$AjaxMdNotReady = $('#AjaxMdNotReady');
+		
+		// Add label to the button
+		var $AjaxMdActionConfirm = $('<span>', { id: 'AjaxMdActionConfirm' }).appendTo($submitButton.find('.ui-button-text'));
 		//
 		// Event handler for the selection box (task to perform)
 		//
-		var $AjaxMdType = $('#AjaxMdType');
+		$AjaxMdType = $('#AjaxMdType');
 		$AjaxMdType.change( function (event) {
 			var optConfig = o.mdOpt[$(this).val()];
 			if (!optConfig) return;
@@ -431,8 +621,9 @@ $.extend(window.VisualFileChange,
 			} else {
 				$('#mdReplacePermissionWrapper').hide();
 			}
+			$AjaxMdActionConfirm.text(' (' + o.i18n.mdOptions[$(this).val()] + ')');
 		});
-		$AjaxMdType.val(this.mdOptDefault);
+		$AjaxMdType.val(this.mdSettings.defaultAction);
 		$AjaxMdType.change();
 		$AjaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
 		$('#AjaxMdIa').bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
@@ -441,15 +632,18 @@ $.extend(window.VisualFileChange,
  
  
 		// cute-selection dialog
+		var $metaSelect = $('<select>', { style: 'width:10em;', size: 1 });
 		var dlgSelectButtons = {};
 		dlgSelectButtons[this.i18n.mdCuteSelect.button] = function () { 
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
-			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, ""));
-			var v_txtAjaxMdSelectTitle = $.trim($('#txtAjaxMdSelectTitle').val().replace(/^File\:/, ""));
+			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, "").replace(/_/g, ''));
+			var v_txtAjaxMdSelectTitle = $.trim($('#txtAjaxMdSelectTitle').val().replace(/^File\:/, "").replace(/_/g, ''));
 			if ( v_txtAjaxMdSelectTitle ) v_txtAjaxMdSelectTitle = new RegExp(v_txtAjaxMdSelectTitle, '');
 			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
 			var vl_selAjaxMdSelectSize = ( ($('#selAjaxMdSelectSize').val() + '') === 'l' );
+			var v_txtAjaxMdSelectMeta = new RegExp($.trim($('#txtAjaxMdSelectMeta').val()), '');
+			var vl_selAjaxMdSelectMeta = $metaSelect.val();
 			var v_txtAjaxMdSelectDate0 = $('#txtAjaxMdSelectDate0').val();
 			var dateFromString = function(st) {
 				try {
@@ -502,13 +696,21 @@ $.extend(window.VisualFileChange,
 					if ( 'object' === typeof(v_txtAjaxMdSelectDate1) ) { // and -> end date -> must be in the future
 						if (curUpldDate <= v_txtAjaxMdSelectDate1) isMatch.date1 = true;
 					} else {isMatch.date1 = true;}
+					
+					if (vl_selAjaxMdSelectMeta) {
+						for (var md in curUpld.metadata) {
+							if (curUpld.metadata.hasOwnProperty(md) && curUpld.metadata[md].name === vl_selAjaxMdSelectMeta && v_txtAjaxMdSelectMeta.test(curUpld.metadata[md].value)) { 
+								isMatch.meta = true;
+							}
+						}
+					} else { isMatch.meta = true; }
  
-					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
+					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
 				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + ex); }
 			});
 			updateSelectedCount();
 		};
- 
+		
 		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
 			.append(this.i18n.mdCuteSelect.intro)
@@ -525,12 +727,19 @@ $.extend(window.VisualFileChange,
 				$('<tr>').append(
 					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
-						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }))),
+						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', this.i18n.mdCuteSelect.and)),
+				$('<tr>').append(
+					$('<td>').append($metaSelect),						
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectMeta', text: this.i18n.mdCuteSelect.matches }), 
+						$('<input>', { type: 'text', placeholder: this.i18n.mdCuteSelect.titleplaceholder, id: 'txtAjaxMdSelectMeta', 'size': 41 }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append(this.i18n.mdCuteSelect.date),
 					$('<td>').append(
-						$('<label>', { 'for': 'txtAjaxMdSelectDate0', text: this.i18n.mdCuteSelect.between }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 22, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<label>', { 'for': 'txtAjaxMdSelectDate0' }).append($('<abbr>', { 
+							text: this.i18n.mdCuteSelect.between,
+							title: this.i18n.mdCuteSelect.after
+						})),
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -545,8 +754,11 @@ $.extend(window.VisualFileChange,
 								title: function() {
 									return o.i18n.optStartAtHowTo;
 							} }),
-						$('<label>', { 'for': 'txtAjaxMdSelectDate1', text: this.i18n.mdCuteSelect.and }),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 22, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<label>', { 'for': 'txtAjaxMdSelectDate1' }).append($('<abbr>', { 
+							text: this.i18n.mdCuteSelect.and,
+							title: this.i18n.mdCuteSelect.before
+						})),
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -569,6 +781,7 @@ $.extend(window.VisualFileChange,
 		var dlgWidth = Math.min(600, $(window).width() - pbWidth);
 		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
+			resizable: false,
 			closeOnEscape: true,
 			position: [($(window).width() - dlgWidth - pbWidth) / 2 + pbWidth, ($(window).height() - 250) / 2 ],
 			title: 'Cute-Selection: Specify the options, please',
@@ -577,6 +790,14 @@ $.extend(window.VisualFileChange,
 			buttons: dlgSelectButtons,
 			show: 'slide',
 			hide: 'fade',
+			open: function(evt, ui) {
+				$metaSelect.children().remove();
+				$('<option>', { text: ' ', value: '' }).appendTo($metaSelect);
+				o.metaKeys.sort();
+				$.each(o.metaKeys, function(k, val) {
+					$('<option>', { text: val }).appendTo($metaSelect);
+				});
+			},
 			autoOpen: false
 		});
 		$('.numbersOnly').keyup(function () { 
@@ -595,7 +816,7 @@ $.extend(window.VisualFileChange,
 			align: "center"
 		});
 		$queryMore.append('<button id="mdQueryMoreBtn" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ui-state-disabled" type="button" role="button" aria-disabled="false"><span class="ui-button-text">' + this.i18n.mdMore + '&gt;&gt;</span></button>');
-		$('#AjaxMdContainer').append($queryMore).append('<div style="height:100px">&nbsp;</div>');
+		$AjaxMdContainer.append($queryMore).append('<div style="height:100px">&nbsp;</div>');
 		$('#mdQueryMoreBtn').click( function (event) { o.mdQueryMore(); });
 		/* End of UI */
 		
@@ -655,7 +876,7 @@ $.extend(window.VisualFileChange,
 					collectedFiles = [];
 				}
 				_this.iCurrentIId = upli.iId;
-				if (Math.round((window.AjaxMassDeleteInterval ? window.AjaxMassDeleteInterval : 30) / 10) === _this.mdUploadCt) {
+				if (Math.round(_this.mdSettings.loadBatchSize / 10) === _this.mdUploadCt) {
 					return false;
 				}
 			});
@@ -869,6 +1090,16 @@ $.extend(window.VisualFileChange,
 			uItem.categories = pg.categories;     // save cats for cute-selection
 			uItem.metadata = ii.metadata;         // save Exif and other for cute-selection
 			uItem.size = (ii.size >> 10);         // for cute-selection
+			
+			// List all Meta-Keys
+			if (ii.metadata.length) {
+				$.each(ii.metadata, function(i, m) {
+					var tp = typeof m.value;
+					if (tp === 'string' || tp === 'number' || tp === 'boolean') {
+						o.metaKeys.push(m.name);
+					}
+				});
+			}
 			
 			var camModel = o.mdSecureCall('mdGetCamModel', uItem);
 			var loglink = mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=Special:Log&page=' + mw.util.wikiUrlencode(dirtyTitle);
@@ -1241,7 +1472,7 @@ $.extend(window.VisualFileChange,
 	}
 });
 
-mw.loader.using('jquery.tipsy', function() {
+mw.loader.using(['jquery.tipsy', 'jquery.placeholder'], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
 });
 
