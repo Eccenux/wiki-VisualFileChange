@@ -1,8 +1,8 @@
 // Main script is at MediaWiki:VisualFileChange.js
 // These are the delayed loaded edit components in order to speed up loading of the first UI
 
-/*global jQuery:false, mediaWiki:false, appendCSS:false, alert:false, console:false */
-/*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
+/*global jQuery:false, mediaWiki:false, alert:false, console:false */
+/*jshint curly:false, maxerr:200, bitwise:false,*/
 (function ($, mw) {
 'use strict';
 
@@ -75,12 +75,26 @@ $.extend(window.VisualFileChange,
 		} else {
 			o.reason = '';
 		}
-		o.mdReplaceText = $('#mdReplaceText').val();
-		o.mdMatchRegExp = $('#mdRRegEx')[0].checked;
 		o.mdReplacePermission = $('#mdReplacePermission')[0].checked;
 		o.mdTalkNote = $('#mdTalkNote').val();
 		o.mdAddEditSummary = $('#mdEditSummary').val();
- 
+
+		// Processing for custom replace
+		$.each(o.mdReplacementMatrix, function(i, rObj) {
+			rObj.match = rObj.match.val();
+			rObj.replace = rObj.replace.val();
+			rObj.regex = rObj.regex[0].checked;
+			if (rObj.regex && rObj.match) {
+				var m = rObj.match.match(/\/(.+)\/(.*)/);
+				if (m && m[0] && m[1]) {
+					rObj.match = new RegExp(m[1], m[2]);
+				} else {
+					o.pb.setError('INVALIDINPUT: ' + rObj.match + ' is not a valid RegExp!');
+					rObj.match = '';
+				}
+			}
+		});
+		
 		o.addTask('mdExecuteContinue');
 		o.nextTask();
 	},
@@ -118,7 +132,7 @@ $.extend(window.VisualFileChange,
 		this.tag = optConfig[7].replace('%REASON%', this.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', this.formatDate('year=YYYY|month=MON|day=DAY'));
 		
 		this.img_summary = (this.mdAddEditSummary ? (this.mdAddEditSummary + ' - ') : '') + 
-			optConfig[8].replace('%pattern%', this.reason).replace('%replace%', this.mdReplaceText).replace('%REASON%', this.reason) + 
+			optConfig[8].replace('%pattern%', this.reason).replace('%replacementcount%', this.mdReplacementMatrix.length-1).replace('%REASON%', this.reason) + 
 			' Using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
 		var r = this.img_summary.match(/\%(.{1,9})\%/);
 		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
@@ -223,7 +237,7 @@ $.extend(window.VisualFileChange,
 				page.title = upload;
 				page.text = this.tag;
 				page.editType = edittype;
-				if (window.AjaxDeleteWatchFile) page.watchlist = 'watch';
+				if (this.mdSettings.watchFiles) page.watchlist = 'watch';
 				
 				this.mdUploadCt++;
 				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
@@ -325,6 +339,53 @@ $.extend(window.VisualFileChange,
 		cleanup = rebuild_comments_nowikis(cleanup, tokens, true);
 		return cleanup;
 	},
+	
+	mdRefreshCache: function () {
+		$(document).triggerHandler('vFC', ['refreshing cache of file-wikitext', this]);
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdRefreshCache', 'md-doing');
+		
+		// Test how old the data are
+		if (new Date().getTime() - this.mdDateOldestDataFetched.getTime() < 60000) {
+			this.nextTask();
+			return;
+		}
+		this.refreshRequests = 0;
+		var o = this,
+			i = 0, 
+			titles = [],
+			query = {
+				action: 'query',
+				prop: 'revisions',
+				rvprop: 'content'
+			};
+		var makeRequest = function() {
+			i = -1;
+			query.titles = titles.join('|');
+			titles = [];
+			o.refreshRequests++;
+			o.doAPICall(query, 'mdRefreshCacheCB');
+		};
+		$.each(this.iUploads, function(upload, upli) {
+			if (!o.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
+			titles.push(upload);
+			if (10 === i) makeRequest();
+			i++;
+		});
+		if (titles.length) makeRequest();
+		if (0 === o.refreshRequests) this.nextTask();
+	},
+	
+	mdRefreshCacheCB: function (result) {
+		var o = this;
+		$(document).triggerHandler('vFC', ['got fresh page contents', this, result]);
+		
+		o.refreshRequests--;
+		$.each(result.query.pages, function(id, pg) {
+			o.iUploads[pg.title].content = pg.revisions[0]['*'];
+		});
+		if (0 === o.refreshRequests) this.nextTask();
+	},
 
 	mdInsertPermission: function () {
 		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', this]);
@@ -352,13 +413,10 @@ $.extend(window.VisualFileChange,
 			if ('c_replace' !== _this.mdTaskToPerform) {
 				page.text = _this.mdSecureCall( "mdInsertOTRS", page.text, _this.reason );
 			} else {
-				if ('' === _this.reason) return;
-				var m, tmpRegEx = _this.reason;
-				if (_this.mdMatchRegExp) {
-					m = tmpRegEx.match(/\/(.+)\/(.*)/);
-					if (m && m[0] && m[1]) tmpRegEx = new RegExp(m[1], m[2]);
-				}
-				page.text = page.text.replace(tmpRegEx, _this.mdReplaceText);
+				$.each(_this.mdReplacementMatrix, function(i, rObj) {
+					if ('' === rObj.match) return;
+					page.text = page.text.replace(rObj.match, rObj.replace);
+				});
 			}
 			
 			page.text = _this.cleanUp(page.text);
@@ -479,7 +537,7 @@ $.extend(window.VisualFileChange,
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
-			if (window.AjaxDeleteWatchUserTalk) page.watchlist = 'watch';
+			if (this.mdSettings.watchUserTalk) page.watchlist = 'watch';
 			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
 			_this.uploadersToNotify++;
@@ -501,6 +559,7 @@ $.extend(window.VisualFileChange,
 			summary: summary,
 			watchlist: (page.watchlist || 'preferences'),
 			title: page.title,
+			nocreate: 1,
 			requestid: page.title
 		};
 		if (page.redirect) edit.redirect = '';
