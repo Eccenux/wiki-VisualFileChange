@@ -466,6 +466,7 @@ $.extend(window.VisualFileChange,
 		page.text = "\n\n=== " + this.mdDeleteHeading + " ===\n\n" + this.requestPageContents + "\n~~" + "~~\n";
 		page.watchlist = 'watch';
 		page.editType = 'appendtext';
+		page.create = true;
 		
 		$(document).triggerHandler('vFC', ['request subpage', this, page]);
 		this.mdSavePage(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
@@ -559,9 +560,9 @@ $.extend(window.VisualFileChange,
 			summary: summary,
 			watchlist: (page.watchlist || 'preferences'),
 			title: page.title,
-			nocreate: 1,
 			requestid: page.title
 		};
+		if (!page.create) edit.nocreate = 1;
 		if (page.redirect) edit.redirect = '';
 		edit[page.editType] = page.text;
 		// Token last!
