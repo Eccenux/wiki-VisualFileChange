@@ -253,11 +253,12 @@ $.extend(window.VisualFileChange,
 		var rowCount = 0;
 		var $lastBigArea = 0;
 		
-		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', text: 'R. → /R\\./g', title: 'Make a match-all-occurrences-RegExp from' }).click(function() {
+		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', html: 'R. → /R\\./g', title: 'Make a match-all-occurrences-RegExp from' }).click(function() {
 			var $serviceFor = $(this).data('mdServiceFor');
 			$serviceFor.val('/' + $.escapeRE($serviceFor.val()).replace(/\//g, '\\/') + '/g').keyup();
+			$(this).hide();
 		});
-		var $table = $('<table>', { width: '100%', cellspacing: 0, cellpadding: 0 });
+		var $table = $('<table>', { style: 'border:1px solid #BBB', width: '100%', cellspacing: 0, cellpadding: 0 });
 		var $thead = $('<thead>').append(
 			$('<th>', { text: 'Nr' }),
 			$('<th>', { text: 'RegExp?', abbr: 'Regular Expression. User full JavaScript RegExp-Syntax like /find.+/g' }),
@@ -274,9 +275,9 @@ $.extend(window.VisualFileChange,
 				$cb.parent().css('background', '');
 				$text.css('background', '');
 				if (isRE && !$cb[0].checked) {
-					$cb.parent().css('background', '#F2CBCB');
+					$cb.parent().css('background', '#FCC');
 				} else if (!isRE && $cb[0].checked) {
-					$text.css('background', '#F2CBCB');
+					$text.css('background', '#FCC');
 				}
 			};
 			var testEmptyReplace = function() {
@@ -329,7 +330,7 @@ $.extend(window.VisualFileChange,
 			})).focus(function() {
 				var $el = $(this);
 				var pos = $el.position();
-				$regExpEscapeHelper.show().css('top', pos.top).css('left', pos.left - $regExpEscapeHelper.width() - 4);
+				$regExpEscapeHelper.show().css('top', pos.top + 5).css('left', pos.left - $regExpEscapeHelper.width() - 4);
 				$regExpEscapeHelper.data('mdServiceFor', $el);
 			});
 		};
@@ -460,6 +461,7 @@ $.extend(window.VisualFileChange,
 		});
 
 		var $AjaxMdContainer = $('#AjaxMdContainer').text('');
+		this.$mdControls = $('<div>');
 
 		if (!this.dlg) return 0;
 		
@@ -477,7 +479,7 @@ $.extend(window.VisualFileChange,
 		document.title = "VisualFileChange: " + subHeading + this.mdTarget + "- ";
 		
 		// Append controls to the dialog
-		$AjaxMdContainer.append(
+		this.$mdControls.append(
 			subHeading, $('<a>', { href: targetHref, target: '_blank', text: this.mdTarget }), "-. ",
 			$('<label>', { id: 'mdTaskForUser', 'for': 'mdDeleteReason', text: this.i18n.mdInsertDeleteReasen }), ": ",
 			$('<textarea></textarea>', { id: 'mdDeleteReason', style: 'width: 99%; height: 40px;' }), $('<br/>'),
@@ -488,7 +490,7 @@ $.extend(window.VisualFileChange,
 				$('<label>', { 'for': 'mdReplacePermission', text: ' ' + this.i18n.mdReplacePermissionText })
 			))
 			.append(
-			$('<table>', { width: '100%', cellspacing: 0, cellpadding: 0 })
+			$('<table>', { cellspacing: 0, cellpadding: 0, style: 'position:relative;', width: '100%' })
 				.append($('<tr>', { id: 'mdRequestPageTitle' }).append(
 					$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: this.i18n.mdInsertDeleteHeading })),
 					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdDeleteHeading', style: 'width: 99%;', value: defaultHeading }))
@@ -497,6 +499,9 @@ $.extend(window.VisualFileChange,
 					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdTalkNote', style: 'width: 99%;', value: this.mdSettings.userNote }))
 				)).append(o.mdCreateReplaceNode())
 			)
+			.appendTo($AjaxMdContainer);
+
+			$AjaxMdContainer
 			.append($('<a>', { text: this.i18n.mdDelContribsButtonLabel, href: '#', 'class': 'md-collapse-closed', style: 'display:block;' })
 				.click(function(e){
 					e.preventDefault();
@@ -1085,6 +1090,8 @@ $.extend(window.VisualFileChange,
 			}
 			
 			ii = pg.imageinfo[0];
+			ii.metadata = ii.metadata || [];      // not all images have metadata
+			pg.categories = pg.categories || [];  // not all images have categories
 
 			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage
 			uItem.categories = pg.categories;     // save cats for cute-selection
