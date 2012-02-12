@@ -101,7 +101,14 @@ $.extend(window.VisualFileChange,
 			close: function () {
 				$(this).remove();
 			},
-			buttons: dlgButtons
+			buttons: dlgButtons,
+			open: function() {
+				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
+				$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } });
+				$buttons.eq(1).button({ icons: { primary: 'ui-icon-circle-close' } });
+				$buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } });
+				$buttons.eq(3).button({ icons: { primary: 'ui-icon-refresh' } });
+			}
 		});
 	},
 	
@@ -270,10 +277,36 @@ $.extend(window.VisualFileChange,
 		var o = this,
 			oldClientConfig,
 			profileVar = 'vFC_Profiles',
-			$dlgNode, $profileSelect, $descSave, $addNameL, $addName, $addButtonCookie, $addButtonJS, $descLoad, $loadButton, $cmdSection;
+			$dlgNode, $profileSelect, $descSave, $addNameL, $addName, $addButtonClient, $addButtonJS, $descLoad, $loadButton, $descRemove, $removeButton, $cmdSection;
 
 		var loadProfile = function() {
+			var profile, profileName = $profileSelect.data('selectedProfileName');
+			if (!profileName) {
+				$profileSelect.css('background-color', '#FCC');
+				setTimeout(function() {
+					$profileSelect.css('background-color', '');
+				}, 1500);
+				return;
+			}
+			profile = $.jStorage.get(profileVar);
+			if (!profile) return;
+			profile = profile[profileName];
+			if (!profile) return;
 			
+			$.each(profile, function(id, val) {
+				if ('action' === id) {
+					o.$AjaxMdType.val(val).change();
+					return;
+				}
+				var $ctr = o.$mdControls.find('#' + id);
+				if (!$ctr.length) return;
+				if ('boolean' === typeof val) {
+					$ctr[0].checked = val;
+					$ctr.change();
+				} else {
+					$ctr.val(val).keyup();
+				}
+			});
 		};
 		var loadStore = function() {
 			return $.jStorage.get(profileVar, {});
@@ -293,18 +326,21 @@ $.extend(window.VisualFileChange,
 				}, 1500);
 				return false;
 			}
-			if (!o.$mdControls) return;
+			if (!o.$mdControls) return false;
 			return true;
 		};
 		var saveToClient = function() {
 			if (!testSaveInfo()) return;
 			var newConfigItem = {};
 			oldClientConfig = loadStore();
-			o.$mdControls.find('input').each(function(i, el) {
+			newConfigItem.action = o.$AjaxMdType.val();
+			o.$mdControls.find('input, textarea').each(function(i, el) {
 				var $el = $(el),
-					$elId = $el.attr('id');
+					$elId = $el.attr('id'),
+					$elType = $el.attr('type');
+
 				if (!$elId) return;
-				newConfigItem[$elId] = $el.val();
+				newConfigItem[$elId] = ('checkbox' === $elType) ? $el[0].checked : $el.val();
 			});
 			oldClientConfig[$addName.val()] = newConfigItem;
 			$.jStorage.set(profileVar, oldClientConfig);
@@ -321,42 +357,47 @@ $.extend(window.VisualFileChange,
 			});
 			$.jStorage.set(profileVar, newConfig);
 			updateSelect();
-			$addName.val('');
+			$profileSelect.change();
 		};
 		var saveToJS = function() {
 			if (!testSaveInfo()) return;
 		};
 		
-		//o.$mdControls.find('input#' + id).val(val)
-		
 		$dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile.' });
-		$profileSelect = $('<select>', { size: 15, style: 'min-width:150px' }).change(function() {
+		$profileSelect = $('<select>', { size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
 			var $sel = $profileSelect,
 				$selVal = $sel.val() || '';
 			$addName.val($selVal.replace(/ \(.+\)$/, ''));
 			$sel.data('selectedProfile', $sel.children().eq($sel[0].selectedIndex));
 			$sel.data('selectedProfileName', $selVal.replace(/ \(.+\)$/, ''));
-			$loadButton.button( "option", "disabled", !$selVal );
-			$removeButton.button( "option", "disabled", !$selVal );
+			$loadButton.button( 'option', 'disabled', !$selVal );
+			$removeButton.button( 'option', 'disabled', !$selVal );
 		});
 		$descSave = $('<div>', { text: 'Save current inputs into your' });
 		$addNameL = $('<label>', { 'for': 'mdProfileName', text: 'Use the same name again to override a profile.' });
-		$addName = $('<input>', { id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block;' }).placeholder();
-		$addButtonCookie = $('<button>', { text: 'Browser'}).click(saveToClient);
-		$addButtonJS = $('<button>', { text: 'Commons-account', disabled: 'disabled' }).click(saveToJS);
+		$addName = $('<input>', { id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' }).placeholder();
+		$addButtonClient = $('<button>', { text: 'Browser (may not permanent)'})
+			.button({ icons: { primary: 'ui-icon-disk' } })
+			.click(saveToClient);
+		$addButtonJS = $('<button>', { text: 'Commons-account (publicly visible)', disabled: 'disabled' })
+			.button({ icons: { primary: 'ui-icon-script' } })
+			.click(saveToJS);
 		
 		$descLoad = $('<div>', { text: 'Load a profile. Caution: Your current inputs will be lost.' });
-		$loadButton = $('<button>', { text: 'Load', disabled: 'disabled' }).click(loadProfile);
+		$loadButton = $('<button>', { text: 'Load', disabled: 'disabled', style: 'display:block;' })
+			.button({ icons: { primary: 'ui-icon-folder-open' } })
+			.click(loadProfile);
 		
 		$descRemove = $('<div>', { text: 'Remove a profile.' });
-		$removeButton = $('<button>', { text: 'Remove', disabled: 'disabled' }).click(function() {
-console.log($profileSelect.data('selectedProfile').data('profileSource'))
-			if ('client' === $profileSelect.data('selectedProfile').data('profileSource')) {
-				removeFromClient($profileSelect.data('selectedProfileName'));
-			}
+		$removeButton = $('<button>', { text: 'Remove', disabled: 'disabled', style: 'display:block;' })
+			.button({ icons: { primary: 'ui-icon-trash' } })
+			.click(function() {
+				if ('client' === $profileSelect.data('selectedProfile').data('profileSource')) {
+					removeFromClient($profileSelect.data('selectedProfileName'));
+				}
 		});
 		
-		$cmdSection = $('<div>', { style: 'display:inline-block; margin:4px;' }).append($addNameL, $addName, $descSave, $addButtonCookie, $addButtonJS, $descLoad, $loadButton, $descRemove, $removeButton);
+		$cmdSection = $('<div>', { style: 'display:inline-block; margin:4px; max-width:360px' }).append($descLoad, $loadButton, $descRemove, $removeButton, $('<hr/>'), $addNameL, $addName, $descSave, $addButtonClient, ' ', $addButtonJS);
 		
 		$dlgNode.append($('<br>'), $profileSelect, $cmdSection);
 		
@@ -366,13 +407,11 @@ console.log($profileSelect.data('selectedProfile').data('profileSource'))
 			title: 'Profile manager',
 			modal: true,
 			resizable: false,
-			width: Math.min(550, $(window).width()),
+			width: Math.min(610, $(window).width()),
 			close: function () {
 				$(this).remove();
 			}
 		});
-		
-		$('div.ui-dialog-content').find('button').button();
 	},
 	
 	mdConfigInstall: function () {
@@ -414,7 +453,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
  */
 
 (function( $ ) {
-	/*jshint evil:true, laxbreak:true, smarttabs:true,*/
+	/*jshint evil:true, laxbreak:true, smarttabs:true*/
 	'use strict';
 	var	escapeable = /["\\\x00-\x1f\x7f-\x9f]/g,
 		meta = {
@@ -665,6 +704,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
  **/
 
 (function($){
+	'use strict';
     if(!$ || !($.toJSON || Object.toJSON || window.JSON)){
         throw new Error("jQuery, MooTools or Prototype needs to be loaded before jStorage!");
     }
@@ -695,7 +735,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
 
         /* Next check for TTL */
         _ttl_timeout;
-		 
+
 		// Rillke: _XMLService removed
 
     ////////////////////////// PRIVATE METHODS ////////////////////////
@@ -801,10 +841,10 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
      * Function checks if a key is set and is string or numeric
      */
     function _checkKey(key){
-        if(!key || (typeof key != "string" && typeof key != "number")){
+        if(!key || (typeof key !== "string" && typeof key !== "number")){
             throw new TypeError('Key name must be string or numeric');
         }
-        if(key == "__jstorage_meta"){
+        if(key === "__jstorage_meta"){
             throw new TypeError('Reserved key name');
         }
         return true;
@@ -818,7 +858,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
 
         clearTimeout(_ttl_timeout);
 
-        if(!_storage.__jstorage_meta || typeof _storage.__jstorage_meta.TTL != "object"){
+        if(!_storage.__jstorage_meta || typeof _storage.__jstorage_meta.TTL !== "object"){
             // nothing to do here
             return;
         }
@@ -838,7 +878,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
         }
 
         // set next check
-        if(nextExpire != Infinity){
+        if(nextExpire !== Infinity){
             _ttl_timeout = setTimeout(_handleTTL, nextExpire - curtime);
         }
 
@@ -865,9 +905,9 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
          */
         set: function(key, value){
             _checkKey(key);
-            if(typeof value == "function"){
+            if(typeof value === "function"){
                 value = null; // functions can't be saved!
-            }else if(value && typeof value == "object"){
+            }else if(value && typeof value === "object"){
                 // clone the object before saving to _storage tree
                 value = json_decode(json_encode(value));
             }
@@ -888,7 +928,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
             if(key in _storage){
 				return _storage[key];
             }
-            return typeof(def) == 'undefined' ? null : def;
+            return typeof(def) === 'undefined' ? null : def;
         },
 
         /**
@@ -903,7 +943,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
                 delete _storage[key];
                 // remove from TTL list
                 if(_storage.__jstorage_meta &&
-                  typeof _storage.__jstorage_meta.TTL == "object" &&
+                  typeof _storage.__jstorage_meta.TTL === "object" &&
                   key in _storage.__jstorage_meta.TTL){
                     delete _storage.__jstorage_meta.TTL[key];
                 }
@@ -979,7 +1019,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
         index: function(){
             var index = [], i;
             for(i in _storage){
-                if(_storage.hasOwnProperty(i) && i != "__jstorage_meta"){
+                if(_storage.hasOwnProperty(i) && i !== "__jstorage_meta"){
                     index.push(i);
                 }
             }
