@@ -52,7 +52,7 @@ function ProgressBox(width, o) {
 		'id': 'mdCMD',
 		'type': 'text',
 		'maxlength': '2',
-		'style': 'position:absolute; top:-10000px;'
+		'style': 'position:absolute; top:-100px;'
 	}).keydown(function(e) {
 		var tVal = ($(this).val() || '');
 		if (13 === (e.keyCode - 0)) {
@@ -96,12 +96,14 @@ function ProgressBox(width, o) {
 		style: 'font:small-caps 1.5em sans-serif; text-align:center; padding:10px; margin-top:10px;',
 		text: 'VisualFileChange.js'
 	});
-	this.$cfg = $('<a>', { href: '#', text: ' >> advanced configuration', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' });
-	this.$profile = $('<a>', { href: '#', text: ' >> profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' });
+	this.$cfg = $('<a>', { href: '#', text: ' advanced configuration', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
+		.prepend($('<div>', { text: ' ', 'class': 'ui-icon ui-icon-gear', style: 'display:inline-block' }));
+	this.$profile = $('<a>', { href: '#', text: ' profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
+		.prepend($('<div>', { text: ' ', 'class': 'ui-icon ui-icon-wrench', style: 'display:inline-block' }));
 	this.$subheading = $('<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.mdScriptRevision
-	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), this.$cfg, $('<br>'), this.$profile);
+	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: 'Tasks:'
@@ -177,6 +179,12 @@ ProgressBox.prototype.isHidden = function () {
 
 var isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
 
+// Fixing the buggy MediaWiki-monobook-style
+if ('monobook' === mw.config.get('skin')) mw.util.addCSS(
+	' button.ui-button > .ui-icon { display: inline-block; position: relative; top: 2px; left: -2px; }\n'
+	+'button.ui-button > .ui-button-text { display: inline-block; }\n'
+);
+
 /**
  * Create a new VisualFileChange-literal-Object.
  *
@@ -186,7 +194,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.8.0.2',
+	mdScriptRevision: '0.8.2.0',
 	
 
 	/**
@@ -418,7 +426,7 @@ var VisualFileChange = window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
+			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var getMwDate = function(dateX) {
@@ -505,7 +513,12 @@ var VisualFileChange = window.VisualFileChange = {
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgButtons,
-			close: o.mdCancel
+			close: o.mdCancel,
+			open: function() {
+				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
+				$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' } });
+				$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } });
+			}
 		});
 		o.pb.setZIndex($('.ui-widget-overlay').css('z-index')-0+1);
 		
@@ -517,7 +530,6 @@ var VisualFileChange = window.VisualFileChange = {
 			pLastCB = 0,
 			delayXHR = 500;
 		
-		$submitButton = $('.ui-dialog-buttonpane button:first');
 		$targetSelect = $('<select>', { size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsCat }),
 			$('<option>', { text: nsUser, selected: 'selected' })
@@ -656,9 +668,9 @@ var VisualFileChange = window.VisualFileChange = {
 				$targetSelect.val(nsUser);
 			}
 			if ($(this).val().length < minlen) {
-				$submitButton.addClass('ui-state-disabled');
+				$submitButton.button('option', 'disabled', true);
 			} else {
-				$submitButton.removeClass('ui-state-disabled');
+				$submitButton.button('option', 'disabled', false);
 			}
 			if (e && e.keyCode && 13 === (e.keyCode - 0)) $submitButton.click();
 		}).keyup().focus();
