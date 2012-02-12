@@ -237,7 +237,7 @@ $.extend(window.VisualFileChange,
 				$examineFirstDiv.text(curUpld.content);
 				$examineSecondDiv.text(newContent);
 			});
-		});
+		}).button({ icons: { primary: 'ui-icon-search' } });
 		$examineFirstDiv = $('<div>', { 'class': 'md-examine-contents' });
 		$examineSecondDiv = $('<div>', { 'class': 'md-examine-contents' });
 		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $('<div>').append($examineFirstDiv, $examineSecondDiv));
@@ -521,15 +521,17 @@ $.extend(window.VisualFileChange,
 			}))
 			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
-		var $submitButton = $('.ui-dialog-buttonpane button:first'),
+		var $buttons = this.dlg.parent().find('.ui-dialog-buttonpane button'),
+			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' } }),
+			$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }),
 			$mdDeleteReason = $('#mdDeleteReason');
 
 		$mdDeleteReason.keyup( function (event) {
 			if ( ($(this).val().length < 6 ) && o.mdMinLenRequired ) {
-				$submitButton.addClass('ui-state-disabled').attr('disabled', 'disabled');
+				$submitButton.button('option', 'disabled', true);
 				o.pb.setHelp2(o.i18n.mdSpecifyReason);
 			} else {
-				$submitButton.removeClass('ui-state-disabled').removeAttr('disabled');
+				$submitButton.button('option', 'disabled', false);
 				o.pb.setHelp2($(this).val());
 				o.mdParseReason($(this).val(), o.pb.setHelp2, o.pb);
 			}
@@ -567,7 +569,7 @@ $.extend(window.VisualFileChange,
 		//
 		// Event handler for the selection box (task to perform)
 		//
-		$AjaxMdType = $('#AjaxMdType');
+		this.$AjaxMdType = $AjaxMdType = $('#AjaxMdType');
 		$AjaxMdType.change( function (event) {
 			var optConfig = o.mdOpt[$(this).val()];
 			if (!optConfig) return;
@@ -1479,7 +1481,7 @@ $.extend(window.VisualFileChange,
 	}
 });
 
-mw.loader.using(['jquery.tipsy', 'jquery.placeholder'], function() {
+mw.loader.using(['jquery.ui.dialog', 'jquery.ui.button', 'jquery.tipsy', 'jquery.placeholder'], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
 });
 
