@@ -523,7 +523,6 @@ $.extend(window.VisualFileChange,
 
 mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jquery.cookie', 'jquery.placeholder', 'mediawiki.user'], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'configManager']);
-	window.VisualFileChange.mdConfigInstall();
 });
 
 }(jQuery, mediaWiki));
