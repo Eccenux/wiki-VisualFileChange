@@ -2,7 +2,7 @@
 // These are the delayed loaded edit components in order to speed up loading of the first UI
 
 /*global jQuery:false, mediaWiki:false, alert:false, console:false */
-/*jshint curly:false, maxerr:200, bitwise:false,*/
+/*jshint curly:false, maxerr:200, smarttabs:true, loopfunc:true*/
 (function ($, mw) {
 'use strict';
 
@@ -19,8 +19,10 @@ $.extend(window.VisualFileChange,
 	**/
 	mdExecute: function () {
 		var o = this;
-		o.mdTaskToPerform = $('#AjaxMdType').val();
+		o.mdTaskToPerform = o.$AjaxMdType.val();
 		var cmdConfig = o.mdCommands[o.mdTaskToPerform];
+		
+		o.startDate = new Date();
 		
 		if (0 !== o.mdNumberOfExecs || 0 !== o.mdListUploadsPending) return; // refuse futher exec request
 		if (0 !== o.mdPendingBatchQueries) { // call me later
@@ -34,7 +36,7 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['processing user\'s input', o]);
 		o.pb.addTask('inputcheck');
 		o.pb.setTaskState('inputcheck', 'md-doing');
-		o.pb.setHelp(this.i18n.mdPleaseWait);
+		o.pb.setHelp(o.i18n.mdPleaseWait);
 		o.pb.setHelp2('');
 		o.pb.setHelp3('');
 
@@ -57,7 +59,7 @@ $.extend(window.VisualFileChange,
 		});
  
 		if (0 === filesToTag) {
-			if ( ('other' !== $('#AjaxMdType').val() ) && ('otrs' !== $('#AjaxMdType').val()) && (0 < o.ioUploads) ) {
+			if ( ('other' !== o.mdTaskToPerform ) && ('otrs' !== o.mdTaskToPerform) && (0 < o.ioUploads) ) {
 				o.addTask('mdRvGenOGallery');
 			}
 			o.addTask('mdExecuteReady');
@@ -85,16 +87,17 @@ $.extend(window.VisualFileChange,
 			rObj.replace = rObj.replace.val();
 			rObj.regex = rObj.regex[0].checked;
 			if (rObj.regex && rObj.match) {
-				var m = rObj.match.match(/\/(.+)\/(.*)/);
-				if (m && m[0] && m[1]) {
-					rObj.match = new RegExp(m[1], m[2]);
-				} else {
-					o.pb.setError('INVALIDINPUT: ' + rObj.match + ' is not a valid RegExp!');
-					rObj.match = '';
-				}
+				rObj.match = o.mdRegExpFromString(rObj.match);
+				if (!rObj.match) o.pb.setError('INVALIDINPUT: -' + rObj.match + '- is not a valid RegExp!');
 			}
 		});
 		
+		// Try to save the current input state into the automatically generated client profile
+		try {
+			o.mdSaveProfileToClient('auto-exec');
+		} catch (e) {
+			o.pb.setHelp2('Could not save your current inputs into your browser');
+		}
 		o.addTask('mdExecuteContinue');
 		o.nextTask();
 	},
@@ -118,7 +121,6 @@ $.extend(window.VisualFileChange,
 	**/
 	mdExecuteContinue: function () {
 		$(document).triggerHandler('vFC', ['generating page messages and summaries', this]);
-		this.startDate = new Date();
  
 		// set up some page names we'll need later
 		var mdRequestPage = (this.mdModeCat ? 'Files in ' : 'Files uploaded by ') + this.mdTarget;
@@ -237,7 +239,7 @@ $.extend(window.VisualFileChange,
 				page.title = upload;
 				page.text = this.tag;
 				page.editType = edittype;
-				if (this.mdSettings.watchFiles) page.watchlist = 'watch';
+				page.watchlist = this.mdSettings.watchFiles;
 				
 				this.mdUploadCt++;
 				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
@@ -245,99 +247,228 @@ $.extend(window.VisualFileChange,
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
+	
+	/**
+	 *  A powerful and easily extensible way to preserve certain areas during regex-replaces
+	 *  (c) 2012 Rainer Rillke, License: GPL
+	 *
+	 * @constructormethod
+	 *   @example
+	 *      var nwe1 = VisualFileChange.nowikiEscaper(pageText1);
+	 *      var nwe2 = VisualFileChange.nowikiEscaper(pageText2);
+	 *   @description
+	 *      You can pass an initial value to the object-function.
+	 *
+	 * @methods
+	 * -getText()
+	 *   @example var newPageText = nwe.getText()
+	 *   @description -> retrieves the stored text
+	 *
+	 * -setText(pageText)
+	 *   @example nwe.setText(pageText) 
+	 *   @description -> set a new text; overrides the old content
+	 *
+	 * -secureReplace(pattern, replace)
+	 *   @example nwe.secureReplace(pattern, replace)
+	 *   @description -> replace the pattern with replace; securely preserve nowikis
+	 *
+	 * -ordinaryReplace(pattern, replace)
+	 *   @example nwe.ordinaryReplace(pattern, replace)
+	 *   @description -> do an ordinary javaScript replace
+	 *
+	 * -replace(pattern, replace)
+	 *   @example nwe.replace(pattern, replace)
+	 *   @description -> replace the pattern with replace; allow extended use of substring () and $1..$9
+	 *
+	 * -doCleanUp(pattern, replace)
+	 *   @example nwe.replace(pattern, replace)
+	 *   @description -> replace the pattern with replace; allow extended use of substring () and $1..$9
+	 *
+	**/
+	nowikiEscaper: function(inputText) {
+		// Private
+		// Data-variables
+		var // The text is always kept up-to-date and contains the actual wikitext
+			_text = inputText || '',
+			// Contains the text where <nowikis> have been replaced by a placeholder
+			placeholderText = '',
+			// Contains the stripped nowikis from placeholderText
+			nowikis = {},
+			// An array of objects [{ preserve: bool, text: textfragment }, ... ]
+			fragmentedText = [],
+			// If the fragments are altered and this is not reflected in the placeholderText yet
+			fragmentsAreDirty = false,
+			// If the placeholderText is altered and this is not reflected in the fragmentedText yet
+			placeholderTextDirty = false,
+			// If the text was manipulated and this is not reflected in the "escaped" texts yet
+			textDirty = false;
+		
+		// Constants
+		// The order is important here in cases where they match the same, the fist will be used
+		var reToPreserve = 
+		[
+			/(<nowiki>(?:.|\n)*?<\/nowiki>)/,
+			/(<\!\-\-\s*categories\s*by\s*commonsense\s*\-\->)/i,
+			/(<!\-\-(?:.|\n)*?\-\->)/
+		];
+		
+		var reToPreservePattern = /^\s*(\/\(\)\/)\s*$/;
+		
+		// Functions
+		var noMatchToInfinity = function(pos) {
+			if (-1===pos) return Infinity;
+			return pos;
+		};
+		var eachPosition = function(text, fn) {
+			while ( text ) {
+				var arrPos = [];
+				$.each(reToPreserve, function(i, regex) {
+					arrPos.push(noMatchToInfinity(text.search(regex)));
+				});
+				text = fn(text, arrPos);
+			}
+		};
+		var nearestMatch = function(paramArray) {
+			var validArgs = [],
+				a = paramArray.length-1;
 
-	cleanUp: function(text) {
-		// FIXME: Do not use hardcoded strings as replacement vars. This is exploitable.
-		// The following code is part of User:Magog the Ogre/cleanup.js
-		/**********************
-		* Function which removes <nowiki> and <!--...--> from the text, and replaces them with a set of 
-		*   temporary strings. This is necessary, because functions which change text will may to leave the 
-		*   nowikis/comments intact. The temporary strings function as "markers", so that 
-		*   rebuild_comments_nowikis() can later be called and the nowikis/comments will return to the correct 
-		*   position, untouched. 
-		* Returns: An array, whose 0th element contains the altered string, and whose 1st element contains 
-		*   another array which will focus as a set "tokens", which should be kept unaltered and passed to 
-		*   rebuild_comments_nowikis() later.
-		**********************/
-		var parse_comments_nowikis = function (text) {
-			//constants
-			var nw_regex = /<nowiki>((?:.|\n)*?)<\/nowiki>/,
-				c_regex = /<!\-\-((?:.|\n)*?)\-\->/,
-				cs_regex = /<\!\-\-(\s*categories\s*by\s*commonsense\s*)\-\->/i; /* special one for CommonSense.... causing grouping headaches */
-
-			//variables
-			var comments = [],
-				nowikis = [],
-				comments_cs = [],
-				nw_com_order = [];
-
-			while (1) {
-				var next_nw = text.search(nw_regex),
-					next_c = text.search(c_regex),
-					next_cs = text.search(cs_regex);
-
-				if (next_nw === -1 && next_c === -1) break; /* cs_regex will be -1 if c_regex is -1 */
-				
-				var index;
-				if (next_nw === -1 || (next_c !== -1 && next_c < next_nw)) {
-					if (next_cs === next_c) {
-						index = comments_cs.length;
-						comments_cs.push(cs_regex.exec(text)[1]);
-						text = text.replace(c_regex, "%%%MTOCSCOMMENT" + index + "%%%");
-						nw_com_order.push('s');
-					} else {
-						index = comments.length;
-						comments.push(c_regex.exec(text)[1]);
-						text = text.replace(c_regex, "%%%MTOCOMMENT" + index + "%%%");
-						nw_com_order.push('c');
-					}
+			for (;a >= 0; a--) {
+				if (-1 !== paramArray[a]) validArgs.push(paramArray[a]);
+			}
+			// If validArgs.length is 0, Infinity (the biggest number possible) is returned
+			return Math.min.apply(window, validArgs);
+		};
+		var buildFragmentsFromText = function() {
+			fragmentedText = [];
+			eachPosition(_text, function(text, arrPos) {
+				var nearestPos = nearestMatch(arrPos);
+				if (0 !== nearestPos) {
+					// Slice until this position
+					fragmentedText.push({ preserve: false, text: text.slice(0, nearestPos) });
+					return text.slice(nearestPos);
 				} else {
-					index = nowikis.length;
-					nowikis.push(nw_regex.exec(text)[1]);
-					text = text.replace(nw_regex, "%%%MTONOWIKI" + index + "%%%");
-					nw_com_order.push('n');
+					var newText;
+					$.each(arrPos, function(i, pos) {
+						if (0 === pos) {
+							newText = text.replace(reToPreserve[i], '');
+							fragmentedText.push({ preserve: true, text: RegExp.$1 });
+							return false;
+						}
+					});
+					return newText;
 				}
-			}
-			return [text, [comments, nowikis, comments_cs, nw_com_order]];
+			});
+			return fragmentedText;
 		};
-		/**********************
-		* See function immediately above for explanation
-		* remove_whitespace: when rebuilding nowikis, remove unnecessary whitespace (not shown in final version anyway)
-		* Returns: Rebuilt text.
-		**********************/
-		var rebuild_comments_nowikis = function (text, tokens, remove_whitespace) {
-			var comments = tokens[0],
-				nowikis = tokens[1],
-				comments_cs = tokens[2],
-				nw_com_order = tokens[3];
+		var buildPlaceholderText = function() {
+			placeholderText = '';
+			eachPosition(_text, function(text, arrPos) {
+				var nearestPos = nearestMatch(arrPos);
+				if (0 !== nearestPos) {
+					// Slice until this position
+					placeholderText += text.slice(0, nearestPos);
+					return text.slice(nearestPos);
+				} else {
+					var newText, rdm = '%v%f%c%' + Math.round(Math.random()*68719476736) + '%V%F%C%';
+					$.each(arrPos, function(i, pos) {
+						if (0 === pos) {
+							newText = text.replace(reToPreserve[i], '');
+							placeholderText += rdm;
+							nowikis[rdm] = RegExp.$1;
+							return false;
+						}
+					});
+					return newText;
+				}
+			});
+			return placeholderText;
+		};
+		var fragmentsToText = function() {
+			_text = '';
+			$.each(fragmentedText, function(i, fragmentObj) {
+				_text += fragmentObj.text;
+			});
+			return _text;
+		};
+		var placeholderTextToText = function() {
+			_text = placeholderText;
+			$.each(nowikis, function(id, nowikiContent) {
+				_text = _text.replace(id, nowikiContent);
+			});
+			return _text;
+		};
+		var updateFragments = function() {
+			_text = placeholderTextToText();
+			placeholderTextDirty = false;
+			return buildFragmentsFromText();
+		};
+		var updatePlaceholderText = function() {
+			_text = fragmentsToText();
+			fragmentsAreDirty = false;
+			return buildPlaceholderText();
+		};
+		var updateEscapedText = function() {
+			buildFragmentsFromText();
+			buildPlaceholderText();
+			textDirty = false;
+		};
+		if (_text) {
+			textDirty = true;
+		}
 
-			while (nw_com_order.length > 0) {
-				var next = nw_com_order.pop();
-				if (next === 's') {
-					text = text.replace("%%%MTOCSCOMMENT" + (comments_cs.length - 1) + "%%%", "<!--" + comments_cs.pop() + "-->");
-				} else if (next === 'c') {
-					text = text.replace("%%%MTOCOMMENT" + (comments.length - 1) + "%%%", "<!--" + comments.pop() + "-->");
-				} else /* i.e., nw_com_order.pop was 'n'; also, mediawiki registers all whitespace inside nw's as just one space */
-				{
-					var text_tmp = nowikis.pop();
-					if (remove_whitespace) {
-						text_tmp = text_tmp.replace(/\s+/g, ' ');
+		// Public interface
+		return {
+			setText: function(text) {
+				_text = text;
+				textDirty = true;
+			},
+			getText: function() {
+				if (placeholderTextDirty) placeholderTextToText();
+				if (fragmentsAreDirty) fragmentsToText();
+				return _text;
+			},
+			secureReplace: function(pattern, replace) {
+				if (textDirty) updateEscapedText();
+				if (placeholderTextDirty) updateFragments();
+				$.each(fragmentedText, function(i, fragmentObj) {
+					if (fragmentObj.preserve) return;
+					fragmentObj.text = fragmentObj.text.replace(pattern, replace);
+				});
+				fragmentsAreDirty = true;
+			},
+			ordinaryReplace: function(pattern, replace) {
+				if (fragmentsAreDirty) updatePlaceholderText();
+				if (placeholderTextDirty) updateFragments();
+				_text = _text.replace(pattern, replace);
+				textDirty = true;
+			},
+			replace: function(pattern, replace) {
+				if (textDirty) updateEscapedText();
+				if (fragmentsAreDirty) updatePlaceholderText();
+				placeholderText = placeholderText.replace(pattern, replace);
+				placeholderTextDirty = true;
+			},
+			alsoPreserve: function(regex) {
+				if ('object' === typeof regex && regex.test){
+					reToPreserve.push(regex);
+					return true;
+				} else if ('string' === typeof regex) {
+					var m = regex.match(reToPreservePattern);
+					if (m && m[1]) {
+						reToPreserve.push(new RegExp(m[1]));
+						return true;
 					}
-					text = text.replace("%%%MTONOWIKI" + (nowikis.length) + "%%%", "<nowiki>" + text_tmp + "</" + "nowiki>");
 				}
+			},
+			doCleanUp: function() {
+				this.secureReplace('== Summary ==', '== {{int:filedesc}} ==');
+				this.secureReplace('== Beschreibung ==', '== {{int:filedesc}} ==');
+				this.secureReplace('== Licensing ==', '== {{int:license-header}} ==');
+				this.secureReplace('== License ==', '== {{int:license-header}} ==');
+				this.secureReplace('== Lizenz ==', '== {{int:license-header}} ==');
+				return this.getText();
 			}
-			return text;
 		};
-		
-		var cnwt = parse_comments_nowikis(text);
-		var cleanup = cnwt[0];
-		var tokens = cnwt[1];
-		
-		cleanup = cleanup.replace('== Summary ==', '== {{int:summary}} ==')
-				.replace('== Licensing ==', '== {{int:license-header}} ==').replace('== License ==', '== {{int:license-header}} ==').replace('== Lizenz ==', '== {{int:license-header}} ==');
-		
-		cleanup = rebuild_comments_nowikis(cleanup, tokens, true);
-		return cleanup;
 	},
 	
 	mdRefreshCache: function () {
@@ -393,13 +524,20 @@ $.extend(window.VisualFileChange,
 		this.pb.setTaskState('mdInsertPermission', 'md-doing');
 		this.mdUploadCt = 0;
 
-		var _this = this;
+		var _this = this,
+			replaceSecurityLevel = _this.$selPreserve.val(),
+			replaceContainer = _this.nowikiEscaper();
+
+			if ('c_replace' === _this.mdTaskToPerform) replaceContainer.alsoPreserve(_this.$alsoPreserve.val());
+
 		$.each(this.iUploads, function(upload, upli) {
 			if (!_this.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
  
 			var page = {};
+			
+			replaceContainer.setText(upli.content);
+
 			page.title = upload;
-			page.text = upli.content;
 			page.watchlist = 'nochange';
  
 			if ('otrs' === _this.mdTaskToPerform) { // drop out other permission templates
@@ -407,26 +545,44 @@ $.extend(window.VisualFileChange,
 				$.each(_this.mdTagRemoval, function(id, tri) {
 					iCt++;
 					if (1 === iCt) return; // Skip first pattern
-					page.text = page.text.replace(tri[0], '');
+					replaceContainer.secureReplace(tri[0], '');
 				});
 			}
 			if ('c_replace' !== _this.mdTaskToPerform) {
-				page.text = _this.mdSecureCall( "mdInsertOTRS", page.text, _this.reason );
+				replaceContainer.setText( _this.mdSecureCall( 'mdInsertOTRS', replaceContainer.getText(), _this.reason ) );
 			} else {
-				$.each(_this.mdReplacementMatrix, function(i, rObj) {
-					if ('' === rObj.match) return;
-					page.text = page.text.replace(rObj.match, rObj.replace);
-				});
+				switch (replaceSecurityLevel) {
+				 case 'secure':
+					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+						if ('' === rObj.match) return;
+						replaceContainer.secureReplace(rObj.match, rObj.replace);
+					});
+					break;
+				 case 'placeholder':
+					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+						if ('' === rObj.match) return;
+						replaceContainer.replace(rObj.match, rObj.replace);
+					});
+					break;
+				 case 'none':
+					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+						if ('' === rObj.match) return;
+						replaceContainer.ordinaryReplace(rObj.match, rObj.replace);
+					});
+					break;
+				}
 			}
-			
-			page.text = _this.cleanUp(page.text);
  
 			page.editType = 'text';
 			if (window.AjaxDeleteWatchFile && ('c_replace' !== _this.mdTaskToPerform)) {
 				page.watchlist = 'watch';
 			}
  
-			if (upli.content !== page.text) {
+			if (upli.content === replaceContainer.getText()) {
+				var $gb = _this.gbs[upload];
+				if ($gb) $gb.find('img').attr('src', _this.mdNoChangeIcon);
+			} else {
+				page.text = replaceContainer.doCleanUp();
 				_this.mdUploadCt++;
 				_this.mdSavePage(page, _this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 			}
@@ -446,11 +602,9 @@ $.extend(window.VisualFileChange,
 					sitetext = texparts[1] + texparts[2] + insert + texparts[4];
 				}
 			} else {
-				// Do we need this for Safari?
-				this.mdSimplePermissionPattern.exec(sitetext);
 				sitetext = sitetext.replace(this.mdSimplePermissionPattern, '$1' + insert);
 			}
-		} else { // if no description template is available, prepend
+		} else { // if no information template is available, prepend
 			sitetext = insert + '\n' + sitetext;
 		}
 		return sitetext;
@@ -512,11 +666,20 @@ $.extend(window.VisualFileChange,
 	
 	mdTemplateAdded: function (result, query, err) {
 		this.mdUploadCt--;
-		var pgTitle = (result.requestid || query.title);
-		var $gb = this.gbs[pgTitle];
+
+		var _this = this,
+			pgTitle = (result.requestid || query.title),
+			$gb = this.gbs[pgTitle];
+
 		if ($gb) {
 			$gb.find('img').attr('src', (err ? this.mdFailIcon : this.mdSuccessIcon));
 			if (err) $gb.find('.gallerytext').prepend($('<span>', { 'class': 'error' }).text(err), '<br/>');
+			if (0 === $gb.visible().length) {
+				if (this.gbScrollTimeout) clearTimeout(this.gbScrollTimeout);
+				this.gbScrollTimeout = setTimeout(function() {
+					_this.dlg.stop().animate({scrollTop: $gb.position().top - _this.$AjaxMdContainer.position().top}, 1000);
+				}, 200);
+			}
 		}
 		if (result.error) {
 			this.pb.setCurrentTaskState('md-attention');
@@ -538,7 +701,7 @@ $.extend(window.VisualFileChange,
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
-			if (_this.mdSettings.watchUserTalk) page.watchlist = 'watch';
+			page.watchlist = _this.mdSettings.watchUserTalk;
 			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
 			_this.uploadersToNotify++;
@@ -585,6 +748,6 @@ $.extend(window.VisualFileChange,
 	}
 });
 
-$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'EditComponents']);
+$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
 
 }(jQuery, mediaWiki));
