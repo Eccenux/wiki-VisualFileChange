@@ -13,8 +13,6 @@ if (window.VisualFileChange.displayComponents) return;
 
 mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
-	+ ' .md-collapse-closed { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/closed-ltr.png) no-repeat center left }\n'
-	+ ' .md-collapse-open { padding-left: 18px; background: url(//bits.wikimedia.org/w/extensions/Vector/modules/images/open.png) no-repeat center left }\n'
 	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
 	+ ' a:link.md-loglink { color:#BB6!important; display:inline-block; }\n'
 	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; }\n'
@@ -22,10 +20,10 @@ mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
-	+ ' .md-re-escape-helper { position:absolute; color:#FFF; cursor:pointer; padding:2px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
+	+ ' .md-re-escape-helper { position:absolute; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
-	+ ' .md-examine-contents { display:inline-block; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
+	+ ' .md-examine-contents { display:inline-block; font-size:1.2em; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
 );
 
 $.extend(window.VisualFileChange,
@@ -37,6 +35,10 @@ $.extend(window.VisualFileChange,
 	**  Calls the appropriate method (uploads of cats)
 	**/
 	mdCreateList: function () {
+		if (this.mdNumberOfExecs) {
+			$(document).triggerHandler('vFC', ['filelist query aborted due to exection of edit-tasks', this]);
+			return true;
+		}
 		if (this.mdListUploadsPending > 0) {
 			$(document).triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
 			var o = this;
@@ -60,14 +62,19 @@ $.extend(window.VisualFileChange,
 		if (this.mdModeCat) this.mdSecureCall('mdFindCatMembers'); else this.mdSecureCall('mdFindUploads');
 	},
 	
+	mdSaveContinueKey: function (key) {
+		this.lastContinues.vals.push(key);
+		if (this.lastContinues.vals.length > 2) this.lastContinues.vals.shift();
+	},
+	
 	mdFindUploads: function () {
 		var query = {
 			action: 'query',
 			list: 'logevents',
 			leprop: 'title|type|timestamp',
-			letype: 'upload',
+			leaction: 'upload/upload',
 			leuser: this.mdTarget,
-			lelimit: this.mdSettings.loadBatchSize * 2,
+			lelimit: this.mdSettings.loadBatchSize,
 			ledir: this.mdLedir
 		};
 		if (this.mdLestart) query.lestart = this.mdLestart;
@@ -105,14 +112,14 @@ $.extend(window.VisualFileChange,
 		if (!result['query-continue']) { 
 			this.mdNoMoreFiles = true;
 		}
+		if (!this.mdNoMoreFiles) {
+			this.mdLestart = result['query-continue'].logevents.lestart;
+			this.mdSaveContinueKey(this.mdLestart);
+		}
 		if (this.mdFirstRun) {			// Call nextTask the first time only
-			if (!this.mdNoMoreFiles) this.mdLestart = result['query-continue'].logevents.lestart;
 			this.mdFirstRun = false;
 			this.nextTask();
 		} else {
-			if (!this.mdNoMoreFiles) {
-				this.mdLestart = result['query-continue'].logevents.lestart;
-			}
 			if (!this.mdActualResultCount) this.mdSecureCall('mdQueryMore');
 		}
 	},
@@ -124,7 +131,7 @@ $.extend(window.VisualFileChange,
 			cmtitle: this.mdTarget,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
-			cmlimit: Math.round(this.mdSettings.loadBatchSize * 1.1),
+			cmlimit: this.mdSettings.loadBatchSize,
 			cmcontinue: this.mdLestart,
 			cmdir: this.mdCmdir,
 			cmsort: this.mdCmsort
@@ -155,6 +162,7 @@ $.extend(window.VisualFileChange,
 		if (!this.mdNoMoreFiles) {
 			this.mdLestart = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
 			if (result['query-continue'].categorymembers.cmstart) this.mdCmstart = result['query-continue'].categorymembers.cmstart;
+			this.mdSaveContinueKey(this.mdCmstart || this.mdLestart);
 		}
 		if (this.mdFirstRun) {			// Call nextTask the first time only
 			this.mdFirstRun = false;
@@ -199,53 +207,84 @@ $.extend(window.VisualFileChange,
 		}, 1000);
 	},
 	
+	mdRegExpFromString: function(st) {
+		var match, m = st.match(this.mdRegExpPattern);
+		if (m && m[0] && m[1]) {
+			match = new RegExp(m[1], m[2]);
+		} else {
+			match = '';
+		}
+		return match;
+	},
+	
 	mdCreateExamineNode: function() {
 		var o = this;
-		var $examineToggler, $examineInput, $examineButton, $examineFirstDiv, $examineSecondDiv, $examineOuterDiv;
-		$examineToggler = $('<a>', { text: 'Examine', href: '#', 'class': 'md-collapse-closed', style: 'display:block;' })
-			.click(function(e){
-				e.preventDefault();
-				$(this).next().slideToggle('fast');
-				if ($(this).hasClass('md-collapse-closed')) {
-					$(this).addClass('md-collapse-open');
-					$(this).removeClass('md-collapse-closed');
-				} else {
-					$(this).addClass('md-collapse-closed');
-					$(this).removeClass('md-collapse-open');
-				}
-			});
+		var $examineToggler, $examineInput, $examineButton, $loadDivButton, $examineFirstDiv, $examineSecondDiv, $examineDiffDiv, $examineOuterDiv;
+			
 		$examineInput = $('<input>', { type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: 'file number' }).placeholder();
 		$examineButton = $('<button>', { text: 'Compare!' }).click(function() {
+			$examineFirstDiv.text('');
+			$examineSecondDiv.text('');
 			if (!$examineInput.val()) return;
+			var replaceSecurityLevel = o.$selPreserve.val();
+
 			$.each(o.iUploads, function(upload, curUpld) {
 				if (!curUpld.content || (($examineInput.val()-0) !== curUpld.iId)) return;
 
-				var newContent = curUpld.content;
+				var replaceContainer = o.nowikiEscaper(curUpld.content);
+				replaceContainer.alsoPreserve(o.$alsoPreserve.val());
+
 				$.each(o.mdReplacementMatrix, function(i, rObj) {
-					var match, m;
+					var match;
 					match = rObj.match.val();
 					if (rObj.regex[0].checked && match) {
-						m = match.match(/\/(.+)\/(.*)/);
-						if (m && m[0] && m[1]) {
-							match = new RegExp(m[1], m[2]);
-						} else {
-							match = '';
-						}
+						match = o.mdRegExpFromString(match);
 					}
-					newContent = newContent.replace(match, rObj.replace.val());
+					if (!match) return;
+					switch (replaceSecurityLevel) {
+						case 'secure':
+							replaceContainer.secureReplace(match, rObj.replace.val());
+							break;
+						case 'placeholder':
+							replaceContainer.replace(match, rObj.replace.val());
+							break;
+						case 'none':
+							replaceContainer.ordinaryReplace(match, rObj.replace.val());
+							break;
+					}
 				});
 				$examineFirstDiv.text(curUpld.content);
-				$examineSecondDiv.text(newContent);
+				$examineSecondDiv.text(replaceContainer.doCleanUp());
+				if (window.schnark_diff && window.schnark_diff.html_diff) {
+					$examineDiffDiv.html('<div style="float:right; font-family:sans-serif;">Powered by SchnarkDiff</div>' + window.schnark_diff.html_diff(curUpld.content, replaceContainer.getText(), true));
+				}
 			});
 		}).button({ icons: { primary: 'ui-icon-search' } });
+		$loadDivButton = $('<button>', { text: 'Load highlight diff-Module from [[:de:Benutzer:Schnark/js/diff.js/core.js]]' }).click(function() {
+			$(this).button('option', 'disabled', true);
+			o.loadModule('diff', function() {
+				$examineButton.click();
+			});
+		}).button();
 		$examineFirstDiv = $('<div>', { 'class': 'md-examine-contents' });
 		$examineSecondDiv = $('<div>', { 'class': 'md-examine-contents' });
-		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $('<div>').append($examineFirstDiv, $examineSecondDiv));
+		$examineDiffDiv = $('<div>', { 'class': 'md-examine-contents', style: 'width:98%' });
+		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $loadDivButton, ' ', $('<div>').append($examineFirstDiv, $examineSecondDiv, $examineDiffDiv));
 		
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
-		return $('<div>').append($examineToggler, $examineOuterDiv.hide());
+
+		return o.createToggler('Examine scheduled changes', $examineOuterDiv.hide());
+	},
+	
+	mdEscapeSpecial: function(string) {
+		var specials = ['t', 'n', 'v', '0', 'f'];
+		$.each(specials, function(i, s) {
+			var rx = new RegExp('\\'+s, 'g');
+			string = string.replace(rx, '\\'+s);
+		});
+		return string;
 	},
 	
 	mdCreateReplaceNode: function() {
@@ -253,21 +292,28 @@ $.extend(window.VisualFileChange,
 		var rowCount = 0;
 		var $lastBigArea = 0;
 		
+		var $desc = $('<p>', { text: 'Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped. When not using RegExp-replace only the first occurrence of the pattern in each file will be replaced.' });
 		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', html: 'R. → /R\\./g', title: 'Make a match-all-occurrences-RegExp from' }).click(function() {
 			var $serviceFor = $(this).data('mdServiceFor');
-			$serviceFor.val('/' + $.escapeRE($serviceFor.val()).replace(/\//g, '\\/') + '/g').keyup();
+			$serviceFor.val('/' + o.mdEscapeSpecial($.escapeRE( $serviceFor.val().replace(/\//g, '\\/') )) + '/g').keyup();
 			$(this).hide();
 		});
 		var $table = $('<table>', { style: 'border:1px solid #BBB', width: '100%', cellspacing: 0, cellpadding: 0 });
 		var $thead = $('<thead>').append(
-			$('<th>', { text: 'Nr' }),
-			$('<th>', { text: 'RegExp?', abbr: 'Regular Expression. User full JavaScript RegExp-Syntax like /find.+/g' }),
+			$('<th>', { text: 'Nr ' }),
+			$('<th>').append($('<abbr>', { title: 'Check if Regular Expression. Use full JavaScript RegExp-Syntax like /find.+/g', text: 'RegExp?' })),
 			$('<th>', { text: 'Pattern to match' }),
 			$('<th>', { text: 'Text to insert instead' })
 		).appendTo($table);
+		var $selPreserve = o.$selPreserve = $('<select>', { id: 'selPreserve', size: 1 }).append(
+			$('<option>', { text: 'Preserve nowikis, comments. Do this as secure as possible (internal split into array). (recommended)', value: 'secure' }),
+			$('<option>', { text: 'Preserve nowikis, comments. Allow usage of substring and $1 (internal usage of placeholders (%v%f%c%\\d+)).', value: 'placeholder' }),
+			$('<option>', { text: 'Do not preserve nowikis and comments.', value: 'none' })
+		);
+		var $alsoPreserveL = o.$alsoPreserve = $('<label>', { 'for': 'alsoPreserve', text: 'Also preserve the following areas from being replaced.' });
+		var $alsoPreserve = o.$alsoPreserve = $('<input>', { type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' }).placeholder();
 		var $tbody = $('<tbody>', { id: 'mdRTableBody' }).appendTo($table);
-		var $desc = $('<p>', { text: 'Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped.' });
-		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, o.mdCreateExamineNode()));
+		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, $selPreserve, $('<br/>'), $alsoPreserveL, $alsoPreserve, $('<br/>'), o.mdCreateExamineNode()));
 		
 		var regExTester = function($text, $cb, $replace) {
 			var testConditions = function() {
@@ -330,7 +376,7 @@ $.extend(window.VisualFileChange,
 			})).focus(function() {
 				var $el = $(this);
 				var pos = $el.position();
-				$regExpEscapeHelper.show().css('top', pos.top + 5).css('left', pos.left - $regExpEscapeHelper.width() - 4);
+				$regExpEscapeHelper.show().css('top', pos.top + 5).css('left', pos.left - $regExpEscapeHelper.width() - 6);
 				$regExpEscapeHelper.data('mdServiceFor', $el);
 			});
 		};
@@ -353,7 +399,6 @@ $.extend(window.VisualFileChange,
 		this.mdUploadCt = 0;              // Number of pending API queries
 		this.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
 		this.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
-		this.mdNumberOfExecs = 0;         // Is Execute called already?
 		this.mdThumbsOnDlg = 0;           // How many thumbs on the dialog?
 		this.mdReplacementMatrix = [];    // Contains pointers to jQuery-Array-Inputfields for the custom replace
 		this.mdDateOldestDataFetched = new Date();
@@ -460,7 +505,7 @@ $.extend(window.VisualFileChange,
 			}, 1000);
 		});
 
-		var $AjaxMdContainer = $('#AjaxMdContainer').text('');
+		var $AjaxMdContainer = this.$AjaxMdContainer.text('');
 		this.$mdControls = $('<div>');
 
 		if (!this.dlg) return 0;
@@ -502,23 +547,10 @@ $.extend(window.VisualFileChange,
 			.appendTo($AjaxMdContainer);
 
 			$AjaxMdContainer
-			.append($('<a>', { text: this.i18n.mdDelContribsButtonLabel, href: '#', 'class': 'md-collapse-closed', style: 'display:block;' })
-				.click(function(e){
-					e.preventDefault();
-					$(this).next().slideToggle();
-					if ($(this).hasClass('md-collapse-closed')) {
-						$(this).addClass('md-collapse-open');
-						$(this).removeClass('md-collapse-closed');
-					} else {
-						$(this).addClass('md-collapse-closed');
-						$(this).removeClass('md-collapse-open');
-					}
-				})
-			)
-			.append($('<ul>', { 
+			.append(o.createToggler(this.i18n.mdDelContribsButtonLabel, $('<ul>', { 
 				id: 'AjaxDeletedUploads', 
 				'class': 'md-deleted-uploads'
-			}))
+			})))
 			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
 		var $buttons = this.dlg.parent().find('.ui-dialog-buttonpane button'),
@@ -822,12 +854,17 @@ $.extend(window.VisualFileChange,
 			id: "mdQueryMore",
 			align: "center"
 		});
-		$queryMore.append('<button id="mdQueryMoreBtn" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ui-state-disabled" type="button" role="button" aria-disabled="false"><span class="ui-button-text">' + this.i18n.mdMore + '&gt;&gt;</span></button>');
+		this.$mdQueryMoreBtn = $('<button>', { id: 'mdQueryMoreBtn', text: this.i18n.mdMore })
+				.button({ disabled: true, icons: { primary: 'ui-icon-arrowthick-1-s', secondary: 'ui-icon-arrowthick-1-s' } })
+				.click( function (event) { o.mdQueryMore(); })
+				.appendTo($queryMore);
+		
 		$AjaxMdContainer.append($queryMore).append('<div style="height:100px">&nbsp;</div>');
-		$('#mdQueryMoreBtn').click( function (event) { o.mdQueryMore(); });
 		/* End of UI */
 		
 		$(document).triggerHandler('vFC', ['initial uploads dialog', this, this.dlg]);
+		// Temporary fix
+		$('.vFCConfigRequired').removeClass('ui-state-disabled');
  
 		this.iCurrentIId = -1;     // Last queried file to continue obtaining detail-info
 		this.mdSecureCall('mdSendNextQueries');
@@ -891,7 +928,7 @@ $.extend(window.VisualFileChange,
 		}
 		
 		if (0 === this.mdUploadCt) this.nextTask();
-		$('#mdQueryMoreBtn').addClass('ui-state-disabled');
+		this.$mdQueryMoreBtn.button('option', 'disabled', true);
 	},
 	
 	/* Helper function: Creating a gallery box for gallery view */
@@ -1174,10 +1211,9 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['detail-info processed', o]);
  
 		if ( (o.iiUploads > (o.iCurrentIId + 1))  || !o.mdNoMoreFiles) {
-			var $mdQueryMore = $('#mdQueryMoreBtn');
-			$mdQueryMore.removeClass('ui-state-disabled');
+			o.$mdQueryMoreBtn.button('option', 'disabled', false);
 			$('.ui-dialog > .ui-dialog-content').bind('scroll', function() {
-				if ( $mdQueryMore.visible().length > 0 ) {
+				if ( o.$mdQueryMoreBtn.visible().length > 0 ) {
 					o.mdSecureCall('mdQueryMore');
 				}
 			});
@@ -1253,7 +1289,6 @@ $.extend(window.VisualFileChange,
 			modal: true,
 			closeOnEscape: true,
 			position: 'center',
-			dialogClass: "wikiEditor-toolbar-dialog",
 			title: this.mdHelpNode + 
 				'Batch Surgery Script in Beta-Mode.' + 
 				' Report bugs and ideas to <a href="' + this.mdErrorsReportPath + '" target="_blank">Rillke</a>.' + 
@@ -1450,26 +1485,50 @@ $.extend(window.VisualFileChange,
 	mdExecuteReady: function () {
 		this.context = "QD";
 		this.pb.setCurrentTaskDone();
+		var o = this;
 
+		var $dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: 'Ready!', text: 'Note: You cannot execute new requests without reloading this page. ' })
+			.append($('<a>', { href: '#', text: 'But you can save your inputs into a profile.' }).click(function(e) {
+				e.preventDefault();
+				o.mdProfile();
+			}));
+		var $ulNode = $('<ul>');
+		
+		var addLink = function(href, text, target) {
+			$('<li>').append($('<a>', { 
+				style: 'font-size:2em; line-height:1.8em', 
+				href: mw.util.wikiGetlink(href),
+				target: target || '_blank',
+				text: text
+			})).appendTo($ulNode);
+		};
+		
 		if (this.mdWasAPIError) {
-			alert('We regret the the inconvenience: The Server-API reported an error during the execution of this process. Please check your contributions, whether something went wrong.');
+			$dlgNode.append(
+				o.createNotifyArea('We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
+				'Please check your contributions, whether something went wrong.',
+				'ui-icon-alert', 'ui-state-error')
+			);
 		}
+		addLink('Special:MyContributions', "Check your contributions", 'contribswindow');
 		
 		if ( this.mdInsertedTag ) {
 			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
 				// navigating to the new created deletion request
-				encTitle = mw.util.wikiUrlencode(this.requestPage);
-				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
+				addLink(this.requestPage, "Go to the created request page");
 			}
 			else if (-1 === mw.config.get('wgNamespaceNumber') && ( 'c_replace' !== this.mdTaskToPerform && 'OTRS' !== this.mdTaskToPerform && 'other' !== this.mdTaskToPerform )) {
 				// navigating to the user-discussion-page
-				encTitle = mw.util.wikiUrlencode(this.mdUserTalkPrefix + this.mdTarget);
-				this.mdGoToSite(mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", encTitle));
+				addLink(this.mdUserTalkPrefix + this.mdTarget, "Look at the user\'s talk-page");
 			} else {
-				this.mdGoToSite(location.href);
+				addLink(mw.config.get('wgPageName'), "Reload this page", '_self');
 			}
 		}
+		$dlgNode.append($ulNode).dialog({
+			show: { effect: 'highlight', duration: 1800 },
+			width: Math.min(450, $(window).width())
+		});
 	},
 
 	mdGoToSite: function (target) {
@@ -1482,7 +1541,7 @@ $.extend(window.VisualFileChange,
 });
 
 mw.loader.using(['jquery.ui.dialog', 'jquery.ui.button', 'jquery.tipsy', 'jquery.placeholder'], function() {
-	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'DisplayComponents']);
+	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'displayComponents']);
 });
 
 }(jQuery, mediaWiki));
