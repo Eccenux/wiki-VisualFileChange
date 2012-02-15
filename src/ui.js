@@ -827,8 +827,6 @@ $.extend(window.VisualFileChange,
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgSelectButtons,
-			show: 'slide',
-			hide: 'fade',
 			open: function(evt, ui) {
 				$metaSelect.children().remove();
 				$('<option>', { text: ' ', value: '' }).appendTo($metaSelect);
@@ -1142,7 +1140,7 @@ $.extend(window.VisualFileChange,
 				$.each(ii.metadata, function(i, m) {
 					var tp = typeof m.value;
 					if (tp === 'string' || tp === 'number' || tp === 'boolean') {
-						o.metaKeys.push(m.name);
+						if (-1 === $.inArray(m.name, o.metaKeys)) o.metaKeys.push(m.name);
 					}
 				});
 			}
