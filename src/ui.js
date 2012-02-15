@@ -553,8 +553,11 @@ $.extend(window.VisualFileChange,
 			})))
 			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
  
+		// Add label to the button
+		var $AjaxMdActionConfirm = $('<span>', { id: 'AjaxMdActionConfirm' });
+
 		var $buttons = this.dlg.parent().find('.ui-dialog-buttonpane button'),
-			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' } }),
+			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' }, label: $('<span>', { text: this.i18n.submitButtonLabel }).append( $AjaxMdActionConfirm ) }),
 			$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }),
 			$mdDeleteReason = $('#mdDeleteReason');
 
@@ -596,8 +599,6 @@ $.extend(window.VisualFileChange,
 		this.$AjaxMdUlContainer = $('#AjaxMdUlContainer');
 		this.$AjaxMdNotReady = $('#AjaxMdNotReady');
 		
-		// Add label to the button
-		var $AjaxMdActionConfirm = $('<span>', { id: 'AjaxMdActionConfirm' }).appendTo($submitButton.find('.ui-button-text'));
 		//
 		// Event handler for the selection box (task to perform)
 		//
