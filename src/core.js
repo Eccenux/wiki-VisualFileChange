@@ -22,7 +22,7 @@
 /*global jQuery:false, mediaWiki:false, Geo:false */
 /*jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
 (function ($, mw) {
-// 'use'' strict'; find a workaround for arguments[]
+'use strict';
 if (window.VisualFileChange) return;
 
 window.VisualFileChange = 1;
@@ -97,9 +97,9 @@ function ProgressBox(width, o) {
 		text: 'VisualFileChange.js'
 	});
 	this.$cfg = $('<a>', { href: '#', text: ' advanced configuration', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
-		.prepend($('<div>', { text: ' ', 'class': 'ui-icon ui-icon-gear', style: 'display:inline-block' }));
-	this.$profile = $('<a>', { href: '#', text: ' profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
-		.prepend($('<div>', { text: ' ', 'class': 'ui-icon ui-icon-wrench', style: 'display:inline-block' }));
+		.prepend(o.mdCreatejIcon('ui-icon-gear'));
+	this.$profile = $('<a>', { href: '#', text: ' profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired ui-state-disabled' })
+		.prepend(o.mdCreatejIcon('ui-icon-person'));
 	this.$subheading = $('<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.mdScriptRevision
@@ -121,7 +121,10 @@ function ProgressBox(width, o) {
 		'class': 'error',
 		text: 'Error:'
 	}).append(this.$error);
-	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$aHelp, this.$errorCont);
+	this.$credits = $('<div>', { id: 'mdCredits', style: 'position: absolute; bottom: 0px; font: small-caps 0.7em sans-serif; margin: 4px; color: #BBB;' })
+		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>Thanks to all supporters, especially Saibo and LX for testing.');
+		
+	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$aHelp, this.$errorCont, this.$credits);
 	$('body').append(this.$cont);
 	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
 		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
@@ -179,14 +182,18 @@ ProgressBox.prototype.isHidden = function () {
 
 var isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
 
+// Adding Style-definitions
+mw.util.addCSS(' .md-inline-icon { display:inline-block; position:relative; top:2px; }\n'
+	+ ' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n'
+);
+
 // Fixing the buggy MediaWiki-monobook-style
-if ('monobook' === mw.config.get('skin')) mw.util.addCSS(
-	' button.ui-button > .ui-icon { display: inline-block; position: relative; top: 2px; left: -2px; }\n'
-	+'button.ui-button > .ui-button-text { display: inline-block; }\n'
+if ('monobook' === mw.config.get('skin')) mw.util.addCSS(' button.ui-button > .ui-icon { display: inline-block; position: relative; top: 2px; left: -2px; }\n'
+	+ 'button.ui-button > .ui-button-text { display: inline-block; }\n'
 );
 
 /**
- * Create a new VisualFileChange-literal-Object.
+ * Create a new VisualFileChange-Object-literal.
  *
  * @context {window}
  */
@@ -194,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.8.2.0',
+	mdScriptRevision: '0.9.0.0',
 	
 
 	/**
@@ -240,34 +247,69 @@ var VisualFileChange = window.VisualFileChange = {
 	},
 	
 	/**
+	*    @description 
+	*        A little ResourceLoader :-)
+	*
 	*    @param m {String} Module to be loaded
+	*    @param cb {Function} Function to be executed when loaded
 	**/
-	loadModule: function(m) {
-		// No double-loading of scripts!
+	loadModule: function(m, cb) {
+		var alias = '', o = this;
+		var executeCB = function () {
+			if ('function' === typeof cb) cb.apply(o, []);
+			if ('string' === typeof cb) o[cb].apply(o, []);
+		};
 		switch (m) {
 			case 'exec.js': 
-				if (this.editComponents) {
-					return;
-				}
+				alias = 'editComponents';
 				break;
 			case 'ui.js': 
-				if (this.displayComponents) {
-					return;
-				}
+				alias = 'displayComponents';
 				break;
 			case 'cfg.js':
-				if (this.ConfigManager) {
-					this.mdConfigInstall();
-					return;
+				alias = 'configManager';
+				break;
+			case 'diff':
+				if (!mw.libs.schnark_diff) {
+					mw.loader.load('//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript');
+					if (cb) $(document).bind('loadWikiScript.vFCListener', function(e, what) {
+						if ('Benutzer:Schnark/js/diff.js/core.js' === what) {
+							$(document).unbind('loadWikiScript.vFCListener');
+							mw.libs.schnark_diff.css.ins = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #fff; background-color: #5dc;';
+							mw.libs.schnark_diff.css.del = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #000; background-color: #fc4;';
+							mw.util.addCSS( window.schnark_diff.getCSS() );
+							executeCB();
+						}
+					});
+				} else {
+					executeCB();
 				}
+				return;
 		}
-		mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + this.mdScriptRevision);
+		if (this[alias]) {
+			executeCB();
+			return;
+		} else {
+			if (cb) $(document).bind('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
+				if (script) { if ('VisualFileChange' === script && add) {
+					if (alias === add) {
+						$(document).unbind('scriptLoaded.vFCListener' + alias);
+						executeCB();
+					}
+				}}
+			});
+			mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + this.mdScriptRevision);
+		}
 	},
 	
 	mdCancel: function () {
 		var _this = VisualFileChange;
 		_this.pb.remove();
 		_this.mdDlgThumbDlgClose();
+	},
+	
+	mdCreatejIcon: function (iconClass) {
+		return $('<span>', { 'class': 'ui-icon ' + iconClass + ' md-inline-icon', text: ' ' });
 	},
  
 	mdStartMd: function () {
@@ -337,8 +379,6 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		// Load the Execute/ Edit components
 		this.loadModule('exec.js');
-		// Load the configuration module
-		this.loadModule('cfg.js');
 		
 		if (mw.user && mw.user.tokens && mw.user.tokens.get) this.edittoken = mw.user.tokens.get('editToken');
 		this.edittoken = (this.edittoken || window['wikilove-edittoken']);
@@ -406,7 +446,10 @@ var VisualFileChange = window.VisualFileChange = {
 		this.mdCmsort = 'sortkey';   // property to sort by: sortkey/timestamp
 		this.mdCmstart = 0;          // extrawurst für catmembers by date - sorting
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
-		this.mdFirstRun = true;       // determining whether it is the first query-cycle
+		this.mdFirstRun = true;      // determining whether it is the first query-cycle
+		this.mdNumberOfExecs = 0;    // Is Execute called already?
+		this.apiRequestQueue = [];   // Reset. In case of restart it would contain non-executed requests otherwise
+		this.lastContinues = { vals: [], setVals: '' };     // contains the last 2 continue-keys
  
 		if (this.mdTarget) {
 			pefilledUser = this.mdTarget;
@@ -417,6 +460,40 @@ var VisualFileChange = window.VisualFileChange = {
 		$(document).triggerHandler('vFC', ['asking for target', this]);
 		this.promptForTarget(pefilledUser, 1, this);
 	},
+	
+	createToggler: function (text, $content) {
+		return $('<div>').append(
+			$('<a>', { text: text, href: '#', 'class':'md-collapsible ui-state-default' }).prepend(
+				this.mdCreatejIcon('ui-icon-carat-1-e')
+			).toggle(
+			function(e){
+				//e.preventDefault();
+				var $el = $(this);
+				$el.next().slideToggle('fast');
+				$el.find('span.ui-icon').removeClass('ui-icon-carat-1-e').addClass('ui-icon-carat-1-s');
+			}, 
+			function(e) {
+				var $el = $(this);
+				$el.next().slideToggle('fast');
+				$el.find('span.ui-icon').removeClass('ui-icon-carat-1-s').addClass('ui-icon-carat-1-e');
+			}).hover(
+			function() {
+				$(this).addClass('ui-state-hover');
+			},
+			function() {
+				$(this).removeClass('ui-state-hover');
+			}),
+			$content.addClass('ui-widget-content').hide()
+		);
+	},
+	
+	createNotifyArea: function(textNode, icon, state) {
+		return $('<div>', { 'class': 'ui-widget' }).append(
+			$('<div>', { 'class': state + ' ui-corner-all', style: 'margin-top:20px; padding:0.7em;' }).append($('<p>').append(
+				this.mdCreatejIcon(icon).css('margin-right', '.3em'), textNode
+			))
+		);
+	},
 
 	/**
 	** Pseudo-Modal JS windows.
@@ -426,7 +503,7 @@ var VisualFileChange = window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL,
+			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var getMwDate = function(dateX) {
@@ -440,31 +517,34 @@ var VisualFileChange = window.VisualFileChange = {
 			else return 'Invalid. Use YYYY-MM-DD';
 		};
 		
-		dlgButtons[o.i18n.nextButtonLabel] = function () {
+		dlgButtons[o.i18n.proceedButtonLabel] = function () {
 			if (confirmed) return;
 			confirmed = true;
 			// Reading input
 			o.mdTarget = o.cleanReason($targetSelect.val() + ':' + $targetInput.val());
-			$('#AjaxMdContainer').text(o.i18n.mdPleaseWait);
+			o.lastContinues.setVals = ['mdLestart'];
+			o.$AjaxMdContainer.text(o.i18n.mdPleaseWait);
 			if (mwDateRx.test($gStartAt.val())) o.mdLestart = $gStartAt.val();
 			switch ($gSortBy.val()) {
-				case 'of':
+				case 'of': // oldest first
 					o.mdLedir = 'newer';
 					o.mdCmdir = 'asc';
 					o.mdCmsort = 'timestamp';
 					o.mdCmstart = o.mdLestart;
+					o.lastContinues.setVals.push('mdCmstart');
 					break;
-				case 'nf':
+				case 'nf': // newest first
 					o.mdLedir = 'older';
 					o.mdCmdir = 'desc';
 					o.mdCmsort = 'timestamp';
 					o.mdCmstart = o.mdLestart;
+					o.lastContinues.setVals.push('mdCmstart');
 					break;
-				case 'ca':
+				case 'ca': // cat asc
 					o.mdCmdir = 'asc';
 					o.mdCmsort = 'sortkey';
 					break;
-				case 'cd':
+				case 'cd': // cat desc
 					o.mdCmdir = 'desc';
 					o.mdCmsort = 'sortkey';
 					break;
@@ -474,20 +554,7 @@ var VisualFileChange = window.VisualFileChange = {
 					o.mdCmsort = 'sortkey';
 					break;
 			}
-			if (!o.displayComponents) {
-				o.loadModule('ui.js');
-				$(document).bind('scriptLoaded', function(evt, script, add) {
-					if (script) { if ('VisualFileChange' === script && add) {
-						if ('DisplayComponents' === add) {
-							o.nextTask();
-						}
-					}}
-				});
-				
-			}
-			else {
-				o.nextTask();
-			}
+			o.loadModule('ui.js', 'nextTask');
 		};
 		dlgButtons[o.i18n.cancelButtonLabel] = function () {
 			$(this).dialog('close');
@@ -503,12 +570,13 @@ var VisualFileChange = window.VisualFileChange = {
 		$('body').css('overflow', 'hidden');
 
 		dlgWidth = Math.min(600, $(window).width() - 250);
+		
+		o.$AjaxMdContainer = $('<div>', { id: 'AjaxMdContainer', style: 'min-height:80px;' });
 
-		o.dlg = $('<div></div>').html('<div id="AjaxMdContainer"></div>').dialog({
+		o.dlg = $('<div>').append(o.$AjaxMdContainer).dialog({
 			modal: true,
 			closeOnEscape: true,
 			position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
-			dialogClass: "wikiEditor-toolbar-dialog",
 			title: o.i18n.mdPerformOnWhichTarget,
 			height: 'auto',
 			width: dlgWidth,
@@ -533,7 +601,15 @@ var VisualFileChange = window.VisualFileChange = {
 		$targetSelect = $('<select>', { size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsCat }),
 			$('<option>', { text: nsUser, selected: 'selected' })
-		);
+		).change(function() {
+			var $catSpecifics = $gSortBy.find('option[value^="c"]');
+			if ($(this).val() === nsCat) {
+				$catSpecifics.removeAttr('disabled');
+			} else {
+				$catSpecifics.attr('disabled', 'disabled');
+			}
+			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
+		});
 		var didXHR = function(result, pCallback) {
 			var searchTerms = [];
 			if (!result) {
@@ -564,7 +640,7 @@ var VisualFileChange = window.VisualFileChange = {
 			lastXHR = $.getJSON( mw.util.wikiScript('api'), query, function(r) { didXHR(r, pCallback); });
 		};
 		
-		$targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
+		o.$targetInput = $targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
 			minLength: 1,
 			delay: delayXHR,
 			source: function ( request, callback ) { 
@@ -620,26 +696,15 @@ var VisualFileChange = window.VisualFileChange = {
 			.append( $('<option>', { 'value': 'default' }).text('default')
 				,$('<option>', { 'value': 'of' }).text('from old to new (category: added-date)')
 				,$('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)')
-				,$('<option>', { 'value': 'ca' }).text('category only: asc')
-				,$('<option>', { 'value': 'cd' }).text('category only: desc')
+				,$('<option>', { 'value': 'ca' }).text('asc, alphabetical')
+				,$('<option>', { 'value': 'cd' }).text('desc, alphabetical')
 			);
 		$gSortByL = $('<label>', {
 				'for': 'gSortBy'
 				,title: 'Sorting'
 				,text: 'Sorting'
 			} );
-		$gMoreOptionsToggler = $('<a>', { text: o.i18n.optMore, href: '#', 'class': 'md-collapse-closed', style: 'display:block; margin:8px;' })
-			.click(function(e){
-				e.preventDefault();
-				$(this).next().slideToggle('fast');
-				if ($(this).hasClass('md-collapse-closed')) {
-					$(this).addClass('md-collapse-open');
-					$(this).removeClass('md-collapse-closed');
-				} else {
-					$(this).addClass('md-collapse-closed');
-					$(this).removeClass('md-collapse-open');
-				}
-			});
+
 		$gMoreOptions = $('<div>').append(
 			$gStartAtL
 			,$gStartAt
@@ -647,8 +712,11 @@ var VisualFileChange = window.VisualFileChange = {
 			,$gSortByL
 			,$gSortBy
 		).hide();
+		$gMoreOptionsToggler = o.createToggler(o.i18n.optMore, $gMoreOptions);
+		$gNotifyText = o.$gNotifyText = $('<span>', { id: 'gNotifyText' });
+		$gNotifyArea = o.$gNotifyArea = o.createNotifyArea($gNotifyText, 'ui-icon-info', 'ui-state-highlight');
 		
-		$('#AjaxMdContainer').append(
+		o.$AjaxMdContainer.append(
 			$('<label>', { 'for': 'mdTargetInput', text: o.i18n.mdTargetInput })
 			,$('<br>')
 			,$targetSelect
@@ -656,24 +724,33 @@ var VisualFileChange = window.VisualFileChange = {
 			,$targetInput
 			,$('<br>')
 			,$gMoreOptionsToggler
-			,$gMoreOptions
+			,$gNotifyArea.hide()
 		);
+		$targetSelect.change();
 		$targetInput.bind('input keyup change', function(e) {
 			var thisVal = $(this).val();
 			if (rxCat.test(thisVal)) {
-				$(this).val(thisVal.replace(rxCat, ''));
+				$(this).val(thisVal = thisVal.replace(rxCat, ''));
 				$targetSelect.val(nsCat);
+				$targetSelect.change();
 			} else if (rxUser.test(thisVal)) {
-				$(this).val(thisVal.replace(rxUser, ''));
+				$(this).val(thisVal = thisVal.replace(rxUser, ''));
 				$targetSelect.val(nsUser);
+				$targetSelect.change();
 			}
-			if ($(this).val().length < minlen) {
+			if (thisVal.length < minlen) {
 				$submitButton.button('option', 'disabled', true);
 			} else {
 				$submitButton.button('option', 'disabled', false);
 			}
+			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
 			if (e && e.keyCode && 13 === (e.keyCode - 0)) $submitButton.click();
 		}).keyup().focus();
+		
+		// Load the configuration module
+		this.loadModule('cfg.js', 'mdConfigInstall');
+		// The following modules are not crucial for execution because there are fallbacks
+		mw.loader.load(['jquery.effects.highlight']);
 	},
 
 	cleanReason: function (uncleanReason) {
@@ -681,8 +758,6 @@ var VisualFileChange = window.VisualFileChange = {
 		uncleanReason = uncleanReason.replace(/^\s*(.+)\s*$/, '$1');
 		// remove signature
 		uncleanReason = uncleanReason.replace(/(.+)(--)?~{3,5}$/, '$1');
-		// escaping '|'
-		//uncleanReason = uncleanReason.replace(/\|/g, '&#124;');
 		return uncleanReason;
 	},
 	
@@ -733,18 +808,44 @@ var VisualFileChange = window.VisualFileChange = {
 	
 	mdEditCountDialog: function(reason) {
 		var o = this;
-		o.$apiEditCountDlg = $('<div>', { text: reason + ' Close this dialog to continue! Close this tab/window to abort.' });
+		var dlgButtons = {};
+		
+		dlgButtons[o.i18n.proceedButtonLabel] = function() {
+			o.$apiEditCountDlg.dialog('close');
+			o.apiEditCount = 0;
+			o.apiEditFirstTestCountDown--;
+			var i = Math.min(o.mdSettings.maxSimultaneousReq - o.apiRunningRequests, o.apiRequestQueue.length);
+			for (;i>0;i--) {
+				o.doAPICall.apply(o, o.apiRequestQueue.shift());
+			}
+		};
+		dlgButtons[o.i18n.abortButtonLabel] = function() {
+			o.$apiEditCountDlg.dialog('close');
+		};
+		
+		o.$apiEditCountDlg = $('<div>', { text: reason }).append($('<br>'), $('<a>', { 
+			style: 'height:5em; font-size:2em; line-height:1.8em', 
+			href: mw.util.wikiGetlink('Special:MyContributions'),
+			target: 'contribswindow',
+			text: 'My Contributions'
+		}).click(function(e) {
+			e.preventDefault();
+			window.open($(this).attr('href'), 'contribswindow', 'resizable=yes,scrollbars=yes');
+		}));
 		o.$apiEditCountDlg.dialog({
-			title: 'Close to continue',
+			title: 'Would you like to proceed?',
+			buttons: dlgButtons,
+			show: { effect: 'highlight', duration: 1800 },
 			close: function() {
 				o.$apiEditCountDlg.remove();
 				o.$apiEditCountDlg = 0;
-				o.apiEditCount = 0;
-				o.apiEditFirstTestCountDown--;
-				var i = Math.min(o.mdSettings.maxSimultaneousReq - o.apiRunningRequests, o.apiRequestQueue.length);
-				for (;i>0;i--) {
-					o.doAPICall.apply(o, o.apiRequestQueue.shift());
-				}
+			},
+			open: function() {
+				var $dlg = $(this).parent();
+				var $buttons = $dlg.find('.ui-dialog-buttonpane button');
+				$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } }).focus();
+				$buttons.eq(1).button({ icons: { primary: 'ui-icon-circle-close' } });
+				$('.ui-dialog-titlebar-close', $dlg).hide();
 			}
 		});
 	},
@@ -769,12 +870,12 @@ var VisualFileChange = window.VisualFileChange = {
 		if (params.action && 'edit' === params.action) {
 			if (o.mdSettings.testEdits > 0 && o.apiEditCount >= o.mdSettings.testEdits) {
 				o.apiRequestQueue.push([ params, callback, errCallBack ]);
-				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits done as specified in the advanced settings.');
+				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits is done as specified in the advanced settings. Would you like to proceed?');
 				return;
 			}
 			if (0 === o.apiEditFirstTestCountDown) {
 				o.apiRequestQueue.push([ params, callback, errCallBack ]);
-				if (!o.$apiEditCountDlg) o.mdEditCountDialog('First batch of edits done as specified in the advanced settings.');
+				if (!o.$apiEditCountDlg) o.mdEditCountDialog('Would you like to do edit number ' + o.mdSettings.firstTest + '?');
 				return;
 			}
 			o.apiEditFirstTestCountDown--;
@@ -891,8 +992,8 @@ var VisualFileChange = window.VisualFileChange = {
 	mdSecureCall: function(stFunction) {
 		var o = this;
 		try {
-			this.currentTask = o.mdSecureCall.arguments[0];
-			return o[stFunction].apply(this, Array.prototype.slice.call(o.mdSecureCall.arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
+			this.currentTask = arguments[0];
+			return o[stFunction].apply(this, Array.prototype.slice.call(arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
 		} catch (ex) {
 			//console.log('failure at ' & stFunction)
 			o.fail(ex);
@@ -963,6 +1064,14 @@ var VisualFileChange = window.VisualFileChange = {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
 	},
 	
+	mdGetWatchlistSelect: function() {
+		var $sel = $('<select size="1"></select>')
+			.append($('<option>', { text: 'watch', value: 'watch' }))
+			.append($('<option>', { text: 'do not change watchstatus', value: 'nochange' }))
+			.append($('<option>', { text: 'as specified in your preferences', value: 'preferences' }));
+		return $sel;
+	},
+	
 	mdDefaults: [
 		{
 			'v': 'userNote', 
@@ -971,17 +1080,17 @@ var VisualFileChange = window.VisualFileChange = {
 			'default': 'Yours sincerely',
 			'controls': '#mdTalkNote'
 		}, {
-			'v': 'testEdits', 
-			'd': 'Numbers of edits before prompting for continue', 
-			'default': 0,
-			'min': 0, 
-			'max': 500
-		}, {
 			'v': 'firstTest', 
-			'd': 'Stop once before doing edit number', 
+			'd': 'Ask for confirmation before doing edit number', 
 			'default': 0,
 			'min': 0, 
 			'max': 50
+		}, {
+			'v': 'testEdits', 
+			'd': 'Ask for confirmation after each … edits', 
+			'default': 0,
+			'min': 0, 
+			'max': 500
 		}, {
 			'v': 'defaultAction',
 			'd': 'Default action to perform',
@@ -1001,11 +1110,13 @@ var VisualFileChange = window.VisualFileChange = {
 		}, {
 			'v': 'watchUserTalk',
 			'd': 'Watch edited user talk pages',
-			'default': true
+			'default': 'watch',
+			'select': 'mdGetWatchlistSelect'
 		}, {
 			'v': 'watchFiles',
-			'd': 'Watch edited file pages (custom replace is not affected)',
-			'default': true
+			'd': 'Watch edited file pages (Exception: File pages are never watched if "custom replace" is used)',
+			'default': 'watch',
+			'select': 'mdGetWatchlistSelect'
 		}, { 
 			'v': 'loadBatchSize', 
 			'old': 'AjaxMassDeleteInterval',
@@ -1086,7 +1197,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdPermissionPattern: /^((?:.|\n)+?)(\|\s*Permission\s*\=)((?:.|\n)+?)?((?:\n\s*\}\}|\n\s*\|)(?:.|\n)*)$/i,
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
-	mdRegExpPattern: /^\/.+\/[oigmx]{0,5}$/,
+	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ':',
@@ -1096,6 +1207,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
 	mdSuccessIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/120px-Crystal_Project_success.png',
 	mdDoingIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Quick_restart.png/120px-Quick_restart.png',
+	mdNoChangeIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/120px-Crystal_Project_tick_yellow.png',
 	mdFailIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/120px-Crystal_Project_cancel.png',
 	mdThisTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png',
 	mdDoneTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
@@ -1103,7 +1215,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdInfoIcon: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
 	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
 	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
-	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues." alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
+	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
  
 	// Translatable strings
@@ -1132,9 +1244,10 @@ var VisualFileChange = window.VisualFileChange = {
 		mdCuteSelectLabel: "Cute Select Files",
 		mdDelContribsButtonLabel: "Cached deleted uploads",
 		mdRevertButtonLabel: "Revert images",
-		nextButtonLabel: "Proceed",
+		proceedButtonLabel: "Proceed",
 		submitButtonLabel: "Execute",
 		cancelButtonLabel: "Cancel",
+		abortButtonLabel: "Abort",
 		mdPleaseWait: "Please wait.",
 		
 		optStartAt: "Start listing from a specific date",
@@ -1143,10 +1256,10 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		mdConfig: {
 			getScriptErr: "Error getting your userscripts!",
-			okButton: 'Ok',
+			okButton: 'Ok (Remember until next reload)',
 			cancelButton: 'Cancel',
 			permaSaveButton: 'Save permanently',
-			defaultsButton: 'Defaults'
+			defaultsButton: 'Fill-in defaults'
 		},
 		
 		mdCuteSelect: {
@@ -1265,13 +1378,13 @@ mediaWiki.loader.using([
 'jquery.ui.autocomplete',
 'jquery.tipsy',
 'jquery.placeholder',
-'mediawiki.html',
 'mediawiki.user',
 'mediawiki.util'
 ], function () {
 	$(document).ready(function () {
 		this.context = "QD";
-		$(document).bind('vFC', function(e, p1, p2, p3) {
+		$(document).unbind('vFC.debuglistener');
+		$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
 			if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
 		});
 		VisualFileChange.mdInstall();
