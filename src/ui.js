@@ -1514,20 +1514,21 @@ $.extend(window.VisualFileChange,
 		if ( this.mdInsertedTag ) {
 			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
-				// navigating to the new created deletion request
+				// allow navigating to the new created deletion request
 				addLink(this.requestPage, "Go to the created request page");
 			}
-			else if (-1 === mw.config.get('wgNamespaceNumber') && ( 'c_replace' !== this.mdTaskToPerform && 'OTRS' !== this.mdTaskToPerform && 'other' !== this.mdTaskToPerform )) {
-				// navigating to the user-discussion-page
+			if (!this.mdModeCat && (-1 === $.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']))) {
 				addLink(this.mdUserTalkPrefix + this.mdTarget, "Look at the user\'s talk-page");
-			} else {
-				addLink(mw.config.get('wgPageName'), "Reload this page", '_self');
+				addLink(this.mdContribPrefix + this.mdTarget, "...or the user\'s contribs");
+				// Revert files overwritten by this user ....
 			}
+			addLink(mw.config.get('wgPageName'), "Reload this page", '_self');
 		}
 		$dlgNode.append($ulNode).dialog({
 			show: { effect: 'highlight', duration: 1800 },
 			width: Math.min(450, $(window).width())
 		});
+		document.title = "VisualFileChange: Ready!";
 	},
 
 	mdGoToSite: function (target) {
