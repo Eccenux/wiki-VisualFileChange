@@ -201,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.0.3',
+	mdScriptRevision: '0.9.0.4',
 	
 
 	/**
@@ -1111,12 +1111,12 @@ var VisualFileChange = window.VisualFileChange = {
 		}, {
 			'v': 'watchlistUserTalk',
 			'd': 'Watch edited user talk pages',
-			'default': 'watch',
+			'default': 'preferences',
 			'select': 'mdGetWatchlistSelect'
 		}, {
 			'v': 'watchlistFiles',
 			'd': 'Watch edited file pages (Exception: File pages are never watched if "custom replace" is used)',
-			'default': 'watch',
+			'default': 'preferences',
 			'select': 'mdGetWatchlistSelect'
 		}, { 
 			'v': 'loadBatchSize', 
