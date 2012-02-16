@@ -239,7 +239,7 @@ $.extend(window.VisualFileChange,
 				page.title = upload;
 				page.text = this.tag;
 				page.editType = edittype;
-				page.watchlist = this.mdSettings.watchFiles;
+				page.watchlist = this.mdSettings.watchlistFiles;
 				
 				this.mdUploadCt++;
 				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
@@ -701,7 +701,7 @@ $.extend(window.VisualFileChange,
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
-			page.watchlist = _this.mdSettings.watchUserTalk;
+			page.watchlist = _this.mdSettings.watchlistUserTalk;
 			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
 			_this.uploadersToNotify++;
