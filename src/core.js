@@ -201,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.0.0',
+	mdScriptRevision: '0.9.0.3',
 	
 
 	/**
@@ -1030,6 +1030,7 @@ var VisualFileChange = window.VisualFileChange = {
 	// key,		minLenReq,	acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
 		'c_replace':[false,	false,					'',					'',						false,	true,	false,	"",												'Doing %replacementcount% replacements.', 															'',											''],
 		'prepend':  [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
+		'prepNf':   [false,	'mdInsertAll',			'',					'',						true,	false,	false,	"",												'Inserting "%pattern%"', 																			'==[[:%FILE%]]==\n',						'There are questions or comments about [[%FILE%]].'],
 		'append':   [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
 		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{copyvio|1=%REASON%}}\n",						'%cv% %REASON%', 																					'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
 		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{Derivative|1=%REASON%}}\n",					'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{{subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
@@ -1046,6 +1047,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdCommands: {
 		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
 		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'] },
+		'prepNf':	{ tasks: ['mdPrependText', 'mdPrependTemplate', 'mdNotifyUploaders'] },
 		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'] },
 		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
@@ -1059,7 +1061,6 @@ var VisualFileChange = window.VisualFileChange = {
 		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
 		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'] }
 	},
-	mdOptDefault: 'del',
 	mdOptText: {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
 	},
@@ -1108,12 +1109,12 @@ var VisualFileChange = window.VisualFileChange = {
 			},
 			'controls': '#AjaxMdType'
 		}, {
-			'v': 'watchUserTalk',
+			'v': 'watchlistUserTalk',
 			'd': 'Watch edited user talk pages',
 			'default': 'watch',
 			'select': 'mdGetWatchlistSelect'
 		}, {
-			'v': 'watchFiles',
+			'v': 'watchlistFiles',
 			'd': 'Watch edited file pages (Exception: File pages are never watched if "custom replace" is used)',
 			'default': 'watch',
 			'select': 'mdGetWatchlistSelect'
@@ -1231,6 +1232,7 @@ var VisualFileChange = window.VisualFileChange = {
 		mdReplacePermissionText: "Clean permission-section?",
 		mdCustomReplaceText: "Please insert the text that should be inserted instead",
 		mdInsertGeneric: "Please insert the text to be added to each selected file.",
+		mdInsertAll: "Insert the text to be added to each selected file. Do not forget to add the text for the user.",
 		mdInsertTalkNote: "Please enter a note to add to the user\'s talk-page",
 		mdInsertReplaceMatch: "What text should become replaced on the selected files?",
 		mdDelteConfirmation: "Your provided reason to delete is",
@@ -1304,7 +1306,8 @@ var VisualFileChange = window.VisualFileChange = {
 			'otrs': "OTRS- remove tags",
 			'c_replace': "custom replace",
 			'prepend': "prepend any text",
-			'append': "append any text"
+			'append': "append any text",
+			'prepNf': "prepend text, notify uploaders"
 		},
 		
 		task: {
