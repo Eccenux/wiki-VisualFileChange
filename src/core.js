@@ -201,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.0.4',
+	mdScriptRevision: '0.9.0.5',
 	
 
 	/**
@@ -750,7 +750,7 @@ var VisualFileChange = window.VisualFileChange = {
 		// Load the configuration module
 		this.loadModule('cfg.js', 'mdConfigInstall');
 		// The following modules are not crucial for execution because there are fallbacks
-		mw.loader.load(['jquery.effects.highlight']);
+		if (!$.fx.off) mw.loader.load(['jquery.effects.highlight']);
 	},
 
 	cleanReason: function (uncleanReason) {
