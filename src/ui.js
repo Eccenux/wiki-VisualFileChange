@@ -680,6 +680,8 @@ $.extend(window.VisualFileChange,
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, "").replace(/_/g, ''));
 			var v_txtAjaxMdSelectTitle = $.trim($('#txtAjaxMdSelectTitle').val().replace(/^File\:/, "").replace(/_/g, ''));
 			if ( v_txtAjaxMdSelectTitle ) v_txtAjaxMdSelectTitle = new RegExp(v_txtAjaxMdSelectTitle, '');
+			var v_txtAjaxMdSelectWikitext = $('#txtAjaxMdSelectWikitext').val();
+			if (v_txtAjaxMdSelectWikitext) v_txtAjaxMdSelectWikitext = new RegExp(v_txtAjaxMdSelectWikitext, '');
 			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
 			var vl_selAjaxMdSelectSize = ( ($('#selAjaxMdSelectSize').val() + '') === 'l' );
 			var v_txtAjaxMdSelectMeta = new RegExp($.trim($('#txtAjaxMdSelectMeta').val()), '');
@@ -724,6 +726,12 @@ $.extend(window.VisualFileChange,
 							isMatch.title = true;
 						}
 					} else {isMatch.title = true;}
+					
+					if ( 'object' === typeof(v_txtAjaxMdSelectWikitext) && curUpld.content ) {
+						if ( v_txtAjaxMdSelectWikitext.test(curUpld.content) ) {
+							isMatch.content = true;
+						}
+					} else {isMatch.content = true;}
  
 					if ( '' !== v_txtAjaxMdSelectSize ) {
 						if ( (vl_selAjaxMdSelectSize && (curUpld.size < v_txtAjaxMdSelectSize)) || (!vl_selAjaxMdSelectSize && (curUpld.size > v_txtAjaxMdSelectSize)) ) isMatch.size = true;
@@ -745,7 +753,7 @@ $.extend(window.VisualFileChange,
 						}
 					} else { isMatch.meta = true; }
  
-					if ( isMatch.cat && isMatch.title && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
+					if ( isMatch.cat && isMatch.title && isMatch.content && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
 				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + ex); }
 			});
 			updateSelectedCount();
@@ -764,6 +772,9 @@ $.extend(window.VisualFileChange,
 				$('<tr>').append(
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)),
+				$('<tr>').append(
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \{\{\[Tt]emplate}\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: this.i18n.mdCuteSelect.wikitextplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
