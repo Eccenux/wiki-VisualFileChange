@@ -201,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.0.5',
+	mdScriptRevision: '0.9.1.0',
 	
 
 	/**
@@ -1270,6 +1270,7 @@ var VisualFileChange = window.VisualFileChange = {
 			'select': "Select (/Deselect)",
 			'inCat': "In Category",
 			'title': "Title matches",
+			'wikitext': "Wikitext matches",
 			'matches': "matches",
 			'size': "Size",
 			'date': "<abbr title=\"Only one date is required. But the first date (start date) must be before the second date (end date).\">Date</abbr> (time is optional)",
@@ -1277,6 +1278,7 @@ var VisualFileChange = window.VisualFileChange = {
 			'before': "If only one date specified, match all before that date.",
 			'after': "If only one date specified, match all after that date.",
 			'titleplaceholder': "(Reg)(?:ular )?(Exp)(?:ression)?",
+			'wikitextplaceholder': "Wikitext matches RegExp",
 			'dateplaceholder': "YYYY-MM-DD hh:mm:ss",
 			'button': "Apply"
 		},
