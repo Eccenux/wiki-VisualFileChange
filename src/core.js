@@ -201,7 +201,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.1.0',
+	mdScriptRevision: '0.9.2.0',
 	
 
 	/**
@@ -345,35 +345,43 @@ var VisualFileChange = window.VisualFileChange = {
 				break;
 			case -1: // Special pages
 				try {
-					if ( "Contributions" === mw.config.get('wgCanonicalSpecialPageName') ) {
-						// Extract target from addressline
-						if ( -1 !== location.href.indexOf("\/Special:Contributions\/") ) {
-							this.mdTarget = decodeURI(location.href.match(/Special\:Contributions\/(.*?)$/)[1]);
-						} else if ( -1 !== location.href.indexOf(mw.config.get('wgScript')) ) {
-							this.mdTarget = mw.util.getParamValue('target');
-						}
-					}
-					if ( "Log" === mw.config.get('wgCanonicalSpecialPageName') ) {
-						// Extract target from addressline
-						if (mw.util.getParamValue('user')) {
-							this.mdTarget = mw.util.getParamValue('user');
-						}
-						if (mw.util.getParamValue('page')) { 
-							if (/User:+./.test(mw.util.getParamValue('page'))) {
-								this.mdTarget = mw.util.getParamValue('page').replace("User:", "");
+					switch (mw.config.get('wgCanonicalSpecialPageName')) {
+						case 'Contributions':
+						case 'DeletedContributions':
+						case 'Block':
+						case 'CentralAuth':
+							// Extract target from addressline
+							if ( /Special\:(?:DeletedContributions|Contributions|Block|CentralAuth)\//.test(location.href) ) {
+								this.mdTarget = decodeURI(location.href.match(/Special\:(?:DeletedContributions|Contributions|Block|CentralAuth)\/(.*?)$/)[1]);
+							} else if ( -1 !== location.href.indexOf(mw.config.get('wgScript')) ) {
+								this.mdTarget = mw.util.getParamValue('target');
 							}
-						}
-						if ( -1 !== location.href.indexOf("\/Special:Log\/") ) {
-							this.mdTarget = decodeURI(location.href.match(/Special\:Log\/(.*?)$/)[1]);
-						}
+							break;
+						case 'Userrights':
+						case 'Listfiles':
+						case 'Log':
+							// Extract target from addressline
+							if (mw.util.getParamValue('user')) {
+								this.mdTarget = mw.util.getParamValue('user');
+							}
+							if (mw.util.getParamValue('page')) { 
+								if (/User:+./.test(mw.util.getParamValue('page'))) {
+									this.mdTarget = mw.util.getParamValue('page').replace("User:", "");
+								}
+							}
+							if ( /Special\:(?:Log|ListFiles|UserRights)\//.test( location.href )) {
+								this.mdTarget = decodeURI(location.href.match(/Special\:(?:Log|ListFiles|UserRights)\/(.*?)$/)[1]);
+							}
+							break;
 					}
 				} catch (ex) { }
 				break;
-			case 14: // Category - Exception Script is also able to handle cats
-				// Don't become confused it's the cat
+			case 14: // categories
 				this.mdTarget = mw.config.get('wgPageName');
 				break;
 		}
+		// Prettify the title (nomalizing)
+		this.mdTarget = this.mdTarget.replace(/_/g, ' ');
 		
 		$(document).triggerHandler('vFC', ['prepared', this]);
 		
@@ -849,6 +857,77 @@ var VisualFileChange = window.VisualFileChange = {
 			}
 		});
 	},
+	
+	/**
+	 ** Called when "invalid token" errors occur
+	 ** Don't use the monster below to avoid confusion
+	 **/
+	refreshEditToken: function(callback) {
+		var o = this;
+		var gotResult = function(result) {
+			if (!result || !result.query) {
+				callback(false);
+				return;
+			}
+			var token;
+			$.each( result.query.pages, function( i, page ) {
+				if ( page.edittoken ) {
+					token = page.edittoken;
+					return false;
+				}
+			} );
+			if (token) {
+				o.edittoken = token;
+				callback(true);
+			} else {
+				callback(false);
+			}
+		};
+		var xhr = $.getJSON(mw.util.wikiScript('api'), {
+			format: 'json',
+			action: 'query',
+			prop: 'info',
+			intoken: 'edit',
+			titles: 'DummyPageForEditToken'
+		}, gotResult);
+		xhr.fail(function() {
+			callback(false);
+		});
+	},
+	
+	/**
+	 ** Find out whether a page was edited within the last 10 contibs
+	 ** Don't use the monster below to avoid confusion
+	 **/
+	editedPageLast: function(title, comment, callback) {
+		var foundIt = false;
+		var o = this;
+		var gotResult = function(result) {
+			if (!result || !result.query) {
+				callback(-1, title);
+				return;
+			}
+			$.each(result.query.usercontribs, function(i, contrib) {
+				if (contrib.comment === comment && contrib.title === title) {
+					callback(1, title);
+					foundIt = true;
+					return false;
+				}
+			});
+			if (!foundIt) callback(0, title);
+		};
+		var xhr = $.getJSON(mw.util.wikiScript('api'), {
+			format: 'json',
+			action: 'query',
+			list: 'usercontribs',
+			ucuser: mw.user.name() || Geo.IP,
+			ucprop: 'title|comment',
+			uclimit: parseInt(o.mdSettings.maxSimultaneousReq)+10
+		}, gotResult);
+		xhr.fail(function() {
+			callback(-1, title);
+		});
+	},
 
 	/**
 	 ** Does a MediaWiki API request and passes the result to the supplied callback (method name).
@@ -859,30 +938,33 @@ var VisualFileChange = window.VisualFileChange = {
 	apiEditCount: 0,
 	apiEditFirstTestCountDown: 0,
 	$apiEditCountDlg: 0,
-	doAPICall: function (params, callback, errCallBack) {
+	doAPICall: function (params, callback, errCallBack, isRetry) {
 		var o = this;
+		if (!isRetry) isRetry = 0;
 		
 		if (o.mdSettings.maxSimultaneousReq > 0 && (o.apiRunningRequests >= o.mdSettings.maxSimultaneousReq)) {
-			o.apiRequestQueue.push([ params, callback, errCallBack ]);
+			o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
 			return;
 		}
 
 		if (params.action && 'edit' === params.action) {
 			if (o.mdSettings.testEdits > 0 && o.apiEditCount >= o.mdSettings.testEdits) {
-				o.apiRequestQueue.push([ params, callback, errCallBack ]);
+				o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
 				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits is done as specified in the advanced settings. Would you like to proceed?');
 				return;
 			}
 			if (0 === o.apiEditFirstTestCountDown) {
-				o.apiRequestQueue.push([ params, callback, errCallBack ]);
+				o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
 				if (!o.$apiEditCountDlg) o.mdEditCountDialog('Would you like to do edit number ' + o.mdSettings.firstTest + '?');
 				return;
 			}
 			o.apiEditFirstTestCountDown--;
 			o.apiEditCount++;
+			params.token = o.edittoken;
 		}
 		
 		o.apiRunningRequests++;
+		isRetry++;
 		
 		var always = function() {
 			o.apiRunningRequests--;
@@ -902,39 +984,83 @@ var VisualFileChange = window.VisualFileChange = {
 			success: function (result, status, x) {
 				// Call always first; jQuery complete-evt is called after that
 				always();
+
+				var doErrCB = function(text) {
+					if ($.isFunction(o[errCallBack])) {
+						o.mdWasAPIError = true;
+						return o[errCallBack](result, params, result.error ? (result.error.code + ': ' + result.error.info) : ("Spamblacklist: " + result.edit.spamblacklist));
+					} else {
+						return o.fail(text);
+					}
+				};
+				
 				if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
 
 				// In case we get the mysterious 231 unknown error, just try again
-				if (result.error && result.error.info.indexOf('231') !== -1) return setTimeout(function () {
-					o.doAPICall(params, callback);
-				}, 500);
+				if (result.error && result.error.info.indexOf('231') !== -1 && isRetry < 20) return setTimeout(function () {
+					o.doAPICall(params, callback, errCallBack, isRetry);
+				}, isRetry*500);
+				// In case we get edit conflicts
+				if (result.error && 'editconflict' === result.error.code && (params.prependtext || params.appendtext) && isRetry < 20) return setTimeout(function () {
+					o.doAPICall(params, callback, errCallBack, isRetry);
+				}, isRetry*500);
+				// If the edit-conflict is about the full text, we have to re-obtain the text and perform the opteration again
+				// ....
+				// If the edit-token is expired or corrupt
+				if (result.error && 'badtoken' === result.error.code && isRetry < 20) {
+					return o.refreshEditToken(function(gotNewToken) {
+						if (gotNewToken) {
+							o.doAPICall(params, callback, errCallBack, isRetry);
+						} else {
+							return doErrCB("API request failed (" + result.error.code + "): " + result.error.info);
+						}
+					});
+				}
 				if (result.error) {
-					if (errCallBack && $.isFunction(o[errCallBack])) {
-						this.mdWasAPIError = true;
-						return o[errCallBack](result, params, result.error.code + ': ' + result.error.info);
-					} else {
-						return o.fail("API request failed (" + result.error.code + "): " + result.error.info);
-					}
+					return doErrCB("API request failed (" + result.error.code + "): " + result.error.info);
 				}
 				if (result.edit && result.edit.spamblacklist) {
-					return o.fail("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
+					return doErrCB("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
 				}
-				try {
-					o[callback](result);
-				} catch (e) {
-					return o.fail(e);
-				}
+				o.mdSecureCall(callback, result, params);
 			},
 			error: function (x, status, error) {
 				// Call always first; jQuery complete-evt is called after that
 				always();
 				
-				if (errCallBack && $.isFunction(o[errCallBack])) {
-					this.mdWasAPIError = true;
-					o[errCallBack]('', params, 'Server status: ' + x.status + ' - Error:' + error);
-				} else {
-					return o.fail("Server returned code " + x.status + " " + status + "Error code is " + error);
+				var doErrCB = function() {
+					if ($.isFunction(o[errCallBack])) {
+						o.mdWasAPIError = true;
+						return o[errCallBack]('', params, 'Server status: ' + x.status + ' - Error:' + error);
+					} else {
+						return o.fail("Server returned code " + x.status + " -" + status + "- Error code is " + error);
+					}
+				};
+				
+				// Catch nasty server errors and retry; 50x are timeouts and similar, 200 is a JSON parser error so the server sent something terribly wrong
+				if (x && x.status && ((x.status > 499 && x.status < 600) || 200 === x.status) && isRetry < 20) {
+					if (params.action && 'edit' === params.action) {
+						o.editedPageLast(params.title, params.summary, function(edited) {
+							switch (edited) {
+								case  1: o.mdSecureCall(callback, {}, params);
+									return;
+								case  0: setTimeout(function () {
+										o.doAPICall(params, callback, errCallBack, isRetry);
+									}, isRetry*500);
+									return;
+								case -1: // Error! 
+									doErrCB();
+									return;
+							}
+						});
+					} else {
+						setTimeout(function () {
+							o.doAPICall(params, callback, errCallBack, isRetry);
+						}, isRetry*500);
+					}
+					return;
 				}
+				doErrCB();
 			}
 		});
 	},
@@ -1217,7 +1343,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
 	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
 	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
-	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot',
+	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot, Upload Bot (Rich Smith), Reedy RotateBot',
  
 	// Translatable strings
 	i18n: {
