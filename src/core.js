@@ -275,8 +275,8 @@ var VisualFileChange = window.VisualFileChange = {
 					if (cb) $(document).bind('loadWikiScript.vFCListener', function(e, what) {
 						if ('Benutzer:Schnark/js/diff.js/core.js' === what) {
 							$(document).unbind('loadWikiScript.vFCListener');
-							mw.libs.schnark_diff.css.ins = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #fff; background-color: #5dc;';
-							mw.libs.schnark_diff.css.del = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #000; background-color: #fc4;';
+							mw.libs.schnark_diff.css.ins = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #050; background-color: #B0C0F0;';
+							mw.libs.schnark_diff.css.del = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #500; background-color: #FFD89D; outline:1px dotted gray;';
 							mw.util.addCSS( window.schnark_diff.getCSS() );
 							executeCB();
 						}
