@@ -151,7 +151,7 @@ $.extend(window.VisualFileChange,
 		
 		// loop through all category-members (object)
 		$.each(result.query.categorymembers, function(id, fc) {
-			_this.iUploads[fc.title] = { uploader: [] };
+			_this.iUploads[fc.title] = { uploader: [], comments: [] };
 			_this.iUploads[fc.title].iId = _this.iiUploads;
 			_this.iUploads[fc.title].time = fc.timestamp;
 			_this.iiUploads++;
@@ -578,7 +578,11 @@ $.extend(window.VisualFileChange,
 		
 		var timoutID = 0;
 		var updateSelectedCount = function () {
-			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $('input[name="mdCheckDelete"]:checked').length));
+			var $inputs = $('input[name="mdCheckDelete"]');
+			var $checkedInputs = $inputs.filter(':checked');
+			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
+			$inputs.parents('li.gallerybox').css('background', '#F8F8F8').find('div.thumb').css('border', '#CCC 1px solid').css('background', '#F9F9F9');
+			$checkedInputs.parents('li.gallerybox').css('background', '#BBE').find('div.thumb').css('border', '#FFF 1px solid').css('background', '#DDE');
 		};
 		updateSelectedCount();
 		$('#AjaxMdIa').change( function (event) {
@@ -773,7 +777,7 @@ $.extend(window.VisualFileChange,
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \{\{\[Tt]emplate}\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{\\[Tt]emplate}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: this.i18n.mdCuteSelect.wikitextplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
@@ -910,7 +914,7 @@ $.extend(window.VisualFileChange,
 					cllimit: 500
 				};
 				if (_this.mdModeCat) {
-					query.iiprop += '|user|sha1';
+					query.iiprop += '|user|sha1|comment';
 					query.iilimit = 500;
 				}
 				
@@ -1128,11 +1132,12 @@ $.extend(window.VisualFileChange,
 			if (o.mdModeCat) {
 				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
-					if (ii.sha1) {
-						if (!seenHash[ii.sha1]) {
-							seenHash[ii.sha1] = true;
-							// Admins can hide usernames. Make sure not pushing undefined.
-							if (ii.user) uItem.uploader.push(ii.user);
+					if (ii.sha1 && !seenHash[ii.sha1]) {
+						seenHash[ii.sha1] = true;
+						// Admins can hide usernames. Make sure not pushing undefined.
+						if (ii.user) {
+							uItem.uploader.push(ii.user);
+							uItem.comments.push(ii.comment || '');
 						}
 					}
 				}
@@ -1142,7 +1147,8 @@ $.extend(window.VisualFileChange,
 			ii.metadata = ii.metadata || [];      // not all images have metadata
 			pg.categories = pg.categories || [];  // not all images have categories
 
-			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage
+			uItem.content = pg.revisions[0]['*']; // save the content for OTRS usage, replace and find-the-real-uploader
+			uItem.basetimestamp = pg.revisions[0].timestamp; // timestamp to detect edit conflicts
 			uItem.categories = pg.categories;     // save cats for cute-selection
 			uItem.metadata = ii.metadata;         // save Exif and other for cute-selection
 			uItem.size = (ii.size >> 10);         // for cute-selection
@@ -1497,18 +1503,19 @@ $.extend(window.VisualFileChange,
 		this.pb.setCurrentTaskDone();
 		var o = this;
 
-		var $dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: 'Ready!', text: 'Note: You cannot execute new requests without reloading this page. ' })
-			.append($('<a>', { href: '#', text: 'But you can save your inputs into a profile.' }).click(function(e) {
+		var $dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: 'What would you like to do next?', text: 'Note: You cannot execute new requests without reloading this page. ' })
+			.append($('<br/>'), $('<a>', { href: '#', text: 'But you can save your inputs into a profile.' }).click(function(e) {
 				e.preventDefault();
 				o.mdProfile();
-			}));
+			}))
+			.append($('<br/>'), mw.html.escape('The inputs of the last executed requests are automatically saved.'));
 		var $ulNode = $('<ul>');
 		
 		var addLink = function(href, text, target) {
 			$('<li>').append($('<a>', { 
 				style: 'font-size:2em; line-height:1.8em', 
 				href: mw.util.wikiGetlink(href),
-				target: target || '_blank',
+				target: target,
 				text: text
 			})).appendTo($ulNode);
 		};
