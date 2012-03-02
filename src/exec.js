@@ -142,12 +142,80 @@ $.extend(window.VisualFileChange,
 		this.uploaders = {};
 		var _this = this;
 		
+		// Shamelessly stolen from [[MediaWiki:AjaxQuickDelete]]
+		var fixDoubleEncoding = function (match) {
+			if (!match) return match;
+			var utf8 = /[u00C2-u00F4][u0080-u00BF][u0080-u00BF]?[u0080-u00BF]?/g;
+			if (!utf8.test(match)) return match;
+			// Looks like we have a double encoding. At least it contains character
+			// sequences that might be legal UTF-8 encodings. Translate them into %-
+			// syntax and try to decode again.
+			var temp = "",
+				curr = 0,
+				m, hex_digit = "0123456789ABCDEF";
+			var str = match.replace(/%/g, '%25');
+			utf8.lastIndex = 0;
+			// Reset regexp to beginning of string
+			try {
+				while ((m = utf8.exec(str)) !== null) {
+					temp += str.substring(curr, m.index);
+					m = m[0];
+					for (var i = 0; i < m.length; i++) {
+						temp += '%' + hex_digit.charAt(m.charCodeAt(i) / 16) + hex_digit.charAt(m.charCodeAt(i) % 16);
+					}
+					curr = utf8.lastIndex;
+				}
+				if (curr < str.length) temp += str.substring(curr);
+				temp = decodeURIComponent(temp);
+				return temp;
+			} catch (e) {}
+			return match;
+		};
+		var getUploadBotUser = function(bot, content, comment) {
+			var match;
+			switch (bot) {
+				case 'Upload Bot (Rich Smith)':
+				case 'File Upload Bot (Magnus Manske)':
+					// CommonsHelper
+					match = /transferred to Commons by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(comment);
+					if (!match) match = /transferred to Commons by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(content);
+					// geograph_org2commons, regex accounts for typo ("transferd") and it's possible future correction
+					if (!match) match = /geograph.org.uk\]; transferr?e?d by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(comment);
+					if (!match) match = /geograph.org.uk\]; transferr?e?d by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(content);
+					// flickr2commons
+					if (!match) match = /\* Uploaded by \[\[User:([^\]\|]+)\|(?:(?:[^\]]*))?/.exec(comment);
+					if (!match) match = /\* Uploaded by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\]/.exec(content);
+					if (match) match = match[1];
+					// Really necessary?
+					match = fixDoubleEncoding(match);
+					break;
+				case 'FlickrLickr':
+					match = /\n\|reviewer=\s*(.+)\n/.exec(content);
+					if (match) match = match[1];
+					break;
+				case 'Flickr upload bot':
+					// Check for the bot's upload template
+					match = /\{\{User:Flickr upload bot\/upload(\|[^\|\}]*)?\|reviewer=([^\}]+)\}\}/.exec(content);
+					if (match) match = match[2];
+					break;
+				default: return bot;
+			}
+			if (match) {
+				// Make sure the username is in canonical form ("wikitrim", normalizing)
+				match = match.replace(/^[\s_]+/, '').replace(/[\s_]+$/, '').replace(/[\s_]+/g, ' ');
+				match = match.substr(0, 1).toUpperCase() + match.substr(1);
+				bot = match;
+			}
+			return bot;
+		};
+		
 		// Reverse-mapping: files-uploader --- > uploader-files
 		$.each(this.iUploads, function(upload, uItem) {
 			if ( -2 === uItem.iId )  {
 				if (_this.mdModeCat) {
 					// Remember: u is just an index of an array
 					$.each(uItem.uploader, function(u, ul) {
+						ul = getUploadBotUser(ul, uItem.content, uItem.comments[u]);
 						if (!_this.uploaders[ul]) {
 							_this.uploaders[ul] = { uploads: {} };
 						}
@@ -420,6 +488,8 @@ $.extend(window.VisualFileChange,
 		return {
 			setText: function(text) {
 				_text = text;
+				placeholderTextDirty = false;
+				fragmentsAreDirty = false;
 				textDirty = true;
 			},
 			getText: function() {
@@ -539,6 +609,7 @@ $.extend(window.VisualFileChange,
 
 			page.title = upload;
 			page.watchlist = 'nochange';
+			page.basetimestamp = upli.basetimestamp;
  
 			if ('otrs' === _this.mdTaskToPerform) { // drop out other permission templates
 				var iCt = 0;
@@ -727,10 +798,9 @@ $.extend(window.VisualFileChange,
 		};
 		if (!page.create) edit.nocreate = 1;
 		if (page.redirect) edit.redirect = '';
+		if (page.basetimestamp) edit.basetimestamp = page.basetimestamp;
 		edit[page.editType] = page.text;
-		// Token last!
-		edit.token = this.edittoken;
-		
+		// Token last will be set by doApiCall
 		
 		// emulation possible
 		if (window.VisualFileChangeDebug) {
