@@ -24,6 +24,10 @@ mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
 	+ ' .md-examine-contents { display:inline-block; font-size:1.2em; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
+	+ ' li.gallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
+	+ ' li.md-selected { background-color:#BBE; }\n'
+	+ ' li.md-selected div.thumb { background-color:#DDE; border:#FFF 1px solid; }\n'
+	+ ' li#mdLastSelected { border:#447 2px solid; }\n'
 );
 
 $.extend(window.VisualFileChange,
@@ -581,8 +585,8 @@ $.extend(window.VisualFileChange,
 			var $inputs = $('input[name="mdCheckDelete"]');
 			var $checkedInputs = $inputs.filter(':checked');
 			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
-			$inputs.parents('li.gallerybox').css('background', '#F8F8F8').find('div.thumb').css('border', '#CCC 1px solid').css('background', '#F9F9F9');
-			$checkedInputs.parents('li.gallerybox').css('background', '#BBE').find('div.thumb').css('border', '#FFF 1px solid').css('background', '#DDE');
+			$inputs.closest('li.gallerybox').removeClass('md-selected');
+			$checkedInputs.closest('li.gallerybox').addClass('md-selected');
 		};
 		updateSelectedCount();
 		$('#AjaxMdIa').change( function (event) {
@@ -597,6 +601,31 @@ $.extend(window.VisualFileChange,
 		$('input[name="mdCheckDelete"]').live( 'change', function (e) {
 			clearTimeout(timoutID);
 			timoutID = setTimeout(updateSelectedCount, 200);
+		});
+		$('input[name="mdCheckDelete"]').die( 'mouseup' );
+		$('input[name="mdCheckDelete"]').live( 'mouseup', function (e) {
+			var $ls, $this, newVal, $lsBox;
+			$ls = $('#mdLastSelected');
+			$lsBox = $ls.find('input[name="mdCheckDelete"]');
+			$this = $(this).closest('li.gallerybox');
+			
+			if ($ls.length && e.shiftKey && this !== $lsBox[0]) {
+				newVal = !this.checked;
+				if ($this.nextAll('#mdLastSelected').length) {
+					$this.nextUntil('#mdLastSelected').find('input[name="mdCheckDelete"]').each(function() {
+						this.checked = newVal;
+					});
+				} else {
+					$this.prevUntil('#mdLastSelected').find('input[name="mdCheckDelete"]').each(function() {
+						this.checked = newVal;
+					});
+				}
+				$lsBox[0].checked = newVal;
+				clearTimeout(timoutID);
+				timoutID = setTimeout(updateSelectedCount, 200);
+			}
+			$ls.removeAttr('id');
+			$this.attr('id', 'mdLastSelected');
 		});
 		
 		this.$AjaxDeletedUploads = $('#AjaxDeletedUploads'); // For later usage to speed up gallery-box creating
@@ -777,7 +806,7 @@ $.extend(window.VisualFileChange,
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{\\[Tt]emplate}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{[Tt]emplate\\}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
 					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: this.i18n.mdCuteSelect.wikitextplaceholder }), this.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
 					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
@@ -950,7 +979,7 @@ $.extend(window.VisualFileChange,
 		var id,
 			$ih = $('<div>', { style: 'margin:' + (imgH ? (Math.round((height - imgH) / 2) + 'px auto;') : '15px auto;') } ),
 			$th = $('<div>', { 'class': 'gallerytext', 'tipsy-title': imgTitle }),
-			$galleryBox = $('<li>', { style: 'width:155px; background:#f8f8f8;', 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
+			$galleryBox = $('<li>', { 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
 		if ('string' === typeof style) $th.attr('style', style);
 		
 		$.each(img, function(id, imgi) {
@@ -1116,7 +1145,7 @@ $.extend(window.VisualFileChange,
 				seenHash = {};
 			
 			o.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (o.mdUploadCt) + 
-			' uploads left on this batch of queries. ' + (o.iiUploads) + ' cached uploads current image: ' + dirtyTitle); 
+			' batch-queries pending. Total files: ' + (o.iiUploads) + '. Current image: ' + dirtyTitle); 
 
 			if ('undefined' === typeof pg.imageinfo) { 
 				try { 
