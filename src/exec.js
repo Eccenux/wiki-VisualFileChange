@@ -326,7 +326,7 @@ $.extend(window.VisualFileChange,
 	 *      var nwe2 = VisualFileChange.nowikiEscaper(pageText2);
 	 *   @description
 	 *      You can pass an initial text to the object-function. 
-    *      The return value is an object. Perform all actions on the returned object!
+	 *      The return value is an object. Perform all actions on the returned object!
 	 *
 	 * @methods
 	 * -getText()
@@ -352,7 +352,7 @@ $.extend(window.VisualFileChange,
 	 * -doCleanUp(pattern, replace)
 	 *   @example nwe.doCleanUp()
 	 *   @description -> clean up the stored text
-    *
+	 *
 	 * -alsoPreserve(regexp)
 	 *   @example nwe.alsoPreserve('(<gallery>(?:.|\n)*?<\/gallery>)')
 	 *   @description -> allows preserving other areas than just the predefined ones
