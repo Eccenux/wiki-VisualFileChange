@@ -25,6 +25,8 @@
 'use strict';
 if (window.VisualFileChange) return;
 
+$(document).ready(function () {
+
 window.VisualFileChange = 1;
 
 /**
@@ -567,7 +569,7 @@ var VisualFileChange = window.VisualFileChange = {
 		o.mdDlgThumbDlgClose();
 		
 		// Change the title of the browser tab/window
-		document.title = "VisualFileChange: Welcome, " + mw.user.name() || Geo.IP || "anonymous" + "!";
+		document.title = "VisualFileChange: Welcome, " + (mw.user.name() || Geo.IP || "anonymous") + "!";
 
 		// Hide overlapping page (avoids scrolling)
 		$('body').css('overflow', 'hidden');
@@ -1507,14 +1509,12 @@ mediaWiki.loader.using([
 'mediawiki.user',
 'mediawiki.util'
 ], function () {
-	$(document).ready(function () {
-		this.context = "QD";
-		$(document).unbind('vFC.debuglistener');
-		$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
-			if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
-		});
-		VisualFileChange.mdInstall();
+	this.context = "QD";
+	$(document).unbind('vFC.debuglistener');
+	$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
+		if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
 	});
+	VisualFileChange.mdInstall();
 });
 
 // / <reference path="jquery-1.4.2.min.js"/>
@@ -1559,5 +1559,5 @@ September 2, 2010
     $.extend($.expr[':'], { "in-view": function(a, i, m) { return $(a).visible().length > 0; } });
 })(jQuery); 
  
-}(jQuery, mediaWiki));
+}) }(jQuery, mediaWiki));
 // </nowiki>
