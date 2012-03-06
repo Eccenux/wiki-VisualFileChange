@@ -187,11 +187,6 @@ mw.util.addCSS(' .md-inline-icon { display:inline-block; position:relative; top:
 	+ ' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n'
 );
 
-// Fixing the buggy MediaWiki-monobook-style
-if ('monobook' === mw.config.get('skin')) mw.util.addCSS(' button.ui-button > .ui-icon { display: inline-block; position: relative; top: 2px; left: -2px; }\n'
-	+ 'button.ui-button > .ui-button-text { display: inline-block; }\n'
-);
-
 /**
  * Create a new VisualFileChange-Object-literal.
  *
@@ -277,7 +272,7 @@ var VisualFileChange = window.VisualFileChange = {
 							$(document).unbind('loadWikiScript.vFCListener');
 							mw.libs.schnark_diff.css.ins = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #050; background-color: #B0C0F0;';
 							mw.libs.schnark_diff.css.del = 'text-decoration: none; font-weight: bold; font-size:1.2em; color: #500; background-color: #FFD89D; outline:1px dotted gray;';
-							mw.util.addCSS( window.schnark_diff.getCSS() );
+							mw.util.addCSS( mw.libs.schnark_diff.getCSS() );
 							executeCB();
 						}
 					});
