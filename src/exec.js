@@ -325,7 +325,8 @@ $.extend(window.VisualFileChange,
 	 *      var nwe1 = VisualFileChange.nowikiEscaper(pageText1);
 	 *      var nwe2 = VisualFileChange.nowikiEscaper(pageText2);
 	 *   @description
-	 *      You can pass an initial value to the object-function.
+	 *      You can pass an initial text to the object-function. 
+    *      The return value is an object. Perform all actions on the returned object!
 	 *
 	 * @methods
 	 * -getText()
@@ -341,16 +342,20 @@ $.extend(window.VisualFileChange,
 	 *   @description -> replace the pattern with replace; securely preserve nowikis
 	 *
 	 * -ordinaryReplace(pattern, replace)
-	 *   @example nwe.ordinaryReplace(pattern, replace)
+	 *   @example nwe.ordinaryReplace('<!-- Comment to remove -->', '')
 	 *   @description -> do an ordinary javaScript replace
 	 *
 	 * -replace(pattern, replace)
-	 *   @example nwe.replace(pattern, replace)
+	 *   @example nwe.replace(/(.)abc(.)/, '$2abc$1')
 	 *   @description -> replace the pattern with replace; allow extended use of substring () and $1..$9
 	 *
 	 * -doCleanUp(pattern, replace)
-	 *   @example nwe.replace(pattern, replace)
-	 *   @description -> replace the pattern with replace; allow extended use of substring () and $1..$9
+	 *   @example nwe.doCleanUp()
+	 *   @description -> clean up the stored text
+    *
+	 * -alsoPreserve(regexp)
+	 *   @example nwe.alsoPreserve('(<gallery>(?:.|\n)*?<\/gallery>)')
+	 *   @description -> allows preserving other areas than just the predefined ones
 	 *
 	**/
 	nowikiEscaper: function(inputText) {
