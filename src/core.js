@@ -198,7 +198,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.3.0',
+	mdScriptRevision: '0.9.3.1',
 	
 
 	/**
@@ -1509,7 +1509,7 @@ mediaWiki.loader.using([
 'mediawiki.user',
 'mediawiki.util'
 ], function () {
-	this.context = "QD";
+	VisualFileChange.context = "QD";
 	$(document).unbind('vFC.debuglistener');
 	$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
