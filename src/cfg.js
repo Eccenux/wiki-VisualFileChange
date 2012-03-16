@@ -623,7 +623,7 @@ $.extend(window.VisualFileChange,
 							if ('initial uploads dialog' === what) {
 								$doc.unbind('vFC_Startup_target');
 								$doc.unbind('vFC.autoContinue');
-								o.mdApplyProfile('auto-exec');
+								o.mdApplyProfile('auto-exec', 'client');
 							}
 						});
 					}) );
