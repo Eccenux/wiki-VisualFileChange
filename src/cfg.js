@@ -12,7 +12,11 @@ if (!window.VisualFileChange) return;
 if (window.VisualFileChange.configManager) return;
 
 mw.util.addCSS( ' .vFCConfigRequired { visibility:visible !important; }\n' );
+
 var profileVar = 'vFC_Profiles';
+var scriptpath = mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/';
+var commonjsPath = scriptpath + 'common.js';
+var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
 
 $.extend(window.VisualFileChange,
 {
@@ -88,7 +92,20 @@ $.extend(window.VisualFileChange,
 		if (!mw.user.anonymous()) {
 			dlgButtons[o.i18n.mdConfig.permaSaveButton] = function() {
 				o.mdPublishSettings(this, cfg);
-				o.mdSaveSettings(cfg, $dlgNode);
+				$dlgNode.html('');
+				$dlgNode.dialog('option', 'buttons', {});
+				
+				$(document).bind('vFC_S', function(e, p0, p1, p2, p3, p4) {
+					$dlgNode.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
+					if (p4) {
+						$dlgNode.append($('<div>', { text: ' ' + p1, 'class': p4 }));
+					} else {
+						$dlgNode.append($('<div>', { text: ' ' + p1 }).prepend(o.mdCreatejIcon('ui-icon-info')));
+					}
+					$(document).triggerHandler('vFC', ['Settings', p2, p1]);
+				});
+				
+				o.mdSaveSettings(cfg, 'vFCvFCCfg', o.mdSettings, 'vFCSettings', 'is updating configuration');
 			};
 		}
 		dlgButtons[o.i18n.mdConfig.defaultsButton] = function() {
@@ -109,8 +126,8 @@ $.extend(window.VisualFileChange,
 				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
 				$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } });
 				$buttons.eq(1).button({ icons: { primary: 'ui-icon-circle-close' } });
-				$buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } });
-				$buttons.eq(3).button({ icons: { primary: 'ui-icon-refresh' } });
+				if (!mw.user.anonymous()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } });
+				$buttons.eq(mw.user.anonymous() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
 			}
 		});
 	},
@@ -137,39 +154,86 @@ $.extend(window.VisualFileChange,
 		});
 	},
 	
-	mdSaveSettings: function (cfg, $dlgNode) {
+	mdLoadRawPage: function(page, cbOk, cbErr) {
 		var o = this;
-		var scriptpath = mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/';
-		var commonjsPath = scriptpath + 'common.js';
-		var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
+		$.ajax({
+			url: mw.config.get('wgScript'),
+			data: { 'action': 'raw', title: page, maxage: 0, smaxage: 0 },
+			dataType: 'text',
+			error: function(x, status, error) {
+				if ('Not Found' === error) {
+					cbOk('', page);
+					return;
+				}
+				if (x && 404 === x.status) {
+					cbOk('', page);
+					return;
+				}
+				cbErr(o.i18n.mdConfig.getScriptErr);
+				$(document).triggerHandler('vFC_S', [400, o.i18n.mdConfig.getScriptErr, this, error, 'md-failed']);
+			},
+			success: function(res) {
+				cbOk(res, page);
+			},
+			type: 'GET',
+			cache: false
+		});
+	},
+	
+	/**
+	**  Save the configuration on the position where it comes from
+	**  
+	**/
+	mdReplaceConfig: function (commonText, skinText, preferred, pattern, replace) {
+		var o = this,
+			t1Contains = pattern.test(commonText),
+			t2Contains = pattern.test(skinText);
+		
+		var addLog = function(jsFile) {
+			$(document).triggerHandler('vFC_S', [570, 'Adding new configuration to ' + jsFile, o]);
+		};
+		if (t1Contains && t2Contains) {
+			if (1 === preferred) {
+				addLog(commonjsPath);
+				return [commonText.replace(pattern, replace), skinText.replace(pattern, '')];
+			} else {
+				addLog(skinjsPath);
+				return [commonText.replace(pattern, ''), skinText.replace(pattern, replace)];
+			}
+		}
+		if (t1Contains) {
+			addLog(commonjsPath);
+			return [commonText.replace(pattern, replace), skinText];
+		}
+		if (t2Contains) {
+			addLog(skinjsPath);
+			return [commonText, skinText.replace(pattern, replace)];
+		}
+		if (1 === preferred) {
+			addLog(commonjsPath);
+			return [commonText + replace, skinText];
+		} else {
+			addLog(skinjsPath);
+			return [commonText, skinText + replace];
+		}
+	},
+	
+	mdSaveSettings: function ( cfg, vFCBannerSig, varToSave, globalVarName, whatIAmDoing ) {
+		var o = this;
 		
 		var skinjs, commonjs, skinjsN, commonjsN;
 		
-		$dlgNode.children().remove();
-		$dlgNode.dialog('option', 'buttons', {});
-		
-		$(document).bind('vFC_S', function(e, p1, p2, p3, p4) {
-			$dlgNode.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
-			if (p4) {
-				$dlgNode.append($('<div>', { text: ' ' + p1, 'class': p4 }));
-			} else {
-				$dlgNode.append($('<div>', { text: ' ' + p1 }).prepend(o.mdCreatejIcon('ui-icon-info')));
-			}
-			$(document).triggerHandler('vFC', ['Settings', p2, p1]);
-		});
-		$(document).triggerHandler('vFC_S', ['Initializing', this]);
+		$(document).triggerHandler('vFC_S', [100, 'Initializing', this]);
 		
 		var removeOldConfig = function(text, jsPath) {
-			if (!text) return text;
-			// Remove the configuration block
-			text = text.replace(/\n?\n?\/\/vFCvFCCfg(?:.|\n)+vFCvFCCfgEnd\/\//g, '');
+			if (!text || !cfg) return text;
 			// Remove old variables: We assume that the user did not use multiple lines... sorry
 			$.each(cfg, function(i, el) {
 				if (el.old) {
 					var rx = new RegExp('[\\t ]*(?:var\\s+|window.)' + $.escapeRE(el.old) + '\\s*\\=.+', 'g'),
 						rxN = new RegExp('[\\t ]*(?:var\\s+|window.)' + $.escapeRE(el.old) + '\\s*\\=.+(?:\\n\\s*)?\\+');
 					if (rxN.test(text)) {
-						$(document).triggerHandler('vFC_S', ['WARNING: Could not remove ' + el.old + ' from ' + jsPath, o, el, 'md-attention']);
+						$(document).triggerHandler('vFC_S', [550, 'WARNING: Could not remove ' + el.old + ' from ' + jsPath, o, el, 'md-attention']);
 						return;
 					}
 					text = text.replace(rx, '');
@@ -178,15 +242,16 @@ $.extend(window.VisualFileChange,
 			return text;
 		};
 		
-		var vFCBanner = '//vFCvFCCfg/////////////////////////////////////\n' +
+		var vFCBanner = '\n\n//' + vFCBannerSig + '/////////////////////////////////////\n' +
 						'/////// VISUAL FILE CHANGE CONFIGURATION ///////\n' +
 						'///// DO NOT MODIFY BY HAND - FINGERS AWAY! ////\n' +
 						'////////////////////////////////////////////////\n';
-		var vFCBannerEnd = '//////////////////////////////////vFCvFCCfgEnd//';
+		var vFCBannerEnd = '//////////////////////////////////' + vFCBannerSig + 'End//';
+		var vFCBannerRx = new RegExp('\\n?\\n?\\/\\/'+ vFCBannerSig +'(?:.|\\n)+'+ vFCBannerSig +'End\\/\\/', 'g');
 						
 		
 		var buildNewCfg = function() {
-			return '\n\n' + vFCBanner + 'window.vFCSettings = ' + $.toJSON(o.mdSettings) + '; \n' + vFCBannerEnd;
+			return vFCBanner + 'window.'+ globalVarName +' = ' + $.toJSON(varToSave) + '; \n' + vFCBannerEnd;
 		};
 		
 		var gotJS = function(res, jsFile) {
@@ -195,84 +260,65 @@ $.extend(window.VisualFileChange,
 			} else {
 				skinjsN = skinjs = res;
 			}
-			$(document).triggerHandler('vFC_S', ['Server returned ' + jsFile + '. ' + ($.trim(res) ? ('Size: ' + res.length) + ' chars.' : 'It is empty.'), o]);
+			$(document).triggerHandler('vFC_S', [400, 'Server returned ' + jsFile + '. ' + ($.trim(res) ? ('Size: ' + res.length) + ' chars.' : 'It is empty.'), o]);
 			if ('string' !== typeof skinjs || 'string' !== typeof commonjs) return;
 			
 			// So we got all the code we need.
-			$(document).triggerHandler('vFC_S', ['Removing old configuration from your custom JavaScript configuration files', o]);
+			$(document).triggerHandler('vFC_S', [500, 'Removing old configuration from your custom JavaScript configuration files', o]);
 			skinjs = removeOldConfig(skinjs, skinjsPath);
 			commonjs = removeOldConfig(commonjs, commonjsPath);
 			
-			if (skinjs === skinjsN) {
-				$(document).triggerHandler('vFC_S', ['Adding new configuration to ' + commonjsPath, o]);
-				commonjs += buildNewCfg();
-			} else {
-				$(document).triggerHandler('vFC_S', ['Adding new configuration to ' + skinjsPath, o]);
-				skinjs += buildNewCfg();
-			}
+			var prefJS;
+			prefJS = skinjs.length ? 2 : 1;
+			prefJS = (skinjs !== skinjsN) ? 2 : prefJS;
+			prefJS = (commonjs !== commonjsN) ? 1 : prefJS;
+			if (skinjs === skinjsN && commonjs === commonjsN) prefJS = (/(?:vFCvFCCfg|Visual ?File ?Change)/i.test(commonjs)) ? 1 : 2;
+			var bothJS = o.mdReplaceConfig( commonjs, skinjs, prefJS, vFCBannerRx, buildNewCfg() );
+			commonjs = bothJS[0];
+			skinjs = bothJS[1];
+			
 			var page = {
 				title: '',
 				text: '',
 				watchlist: 'nochange',
 				editType: 'text'
 			};
+			var editSummary = '[[' + o.mdSelfPath + '|VisualFileChange.js]] ' + whatIAmDoing;
+			
 			o.settingSaves = 0;
 			if (skinjs !== skinjsN) {
 				page.title = skinjsPath;
 				page.text = skinjs;
-				$(document).triggerHandler('vFC_S', ['Saving ' + skinjsPath, o]);
-				o.mdSavePage(page, '[[' + o.mdSelfPath + '|VisualFileChange.js]] is updating configuration', 'mdSaveSettingsCB', 'mdSaveSettingsCB');
+				$(document).triggerHandler('vFC_S', [600, 'Saving ' + skinjsPath, o]);
+				o.mdSavePage(page, editSummary, 'mdSaveSettingsCB', 'mdSaveSettingsCB');
 				o.settingSaves++;
 			}
 			if (commonjs !== commonjsN) {
 				page.title = commonjsPath;
 				page.text = commonjs;
-				$(document).triggerHandler('vFC_S', ['Saving ' + commonjsPath, o]);
+				$(document).triggerHandler('vFC_S', [600, 'Saving ' + commonjsPath, o]);
 				o.settingSaves++;
-				o.mdSavePage(page, '[[' + o.mdSelfPath + '|VisualFileChange.js]] is updating configuration', 'mdSaveSettingsCB', 'mdSaveSettingsCB');
+				o.mdSavePage(page, editSummary, 'mdSaveSettingsCB', 'mdSaveSettingsCB');
 			}
-			if (0 === o.settingSaves) $(document).triggerHandler('vFC_S', ['Nothing to change. You can close this dialog now.', o, '', 'md-done']);
+			if (0 === o.settingSaves) $(document).triggerHandler('vFC_S', [1000, 'Nothing to change. You can close this dialog now.', o, '', 'md-done']);
 		};
 		
-		var getJS = function(jsfile) {
-			$.ajax({
-				url: mw.config.get('wgScript'),
-				data: { 'action': 'raw', title: jsfile, maxage: 0, smaxage: 0 },
-				dataType: 'text',
-				error: function(x, status, error) {
-					if ('Not Found' === error) {
-						gotJS('', jsfile);
-						return;
-					}
-					if (x && 404 === x.status) {
-						gotJS('', jsfile);
-						return;
-					}
-					o.fail(o.i18n.mdConfig.getScriptErr);
-					$(document).triggerHandler('vFC_S', [o.i18n.mdConfig.getScriptErr, this, error, 'md-failed']);
-				},
-				success: function(res) {
-					gotJS(res, jsfile);
-				},
-				type: 'GET',
-				cache: false
-			});
-		};
-		getJS(commonjsPath);
-		getJS(skinjsPath);
-		$(document).triggerHandler('vFC_S', ['Loading your custom JavaScript configuration files', this]);
+		o.mdLoadRawPage(commonjsPath, gotJS, o.fail);
+		o.mdLoadRawPage(skinjsPath, gotJS, o.fail);
+		$(document).triggerHandler('vFC_S', [200, 'Loading your custom JavaScript configuration files', this]);
 	},
 	
 	mdSaveSettingsCB: function (result, query, err) {
 		this.settingSaves--;
 		var pgTitle = (result.requestid || query.title);
 		if (err) {
-			$(document).triggerHandler('vFC_S', ['Updated ' + pgTitle + ' failded. ERROR: ' + err, this, err, 'md-failed']);
+			$(document).triggerHandler('vFC_S', [999 -this.settingSaves*250, 'Updated ' + pgTitle + ' failded. ERROR: ' + err, this, err, 'md-failed']);
 		} else {
-			$(document).triggerHandler('vFC_S', [pgTitle + ' successfully updated', this, result, 'md-done']);
+			$(document).triggerHandler('vFC_S', [999 -this.settingSaves*250, pgTitle + ' successfully updated', this, result, 'md-done']);
 		}
 		if (0 === this.settingSaves) {
-			$(document).triggerHandler('vFC_S', ['Ready. You can close this dialog now.', this]);
+			$(document).triggerHandler('vFC_S', [1000, 'Ready. You can close this dialog now.', this]);
+			$(document).unbind('vFC_S');
 		}
 	},
 	
@@ -297,47 +343,74 @@ $.extend(window.VisualFileChange,
 	 *
 	 *
 	 */
-	mdGetProfiles: function () {
+	mdGetClientProfiles: function () {
 		return $.jStorage.get(profileVar, {});
 	},
-	mdSaveProfileToClient: function (saveName, objProfile) {
+	getNewConfigItem: function (objProfile) {
+		if ('object' === typeof objProfile) return objProfile;
+	
 		var o = this,
-			oldClientConfig = o.mdGetProfiles(),
 			newConfigItem = { editInputs: {}, action: o.$AjaxMdType.val(), objectMembers:{}, continueAt: o.lastContinues, time: o.startDate || new Date() },
 			membersToSave = ['mdTarget', 'mdLedir', 'mdCmdir', 'mdCmsort'];
-		
+
 		$.each(membersToSave, function(i, memberName) {
 			var memberVal = o[memberName];
 			if ('undefined' !== typeof memberVal) newConfigItem.objectMembers[memberName] = memberVal;
 		});
 
-		if ('object' !== typeof objProfile) {
-			o.$mdControls.find('input, textarea, select').each(function(i, el) {
-				var $el = $(el),
-					$elId = $el.attr('id'),
-					$elType = $el.attr('type');
+		o.$mdControls.find('input, textarea, select').each(function(i, el) {
+			var $el = $(el),
+				$elId = $el.attr('id'),
+				$elType = $el.attr('type');
 
-				if (!$elId) return;
-				newConfigItem.editInputs[$elId] = ('checkbox' === $elType) ? $el[0].checked : $el.val();
-			});
-		} else {
-			newConfigItem = objProfile;
-		}
-		oldClientConfig[saveName] = newConfigItem;
+			if (!$elId) return;
+			newConfigItem.editInputs[$elId] = ('checkbox' === $elType) ? $el[0].checked : $el.val();
+		});
+		return newConfigItem;
+	},
+	mdUpdateJSProfile: function () {
+		this.mdSaveSettings(0, 'vFCProfil', window[profileVar], profileVar, 'is updating a profile');
+	},
+	mdSaveProfileToJS: function (saveName, objProfile, progressCB) {
+		var o = this;
+		
+		if (!window[profileVar]) window[profileVar] = {};
+		window[profileVar][saveName] = o.getNewConfigItem(objProfile);
+		
+		$(document).bind('vFC_S', function(e, p0, p1, p2, p3, p4) {
+			$(document).triggerHandler('vFC', ['Settings', p2, p1]);
+			progressCB(p0);
+		});
+		o.mdUpdateJSProfile();
+	},
+	mdSaveProfileToClient: function (saveName, objProfile) {
+		var o = this,
+			oldClientConfig = o.mdGetClientProfiles();
+
+		oldClientConfig[saveName] = o.getNewConfigItem(objProfile);
 		$.jStorage.set(profileVar, oldClientConfig);
 	},
-	mdApplyProfile: function (applyName) {
+	mdApplyProfile: function (applyName, source) {
 		var o = this,
-			profile = o.mdGetProfiles();
+			profiles;
 
 		if (!applyName) {
 			return false;
 		}
-		profile = profile[applyName];
-		if (!profile || !profile.editInputs) return false;
+
+		switch (source) {
+			case 'client':
+				profiles = o.mdGetClientProfiles();
+				break;
+			case 'js':
+				profiles = window[profileVar];
+				break;
+		}
+		profiles = profiles[applyName];
+		if (!profiles || !profiles.editInputs) return false;
 		
-		o.$AjaxMdType.val(profile.action).change();
-		$.each(profile.editInputs, function(id, val) {
+		o.$AjaxMdType.val(profiles.action).change();
+		$.each(profiles.editInputs, function(id, val) {
 			var $ctr = o.$mdControls.find('#' + id);
 			if (!$ctr.length) return;
 			if ('boolean' === typeof val) {
@@ -349,9 +422,26 @@ $.extend(window.VisualFileChange,
 		});
 		return true;
 	},
+	mdRemoveProfileFromJS: function (rmName, progressCB) { 
+		var o = this,
+			newConfig = {};
+
+		$.each(window[profileVar], function(profileName, profileContent) {
+			if (profileName !== rmName) {
+				newConfig[profileName] = profileContent;
+			}
+		});
+		window[profileVar] = newConfig;
+		
+		$(document).bind('vFC_S', function(e, p0, p1, p2, p3, p4) {
+			$(document).triggerHandler('vFC', ['Settings', p2, p1]);
+			progressCB(p0, p4);
+		});
+		o.mdUpdateJSProfile();
+	},
 	mdRemoveProfileFromClient: function (rmName) {
 		var o = this,
-			oldClientConfig = o.mdGetProfiles(),
+			oldClientConfig = o.mdGetClientProfiles(),
 			newConfig = {};
 
 		$.each(oldClientConfig, function(profileName, profileContent) {
@@ -365,10 +455,11 @@ $.extend(window.VisualFileChange,
 	mdProfile: function () {
 		var o = this,
 			oldClientConfig,
-			$dlgNode, $profileSelect, $descSave, $addNameL, $addName, $addButtonClient, $addButtonJS, $descLoad, $loadButton, $descRemove, $removeButton, $cmdSection;
+			$dlgNode, $profileSelect, $descSave, $addNameL, $addName, $addButtonClient, $addButtonJS, $descLoad, $loadButton, $descRemove, $removeButton, $cmdSection, $jsProgess;
 
+		if (!window[profileVar]) window[profileVar] = {};
 		var loadProfile = function() {
-			if (!o.mdApplyProfile($profileSelect.data('selectedProfileName'))) {
+			if (!o.mdApplyProfile($profileSelect.data('selectedProfileName'), $profileSelect.data('selectedProfile').data('profileSource'))) {
 				$profileSelect.addClass('ui-state-error');
 				setTimeout(function() {
 					$profileSelect.removeClass('ui-state-error');
@@ -376,10 +467,13 @@ $.extend(window.VisualFileChange,
 			}
 		};
 		var updateSelect = function() {
-			var store = o.mdGetProfiles();
+			var profiles = o.mdGetClientProfiles();
 			$profileSelect.text('');
-			$.each(store, function(profileName, profileContent) {
+			$.each(profiles, function(profileName, profileContent) {
 				$profileSelect.append($('<option>', { text: profileName + ' (browser)' }).data('profileSource', 'client'));
+			});
+			$.each(window[profileVar], function(profileName, profileContent) {
+				$profileSelect.append($('<option>', { text: profileName + ' (Commons)' }).data('profileSource', 'js'));
 			});
 		};
 		var testSaveInfo = function() {
@@ -393,10 +487,22 @@ $.extend(window.VisualFileChange,
 			if (!o.$mdControls) return false;
 			return true;
 		};
+		var prepareJSAction = function() {
+			$addButtonJS.button('option', 'disabled', true);
+			$removeButton.button('option', 'disabled', true);
+			$jsProgess.removeClass('ui-state-error');
+			$jsProgess.show();
+		};
 		var saveToClient = function() {
 			if (!testSaveInfo()) return;
 			o.mdSaveProfileToClient($addName.val());
 			updateSelect();
+			$addName.val('');
+		};
+		var saveToJS = function() {
+			if (!testSaveInfo()) return;
+			prepareJSAction();
+			o.mdSaveProfileToJS($addName.val(), 0, showProgress);
 			$addName.val('');
 		};
 		var removeFromClient = function(what) {
@@ -404,8 +510,25 @@ $.extend(window.VisualFileChange,
 			updateSelect();
 			$profileSelect.change();
 		};
-		var saveToJS = function() {
-			if (!testSaveInfo()) return;
+		var removeFromJS = function(what) {
+			prepareJSAction();
+			o.mdRemoveProfileFromJS(what, showProgress);
+		};
+		var showProgress = function(p, p4) {
+			if ('md-failed' === p4) {
+				$jsProgess.addClass('ui-state-error');
+				alert('Error. Profile not saved.');
+			}
+			if (1000 === p) {
+				updateSelect();
+				$addButtonJS.button('option', 'disabled', false);
+				$removeButton.button('option', 'disabled', false);
+				$profileSelect.change();
+				$jsProgess.fadeOut(2000);
+			}
+			mw.loader.using('jquery.ui.progressbar', function() {
+				$jsProgess.progressbar({ value: p/10 });
+			});
 		};
 		
 		$dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.' });
@@ -425,9 +548,11 @@ $.extend(window.VisualFileChange,
 		$addButtonClient = $('<button>', { text: 'Browser (may not permanent)'})
 			.button({ icons: { primary: 'ui-icon-disk' } })
 			.click(saveToClient);
-		$addButtonJS = $('<button>', { text: 'Commons-account (publicly visible)', disabled: 'disabled' })
+		$addButtonJS = $('<button>', { text: 'Commons-account (publicly visible)' })
 			.button({ icons: { primary: 'ui-icon-script' } })
 			.click(saveToJS);
+		if (mw.user.anonymous()) $addButtonJS.button('option', 'disabled', true);
+		$jsProgess = $('<div>', { style: 'display:inline-block; width:200px; height:25px;' });
 		
 		$descLoad = $('<div>', { text: 'Load a profile. Caution: Your current inputs will be lost.' });
 		$loadButton = $('<button>', { text: 'Load', disabled: 'disabled', style: 'display:block;' })
@@ -438,16 +563,22 @@ $.extend(window.VisualFileChange,
 		$removeButton = $('<button>', { text: 'Remove', disabled: 'disabled', style: 'display:block;' })
 			.button({ icons: { primary: 'ui-icon-trash' } })
 			.click(function() {
-				if ('client' === $profileSelect.data('selectedProfile').data('profileSource')) {
-					removeFromClient($profileSelect.data('selectedProfileName'));
+				switch ($profileSelect.data('selectedProfile').data('profileSource')) {
+					case 'client':
+						removeFromClient($profileSelect.data('selectedProfileName'));
+						break;
+					case 'js':
+						removeFromJS($profileSelect.data('selectedProfileName'));
+						break;
 				}
-		});
+			});
 		
-		$cmdSection = $('<div>', { style: 'display:inline-block; margin:4px; max-width:360px' }).append($descLoad, $loadButton, $descRemove, $removeButton, $('<hr/>'), $addNameL, $addName, $descSave, $addButtonClient, ' ', $addButtonJS);
+		$cmdSection = $('<div>', { style: 'display:inline-block; margin:4px; max-width:360px' }).append($descLoad, $loadButton, $descRemove, $removeButton, $('<hr/>'), $addNameL, $addName, $descSave, $addButtonClient, ' ', $addButtonJS, $jsProgess);
 		
 		$dlgNode.append($('<br>'), $profileSelect, $cmdSection);
 		
 		updateSelect();
+		mw.loader.load('jquery.ui.progressbar');
 		
 		$dlgNode.dialog({
 			title: 'Profile manager',
@@ -462,7 +593,7 @@ $.extend(window.VisualFileChange,
 	
 	mdSuggestContinue: function () {
 		var o = this,
-			autoExecProfile = o.mdGetProfiles()['auto-exec'],
+			autoExecProfile = o.mdGetClientProfiles()['auto-exec'],
 			lookFor,
 			$doc = $(document);
 
@@ -527,7 +658,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
 
 }(jQuery, mediaWiki));
 
-
+// TODO: jquery.json https://bugzilla.wikimedia.org/show_bug.cgi?id=34896
 /**
  * jQuery JSON Plugin
  * version: 2.3 (2011-09-17)
@@ -725,6 +856,7 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.slider', 'jquery.ui.button', 'jq
 })( jQuery );
 
 
+// TODO: jquery.jStorage https://bugzilla.wikimedia.org/show_bug.cgi?id=35073
 
 /* Modified: removed xml-support
  * ----------------------------- JSTORAGE -------------------------------------
