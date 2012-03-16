@@ -198,7 +198,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.2.0',
+	mdScriptRevision: '0.9.3.0',
 	
 
 	/**
@@ -519,7 +519,7 @@ var VisualFileChange = window.VisualFileChange = {
 			if (m1) return (m1[1] + '-' + m1[2] + '-' + m1[3] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
 			m1 = dateX.match(/(\d{2}).(\d{2}).(\d{4})\D*(\d{2}:\d{2}:\d{2})?/);
 			if (m1) return (m1[3] + '-' + m1[2] + '-' + m1[1] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
-			else return 'Invalid. Use YYYY-MM-DD';
+			else return '';
 		};
 		
 		dlgButtons[o.i18n.proceedButtonLabel] = function () {
