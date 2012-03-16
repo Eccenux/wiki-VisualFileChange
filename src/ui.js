@@ -259,8 +259,8 @@ $.extend(window.VisualFileChange,
 				});
 				$examineFirstDiv.text(curUpld.content);
 				$examineSecondDiv.text(replaceContainer.doCleanUp());
-				if (window.schnark_diff && window.schnark_diff.html_diff) {
-					$examineDiffDiv.html('<div style="float:right; font-family:sans-serif;">Powered by SchnarkDiff</div>' + window.schnark_diff.html_diff(curUpld.content, replaceContainer.getText(), true));
+				if (mw.libs.schnark_diff && mw.libs.schnark_diff.html_diff) {
+					$examineDiffDiv.html('<div style="float:right; font-family:sans-serif;">Powered by SchnarkDiff</div>' + mw.libs.schnark_diff.html_diff(curUpld.content, replaceContainer.getText(), true));
 				}
 			});
 		}).button({ icons: { primary: 'ui-icon-search' } });
@@ -827,7 +827,7 @@ $.extend(window.VisualFileChange,
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
-								'dateFormat': 'yy-mm-dd 12:00:00',
+								'dateFormat': 'yy-mm-dd 00:00:00',
 								showWeek: true,
 								firstDay: 1
 							} )
@@ -846,7 +846,7 @@ $.extend(window.VisualFileChange,
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
-								'dateFormat': 'yy-mm-dd 12:00:00',
+								'dateFormat': 'yy-mm-dd 23:59:59',
 								showWeek: true,
 								firstDay: 1
 							} )
