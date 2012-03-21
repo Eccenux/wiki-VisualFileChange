@@ -198,7 +198,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.3.1',
+	mdScriptRevision: '0.9.4.0',
 	
 
 	/**
@@ -1284,6 +1284,7 @@ var VisualFileChange = window.VisualFileChange = {
 		[/Incomplete deletion requests.*/,					'd(incomplete)'],
 		[/Media missing permission.*/,						'!p'],
 		[/Media without a license.*/,						'!l'],
+		[/Media uploaded without a license.*/,				'uwl'],
 		[/Media without a source.*/,						'!s'],
 		[/Other speedy deletions.*/,						'speedyd'],
 		[/Copyright violations.*/,							'copyvio'],
@@ -1299,10 +1300,10 @@ var VisualFileChange = window.VisualFileChange = {
 		// RegExp for the tag			note to add to the thumb-page
 		[/Category:CC[\- _]BY-SA.*/i,	'CC-By-SA'],
 		[/Category:CC[\- _]BY.*/i,		'CC-By'],
-		[/Category:CC[\- _]Zero.*/i,		'CC0'],
+		[/Category:CC[\- _]Zero.*/i,	'CC0'],
 		[/Category:GFDL.*/i,			'GFDL'],
 		[/Category:PD[\- _]Old.*/i,		'PD-old'],
-		[/Category:PD[\- _]self.*/i,		'PD-self'],
+		[/Category:PD[\- _]self.*/i,	'PD-self'],
 		[/Category:PD[\- _]author.*/i, 	'PD-author'],
 		[/Category:PD.*/i, 				'PDx'],
 		[/Category:FAL/i, 				'LibreA'],
@@ -1311,6 +1312,7 @@ var VisualFileChange = window.VisualFileChange = {
 		[/Category:Mozilla Public License/i, 					'MPL'],
 		[/Category:GPL/i, 										'GPL'],
 		[/Category:Free screenshot.*/i, 						'free-Screenshot'],
+		[/Category:Copyright by Wikimedia.*/i, 					'(c)WMF'],
 		[/Category:Self[\- _]published[ß\- _]work/i, 				'<b>self</b>'],  // rm the next tags from being shown
 		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
