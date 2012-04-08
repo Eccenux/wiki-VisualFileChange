@@ -134,7 +134,7 @@ function ProgressBox(width, o) {
 	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
 		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
 		+ '.md-failed { padding-left:16px; background:url(\'' + o.mdFailedTaskIcon + '\') no-repeat left; } '
-		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
+		+ '.md-attention, .md-notdone { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
 	);
 }
 ProgressBox.prototype.show = function () {
