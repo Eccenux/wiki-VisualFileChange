@@ -20,7 +20,7 @@ mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
-	+ ' .md-re-escape-helper { position:absolute; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
+	+ ' .md-re-escape-helper { position:absolute; z-index:1002; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
 	+ ' .md-examine-contents { display:inline-block; font-size:1.2em; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
@@ -221,6 +221,11 @@ $.extend(window.VisualFileChange,
 		return match;
 	},
 	
+	mdVarReplacements: function(replacetext, uploadTitle, uploadObject) {
+		replacetext = replacetext.replace('%FILENAME%', uploadTitle);
+		return replacetext;
+	},
+	
 	mdCreateExamineNode: function() {
 		var o = this;
 		var $examineToggler, $examineInput, $examineButton, $loadDivButton, $examineFirstDiv, $examineSecondDiv, $examineDiffDiv, $examineOuterDiv;
@@ -239,21 +244,26 @@ $.extend(window.VisualFileChange,
 				replaceContainer.alsoPreserve(o.$alsoPreserve.val());
 
 				$.each(o.mdReplacementMatrix, function(i, rObj) {
-					var match;
+					var match, replace;
 					match = rObj.match.val();
+					replace = rObj.replace.val();
+					
 					if (rObj.regex[0].checked && match) {
 						match = o.mdRegExpFromString(match);
 					}
 					if (!match) return;
+					
+					if (rObj.vars[0].checked) replace = o.mdVarReplacements(replace, upload, curUpld);
+					
 					switch (replaceSecurityLevel) {
 						case 'secure':
-							replaceContainer.secureReplace(match, rObj.replace.val());
+							replaceContainer.secureReplace(match, replace);
 							break;
 						case 'placeholder':
-							replaceContainer.replace(match, rObj.replace.val());
+							replaceContainer.replace(match, replace);
 							break;
 						case 'none':
-							replaceContainer.ordinaryReplace(match, rObj.replace.val());
+							replaceContainer.ordinaryReplace(match, replace);
 							break;
 					}
 				});
@@ -264,7 +274,7 @@ $.extend(window.VisualFileChange,
 				}
 			});
 		}).button({ icons: { primary: 'ui-icon-search' } });
-		$loadDivButton = $('<button>', { text: 'Load highlight diff-Module from [[:de:Benutzer:Schnark/js/diff.js/core.js]]' }).click(function() {
+		$loadDivButton = $('<button>', { text: 'Diff- Loading from [[:de:Benutzer:Schnark/js/diff.js/core.js]]' }).click(function() {
 			$(this).button('option', 'disabled', true);
 			o.loadModule('diff', function() {
 				$examineButton.click();
@@ -305,7 +315,7 @@ $.extend(window.VisualFileChange,
 		var $table = $('<table>', { style: 'border:1px solid #BBB', width: '100%', cellspacing: 0, cellpadding: 0 });
 		var $thead = $('<thead>').append(
 			$('<th>', { text: 'Nr ' }),
-			$('<th>').append($('<abbr>', { title: 'Check if Regular Expression. Use full JavaScript RegExp-Syntax like /find.+/g', text: 'RegExp?' })),
+			$('<th>').append($('<abbr>', { title: 'Flags (=options) control how to treat your input.', text: 'Flags' })),
 			$('<th>', { text: 'Pattern to match' }),
 			$('<th>', { text: 'Text to insert instead' })
 		).appendTo($table);
@@ -343,22 +353,25 @@ $.extend(window.VisualFileChange,
 		};
 		var $newRow = function() {
 			rowCount++;
-			var $mA = $newMatchArea(),
-				$rA = $newReplaceArea(),
-				$rE = $newRegexCheckBox();
+			var $mA  = $newMatchArea(),
+				$rA  = $newReplaceArea(),
+				$rE  = $newRegexCheckBox(),
+				$rEL = $newRegexLabel(),
+				$v   = $newVarCheckBox(),
+				$vL  = $newVarLabel();
 			
-			o.mdReplacementMatrix.push({ match: $mA, replace: $rA, regex: $rE });
+			o.mdReplacementMatrix.push({ match: $mA, replace: $rA, regex: $rE, vars: $v });
 			
 			$rE.click(function(e) {
+				e.stopPropagation();
+			});
+			$rEL.click(function(e) {
 				e.stopPropagation();
 			});
 			regExTester($mA, $rE, $rA);
 			$('<tr>', { align: 'center' }).append(
 				$('<td>').append(rowCount + '.'),
-				$('<td>').append($rE).click(function() {
-					$rE[0].checked = !$rE[0].checked;
-					$rE.triggerHandler('change');
-				}),
+				$('<td>', { style: 'max-width:15%' }).append($rE, $rEL, $v, $vL).buttonset(),
 				$('<td>').append($mA),
 				$('<td>').append($rA)
 			).appendTo($tbody);
@@ -385,10 +398,19 @@ $.extend(window.VisualFileChange,
 			});
 		};
 		var $newReplaceArea = function() {
-			return resizeHandler($('<textarea></textarea>', { id: 'mdReplaceText'+rowCount, rows: 1, cols: 50, style: 'width:95%' }));
+			return resizeHandler($('<textarea></textarea>', { id: 'mdReplaceText'+rowCount, rows: 1, cols: 50, style: 'width:98%' }));
 		};		
 		var $newRegexCheckBox = function() {
 			return $('<input>', { type: 'checkbox', id: 'mdRRegEx'+rowCount });
+		};
+		var $newRegexLabel = function() {
+			return $('<label>', { 'for': 'mdRRegEx'+rowCount, text: '/R/', title: 'Select if Regular Expression. Use full JavaScript RegExp-Syntax like /find.+/g' });
+		};
+		var $newVarCheckBox = function() {
+			return $('<input>', { type: 'checkbox', id: 'mdRVar'+rowCount, checked: 'checked' });
+		};
+		var $newVarLabel = function() {
+			return $('<label>', { 'for': 'mdRVar'+rowCount, text: '%V%', title: 'Select to allow inserting variables like %FILENAME%' });
 		};
 		$newRow();
 		return $rn;
