@@ -4,7 +4,7 @@
 // TODO if version 1.18 ready, add possibility to revert all images
 //   http://svn.wikimedia.org/viewvc/mediawiki/trunk/phase3/includes/api/ApiFileRevert.php?view=log
 //   action=filerevert&filename=File:MassDeleteOTRS.png&comment=TestingBryanTongMinhRevert&archivename=20110429234711!Wiki.png&token=+\\
-// TODO AJAX userlist-dropdown / verification
+// TODO using mockjax for the debugger?
 // Depends on MediaWiki:VisualFileChange.js/exec.js, /ui.js, /cfg.js
 /***************************************************
 	Event-System:
@@ -110,6 +110,9 @@ function ProgressBox(width, o) {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: 'Tasks:'
 	});
+	this.$progressWrap = $('<div>', { css: { position: 'relative', padding: '10px', height: '25px', display: 'none' } });
+	this.$progressBar = $('<div>', { css: { width: '100%', height: '100%' } }).appendTo(this.$progressWrap);
+	this.$progressText = $('<div>', { css: { width: '100%', height: '100%', position: 'absolute', top: '10px', left: '0px', 'text-align': 'center' } }).appendTo(this.$progressWrap);
 	this.$aHelpHead = $('<div>');
 	this.$aHelpCont = $('<div>', { style: ('font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min($(window).height() / 3, 500) + 'px;') });
 	this.$aHelpCont2 = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
@@ -126,7 +129,7 @@ function ProgressBox(width, o) {
 	this.$credits = $('<div>', { id: 'mdCredits', style: 'position: absolute; bottom: 0px; font: small-caps 0.7em sans-serif; margin: 4px; color: #BBB;' })
 		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>Thanks to all supporters, especially Saibo and LX for testing.');
 		
-	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$aHelp, this.$errorCont, this.$credits);
+	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
 	$('body').append(this.$cont);
 	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
 		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
@@ -181,6 +184,21 @@ ProgressBox.prototype.setZIndex = function (zIndex) {
 ProgressBox.prototype.isHidden = function () {
 	return ('none' === this.$cont.css('display'));
 };
+ProgressBox.prototype.showProgress = function(total, done) {
+	var _this = this;
+	if (_this.progressTimeout) clearTimeout(_this.progressTimeout);
+	_this.progressTimeout = setTimeout(function() {
+		mw.loader.using('jquery.ui.progressbar', function() {
+			_this.$progressBar.progressbar({ value: (done) / (total) * 100 });
+			_this.$progressText.text('remaining ' + (total - done) + ' edits');
+			if (total === done) {
+				_this.$progressWrap.stop().fadeOut();
+			} else {
+				_this.$progressWrap.stop().fadeTo(0, 1);
+			}
+		});
+	}, 10);
+};
 
 var isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
 
@@ -198,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.4.0',
+	mdScriptRevision: '0.9.5.0',
 	
 
 	/**
@@ -324,7 +342,6 @@ var VisualFileChange = window.VisualFileChange = {
 		pb.show();
 		
 		this.oldDocTitle = document.title;
-		this.apiEditFirstTestCountDown = this.mdSettings.firstTest-1;
 		this.context = "MD"; // The error handler should know what we are performing
 		this.mdBusy = false; // indicate that any dialog can be closed
 		this.tasks = []; // reset task list in case an earlier error left it non-empty
@@ -648,6 +665,12 @@ var VisualFileChange = window.VisualFileChange = {
 		o.$targetInput = $targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
 			minLength: 1,
 			delay: delayXHR,
+			select: function(event, ui) {
+				var _this = this;
+				setTimeout(function() {
+					$(_this).triggerHandler('change');
+				}, 10);
+			},
 			source: function ( request, callback ) { 
 				if (pLastCB) pLastCB([]);
 				pLastCB = callback;
@@ -933,18 +956,26 @@ var VisualFileChange = window.VisualFileChange = {
 	apiRequestQueue: [],
 	apiRunningRequests: 0,
 	apiEditCount: 0,
-	apiEditFirstTestCountDown: 0,
+	apiEditFirstTestCountDown: -1,
 	$apiEditCountDlg: 0,
+	totalEdits: 0,
+	totalEditsDone: 0,
 	doAPICall: function (params, callback, errCallBack, isRetry) {
 		var o = this;
-		if (!isRetry) isRetry = 0;
+		var isEdit = params.action && 'edit' === params.action;
+
+		if (!isRetry) {
+			isRetry = 0;
+			if (params.action && 'edit' === params.action) o.totalEdits++;
+			o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+		}
 		
 		if (o.mdSettings.maxSimultaneousReq > 0 && (o.apiRunningRequests >= o.mdSettings.maxSimultaneousReq)) {
 			o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
 			return;
 		}
 
-		if (params.action && 'edit' === params.action) {
+		if (isEdit) {
 			if (o.mdSettings.testEdits > 0 && o.apiEditCount >= o.mdSettings.testEdits) {
 				o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
 				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits is done as specified in the advanced settings. Would you like to proceed?');
@@ -967,7 +998,9 @@ var VisualFileChange = window.VisualFileChange = {
 			o.apiRunningRequests--;
 			var i = Math.min(o.mdSettings.maxSimultaneousReq - o.apiRunningRequests, o.apiRequestQueue.length);
 			for (;i>0;i--) {
-				o.doAPICall.apply(o, o.apiRequestQueue.shift());
+				var args = o.apiRequestQueue.shift();
+				if (args[0].action && 'edit' === args[0].action) o.totalEdits--;
+				o.doAPICall.apply(o, args);
 			}
 		};
 
@@ -1019,6 +1052,10 @@ var VisualFileChange = window.VisualFileChange = {
 				if (result.edit && result.edit.spamblacklist) {
 					return doErrCB("The edit failed because " + result.edit.spamblacklist + " is on the Spam Blacklist");
 				}
+				if (isEdit) {
+					o.totalEditsDone++;
+					o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+				}
 				o.mdSecureCall(callback, result, params);
 			},
 			error: function (x, status, error) {
@@ -1036,10 +1073,12 @@ var VisualFileChange = window.VisualFileChange = {
 				
 				// Catch nasty server errors and retry; 50x are timeouts and similar, 200 is a JSON parser error so the server sent something terribly wrong
 				if (x && x.status && ((x.status > 499 && x.status < 600) || 200 === x.status) && isRetry < 20) {
-					if (params.action && 'edit' === params.action) {
+					if (isEdit) {
 						o.editedPageLast(params.title, params.summary, function(edited) {
 							switch (edited) {
-								case  1: o.mdSecureCall(callback, {}, params);
+								case  1: o.totalEditsDone++;
+									o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+									o.mdSecureCall(callback, {}, params);
 									return;
 								case  0: setTimeout(function () {
 										o.doAPICall(params, callback, errCallBack, isRetry);
@@ -1561,5 +1600,5 @@ September 2, 2010
     $.extend($.expr[':'], { "in-view": function(a, i, m) { return $(a).visible().length > 0; } });
 })(jQuery); 
  
-}) }(jQuery, mediaWiki));
+}); }(jQuery, mediaWiki));
 // </nowiki>
