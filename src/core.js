@@ -1072,7 +1072,7 @@ var VisualFileChange = window.VisualFileChange = {
 				};
 				
 				// Catch nasty server errors and retry; 50x are timeouts and similar, 200 is a JSON parser error so the server sent something terribly wrong
-				if (x && x.status && ((x.status > 499 && x.status < 600) || 200 === x.status) && isRetry < 20) {
+				if (x && x.status && ((x.status > 499 && x.status < 600) || 200 === x.status || 0 === x.status) && isRetry < 20) {
 					if (isEdit) {
 						o.editedPageLast(params.title, params.summary, function(edited) {
 							switch (edited) {
