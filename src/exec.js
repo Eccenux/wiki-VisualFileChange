@@ -708,7 +708,7 @@ $.extend(window.VisualFileChange,
 	
 	mdCreateRequestSubpageCB: function (result, query, err) {
 		if (err) {
-			this.pb.setCurrentTaskState('md-notdone');
+			this.pb.setCurrentTaskState('md-attention');
 			this.pb.setError(err);
 		} else {
 			this.pb.setCurrentTaskDone();
@@ -736,7 +736,7 @@ $.extend(window.VisualFileChange,
 	
 	mdListRequestSubpageCB: function (result, query, err) {
 		if (err) {
-			this.pb.setCurrentTaskState('md-notdone');
+			this.pb.setCurrentTaskState('md-attention');
 			this.pb.setError(err);
 		} else {
 			this.pb.setCurrentTaskDone();
