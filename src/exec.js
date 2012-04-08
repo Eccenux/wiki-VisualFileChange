@@ -23,6 +23,9 @@ $.extend(window.VisualFileChange,
 		var cmdConfig = o.mdCommands[o.mdTaskToPerform];
 		
 		o.startDate = new Date();
+		o.apiEditFirstTestCountDown = o.mdSettings.firstTest-1;
+		o.totalEdits = 0;
+		o.totalEditsDone = 0;
 		
 		if (0 !== o.mdNumberOfExecs || 0 !== o.mdListUploadsPending) return; // refuse futher exec request
 		if (0 !== o.mdPendingBatchQueries) { // call me later
@@ -86,6 +89,7 @@ $.extend(window.VisualFileChange,
 			rObj.match = rObj.match.val();
 			rObj.replace = rObj.replace.val();
 			rObj.regex = rObj.regex[0].checked;
+			rObj.vars = rObj.vars[0].checked;
 			if (rObj.regex && rObj.match) {
 				rObj.match = o.mdRegExpFromString(rObj.match);
 				if (!rObj.match) o.pb.setError('INVALIDINPUT: -' + rObj.match + '- is not a valid RegExp!');
@@ -631,19 +635,19 @@ $.extend(window.VisualFileChange,
 				 case 'secure':
 					$.each(_this.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.secureReplace(rObj.match, rObj.replace);
+						replaceContainer.secureReplace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				 case 'placeholder':
 					$.each(_this.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.replace(rObj.match, rObj.replace);
+						replaceContainer.replace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				 case 'none':
 					$.each(_this.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.ordinaryReplace(rObj.match, rObj.replace);
+						replaceContainer.ordinaryReplace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				}
@@ -767,6 +771,8 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['notifying uploaders', this, this.uploaders]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdNotifyUploaders', 'md-doing');
+		this.totalEdits = 0;
+		this.totalEditsDone = 0;
 		
 		this.uploadersToNotify = 0;
 		var _this = this;
@@ -777,6 +783,7 @@ $.extend(window.VisualFileChange,
 			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
+			page.create = true;
 			page.watchlist = _this.mdSettings.watchlistUserTalk;
 			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
 
