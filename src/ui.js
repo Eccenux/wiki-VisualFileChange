@@ -23,12 +23,17 @@ mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .md-re-escape-helper { position:absolute; z-index:1002; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
-	+ ' .md-examine-contents { display:inline-block; font-size:1.2em; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; }\n'
+	+ ' .md-examine-contents { display:inline-block; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; word-wrap:break-word; }\n'
 	+ ' li.gallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
 	+ ' li.md-selected { background-color:#BBE; }\n'
 	+ ' li.md-selected div.thumb { background-color:#DDE; border:#FFF 1px solid; }\n'
 	+ ' li#mdLastSelected { border:#447 2px solid; }\n'
 );
+
+// Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
+if ('vector' === mw.config.get('skin')) mw.util.addCSS(' .ui-buttonset .ui-button { margin-left:0px!important; margin-right:-.3em!important; }\n' 
+		+ ' .ui-buttonset .ui-button > .ui-button-text { padding-left:0.5em !important; padding-right:0.5em !important; }'
+		+ ' .md-examine-contents { font-size:1.2em; }');
 
 $.extend(window.VisualFileChange,
 {
@@ -222,7 +227,14 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdVarReplacements: function(replacetext, uploadTitle, uploadObject) {
-		replacetext = replacetext.replace('%FILENAME%', uploadTitle);
+		if (!/\%.+\%/.test(replacetext)) return replacetext;
+
+		replacetext = replacetext.replace('%PAGENAME%', uploadTitle.replace(/^File:/, ''));
+		replacetext = replacetext.replace('%FULLPAGENAME%', uploadTitle);
+		replacetext = replacetext.replace('%FULLPAGENAMEE%', encodeURIComponent(uploadTitle));
+		$.each(uploadObject.metadata, function(i, el) {
+			if (-1 !== $.inArray(typeof el.value, ['string', 'number'])) replacetext = replacetext.replace('%' + el.name + '%', el.value);
+		});
 		return replacetext;
 	},
 	
@@ -410,7 +422,7 @@ $.extend(window.VisualFileChange,
 			return $('<input>', { type: 'checkbox', id: 'mdRVar'+rowCount, checked: 'checked' });
 		};
 		var $newVarLabel = function() {
-			return $('<label>', { 'for': 'mdRVar'+rowCount, text: '%V%', title: 'Select to allow inserting variables like %FILENAME%' });
+			return $('<label>', { 'for': 'mdRVar'+rowCount, text: '%V%', title: 'Select to allow inserting variables like %FULLPAGENAME%' });
 		};
 		$newRow();
 		return $rn;
