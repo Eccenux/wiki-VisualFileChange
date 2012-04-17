@@ -216,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.5.0',
+	mdScriptRevision: '0.9.6.0',
 	
 
 	/**
@@ -1003,6 +1003,30 @@ var VisualFileChange = window.VisualFileChange = {
 				o.doAPICall.apply(o, args);
 			}
 		};
+		
+		var smartRetry = function(errCB) {
+			if (isEdit) {
+				o.editedPageLast(params.title, params.summary, function(edited) {
+					switch (edited) {
+						case  1: o.totalEditsDone++;
+							o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+							o.mdSecureCall(callback, {}, params);
+							return;
+						case  0: setTimeout(function () {
+								o.doAPICall(params, callback, errCallBack, isRetry);
+							}, isRetry*500);
+							return;
+						case -1: // Error! 
+							errCB();
+							return;
+					}
+				});
+			} else {
+				setTimeout(function () {
+					o.doAPICall(params, callback, errCallBack, isRetry);
+				}, isRetry*500);
+			}
+		};
 
 		params.format = 'json';
 		$.ajax({
@@ -1024,7 +1048,7 @@ var VisualFileChange = window.VisualFileChange = {
 					}
 				};
 				
-				if (!result) return o.fail("Receive empty API response:\n" + x.responseText);
+				if (!result) return smartRetry(doErrCB);
 
 				// In case we get the mysterious 231 unknown error, just try again
 				if (result.error && result.error.info.indexOf('231') !== -1 && isRetry < 20) return setTimeout(function () {
@@ -1073,28 +1097,7 @@ var VisualFileChange = window.VisualFileChange = {
 				
 				// Catch nasty server errors and retry; 50x are timeouts and similar, 200 is a JSON parser error so the server sent something terribly wrong
 				if (x && x.status && ((x.status > 499 && x.status < 600) || 200 === x.status || 0 === x.status) && isRetry < 20) {
-					if (isEdit) {
-						o.editedPageLast(params.title, params.summary, function(edited) {
-							switch (edited) {
-								case  1: o.totalEditsDone++;
-									o.pb.showProgress(o.totalEdits, o.totalEditsDone);
-									o.mdSecureCall(callback, {}, params);
-									return;
-								case  0: setTimeout(function () {
-										o.doAPICall(params, callback, errCallBack, isRetry);
-									}, isRetry*500);
-									return;
-								case -1: // Error! 
-									doErrCB();
-									return;
-							}
-						});
-					} else {
-						setTimeout(function () {
-							o.doAPICall(params, callback, errCallBack, isRetry);
-						}, isRetry*500);
-					}
-					return;
+					return smartRetry(doErrCB);
 				}
 				doErrCB();
 			}
@@ -1548,7 +1551,8 @@ mediaWiki.loader.using([
 'jquery.tipsy',
 'jquery.placeholder',
 'mediawiki.user',
-'mediawiki.util'
+'mediawiki.util',
+'ext.gadget.jquery.in-view'
 ], function () {
 	VisualFileChange.context = "QD";
 	$(document).unbind('vFC.debuglistener');
@@ -1558,47 +1562,5 @@ mediaWiki.loader.using([
 	VisualFileChange.mdInstall();
 });
 
-// / <reference path="jquery-1.4.2.min.js"/>
-/*
-@author Dan Gidman
-released under GNU General Public License v3
-http://www.gnu.org/licenses/gpl.html
-version 1
-September 2, 2010
-*/
-(function ($) {
-    $.fn.visible = function () {
-        // / <summary>Filter that checks if the item(s) is visible within the page. Returns set of visible elements</summary>
-        // / <returns type="jQuery" />
-        // sanity check aborts when no elements visible
-        return this.filter(":visible").filter(function () {
-            var add = true, 
-                elem = this, 
-                p = $(this).parents().filter(function () {
-                    return (this.scrollHeight > this.offsetHeight || this.scrollWidth > this.offsetWidth);
-                }); // select only scrollable parents
-            // loop through the parent elements checking that each 
-            // scrollable element is visible in parent.
-            for (var i = 0; i < p.length; ++i) {
-                var vp = $(p[i]), v = { 
-                    t: vp.scrollTop(),
-                    b: vp.scrollTop() + vp.height(),
-                    l: vp.scrollLeft(),
-                    r: vp.scrollLeft() + vp.width()
-                }, el = $(elem), e = {
-                    t: elem.offsetTop,
-                    b: elem.offsetTop + el.height(),
-                    l: elem.offsetLeft,
-                    r: elem.offsetLeft + el.width()
-                };
-                elem = p[i];
-                if (!(add = add && ( v.t < e.b && v.b > e.t && v.l < e.r && v.r > e.l ))) break;
-            }
-            return add;
-        });
-    };
-    $.extend($.expr[':'], { "in-view": function(a, i, m) { return $(a).visible().length > 0; } });
-})(jQuery); 
- 
 }); }(jQuery, mediaWiki));
 // </nowiki>
