@@ -181,7 +181,8 @@ $.extend(window.VisualFileChange,
 				case 'Upload Bot (Rich Smith)':
 				case 'File Upload Bot (Magnus Manske)':
 					// CommonsHelper
-					match = /transferred to Commons by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(comment);
+					match = /^[Tt]ransferr?e?d from .+? by \[\[User:([^\]\|]*)(\|([^\]]*))?\]\] using/.exec(comment);
+					if (!match) match = /transferred to Commons by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(comment);
 					if (!match) match = /transferred to Commons by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(content);
 					// geograph_org2commons, regex accounts for typo ("transferd") and it's possible future correction
 					if (!match) match = /geograph.org.uk\]; transferr?e?d by \[\[User:([^\]\|]+)(?:\|(?:[^\]]*))?\]\] using/.exec(comment);
