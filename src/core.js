@@ -216,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.6.1',
+	mdScriptRevision: '0.9.7.0',
 	
 
 	/**
@@ -1552,6 +1552,7 @@ mediaWiki.loader.using([
 'jquery.placeholder',
 'mediawiki.user',
 'mediawiki.util',
+'ext.gadget.libCommons',
 'ext.gadget.jquery.in-view'
 ], function () {
 	VisualFileChange.context = "QD";
