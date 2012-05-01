@@ -216,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.6.0',
+	mdScriptRevision: '0.9.6.1',
 	
 
 	/**
@@ -785,7 +785,7 @@ var VisualFileChange = window.VisualFileChange = {
 		// trim whitespace
 		uncleanReason = uncleanReason.replace(/^\s*(.+)\s*$/, '$1');
 		// remove signature
-		uncleanReason = uncleanReason.replace(/(.+)(--)?~{3,5}$/, '$1');
+		uncleanReason = uncleanReason.replace(/(?:\-\-|–|—)? ?~{3,5}$/, '');
 		return uncleanReason;
 	},
 	
