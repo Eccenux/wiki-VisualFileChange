@@ -216,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.7.0',
+	mdScriptRevision: '0.9.8.0',
 	
 
 	/**
@@ -234,6 +234,9 @@ var VisualFileChange = window.VisualFileChange = {
 		});
 		// Merge the user's settings
 		$.extend(this.mdSettings, window.vFCSettings);
+		
+		// Get the username
+		this.username = mw.user.name() || Geo.IP || "anonymous";
 
 
 		var $tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand");
@@ -348,6 +351,8 @@ var VisualFileChange = window.VisualFileChange = {
 		this.pageName = wgPageName;
 		this.mdTarget = '';
 		this.mdListUploadsPending = 0;
+		this.apiRatelimited = mw.user.anonymous();
+		this.mdSecureCall('retrieveRatelimit');
  
 		switch (mw.config.get('wgNamespaceNumber')) {
 			case 6: // File
@@ -407,6 +412,35 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		this.addTask('mdContinue');
 		this.nextTask();
+	},
+	
+	retrieveRatelimit: function () {
+		this.doAPICall({
+			action: 'query',
+			meta: 'userinfo',
+			uiprop: 'ratelimits'
+		}, 'retrieveRatelimitCb');
+	},
+	retrieveRatelimitCb: function (result) {
+		if (result.query) {
+			var ui = result.query.userinfo;
+			this.username = ui.name;
+			if (ui.ratelimits.edit) {
+				var l = ui.ratelimits.edit.ip;
+				if (l) {
+					var limit = Math.floor(l.hits / (l.seconds/60));
+					// If more than 150 per minute are allowed and we do not send more at once, skip this
+					if (limit > 150 && limit > this.mdSettings.maxSimultaneousReq) return;
+					// If the users themselves limited, respect this
+					this.mdSettings.testEdits = Math.min(limit, this.mdSettings.testEdits);
+					// If they didn't set the limit
+					if (0 === this.mdSettings.testEdits) this.mdSettings.testEdits = limit;
+					// Tell our script where the number come from
+					this.apiRatelimited = true;
+				}
+			}
+			if ('string' === typeof ui.anon && !mw.user.anonymous()) throw new Error("You seem not to be logged in anymore!");
+		}
 	},
  
 	findOriginalUploader: function () {
@@ -473,12 +507,7 @@ var VisualFileChange = window.VisualFileChange = {
 		this.apiRequestQueue = [];   // Reset. In case of restart it would contain non-executed requests otherwise
 		this.lastContinues = { vals: [], setVals: '' };     // contains the last 2 continue-keys
  
-		if (this.mdTarget) {
-			pefilledUser = this.mdTarget;
-		}
-		if ( !pefilledUser ) { 
-			pefilledUser = mw.user.name(); 
-		}
+		pefilledUser = this.mdTarget || this.username;
 		$(document).triggerHandler('vFC', ['asking for target', this]);
 		this.promptForTarget(pefilledUser, 1, this);
 	},
@@ -586,7 +615,7 @@ var VisualFileChange = window.VisualFileChange = {
 		o.mdDlgThumbDlgClose();
 		
 		// Change the title of the browser tab/window
-		document.title = "VisualFileChange: Welcome, " + (mw.user.name() || Geo.IP || "anonymous") + "!";
+		document.title = "VisualFileChange: Welcome, " + o.username + "!";
 
 		// Hide overlapping page (avoids scrolling)
 		$('body').css('overflow', 'hidden');
@@ -940,7 +969,7 @@ var VisualFileChange = window.VisualFileChange = {
 			format: 'json',
 			action: 'query',
 			list: 'usercontribs',
-			ucuser: mw.user.name() || Geo.IP,
+			ucuser: o.username,
 			ucprop: 'title|comment',
 			uclimit: parseInt(o.mdSettings.maxSimultaneousReq)+10
 		}, gotResult);
@@ -958,6 +987,7 @@ var VisualFileChange = window.VisualFileChange = {
 	apiEditCount: 0,
 	apiEditFirstTestCountDown: -1,
 	$apiEditCountDlg: 0,
+	apiRatelimited: false,
 	totalEdits: 0,
 	totalEditsDone: 0,
 	doAPICall: function (params, callback, errCallBack, isRetry) {
@@ -978,7 +1008,7 @@ var VisualFileChange = window.VisualFileChange = {
 		if (isEdit) {
 			if (o.mdSettings.testEdits > 0 && o.apiEditCount >= o.mdSettings.testEdits) {
 				o.apiRequestQueue.push([ params, callback, errCallBack, isRetry ]);
-				if (!o.$apiEditCountDlg) o.mdEditCountDialog('One batch of edits is done as specified in the advanced settings. Would you like to proceed?');
+				if (!o.$apiEditCountDlg) o.mdEditCountDialog(o.apiRatelimited ? 'Due to rate-limits on Commons, no further edits are possible within 1 minute. Please wait and then, click on continue. Use the time to do something useful like checking your last contributions.' : 'One batch of edits is done as specified in the advanced settings. Would you like to proceed?');
 				return;
 			}
 			if (0 === o.apiEditFirstTestCountDown) {
@@ -1036,6 +1066,40 @@ var VisualFileChange = window.VisualFileChange = {
 			data: params,
 			type: 'POST',
 			success: function (result, status, x) {
+			
+				// In case we have to solve a captcha - re-enqueue and prompt
+				if (result && result.edit && result.edit.captcha) {
+					var captcha = result.edit.captcha;
+					var $cDlg = $('<div>');
+					$('<p>', { text: 'Either enter the captcha or give it up. You if a template you are inserting contains an URL, you will be prompted each time. Create an account, do some useful stuff and become autoconfirmed.' })
+						.appendTo($cDlg);
+					$('<img>', { alt: 'captcha', src: captcha.url }).appendTo($cDlg);
+					var $w = $('<input>', { type: 'text', size: 30 }).appendTo($cDlg.append(' '));
+					var dlgButtons = {};
+					dlgButtons['Ok'] = function() {
+						$(this).dialog('close');
+					};
+					$cDlg.dialog({
+						title: 'Please enter the letters into the textbox and submit.',
+						buttons: dlgButtons,
+						show: { effect: 'highlight', duration: 1800 },
+						close: function() {
+							$cDlg.remove();
+							params.captchaid = captcha.id;
+							params.captchaword = $w.val();
+							o.apiRunningRequests--;
+							o.doAPICall(params, callback, errCallBack, isRetry);
+						},
+						open: function() {
+							var $dlg = $(this).parent();
+							var $buttons = $dlg.find('.ui-dialog-buttonpane button');
+							$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } });
+							$w.focus();
+						}
+					});
+					return;
+				}
+			
 				// Call always first; jQuery complete-evt is called after that
 				always();
 
@@ -1252,9 +1316,10 @@ var VisualFileChange = window.VisualFileChange = {
 			'min': 0, 
 			'max': 50
 		}, {
+			// Ratelimits may restrict this
 			'v': 'testEdits', 
 			'd': 'Ask for confirmation after each … edits', 
-			'default': 0,
+			'default': (mw.user.anonymous() ? 7 : 0),
 			'min': 0, 
 			'max': 500
 		}, {
