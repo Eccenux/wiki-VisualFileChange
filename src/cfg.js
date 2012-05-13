@@ -14,7 +14,7 @@ if (window.VisualFileChange.configManager) return;
 mw.util.addCSS( ' .vFCConfigRequired { visibility:visible !important; }\n' );
 
 var profileVar = 'vFC_Profiles';
-var scriptpath = mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/';
+var scriptpath = mw.config.get('wgUserName') ? mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/' : '';
 var commonjsPath = scriptpath + 'common.js';
 var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
 
