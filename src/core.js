@@ -1270,8 +1270,8 @@ var VisualFileChange = window.VisualFileChange = {
 		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{{subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
 		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
 		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
-		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
-		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Addding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											'']
+		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
+		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											'']
 	},
 	mdCommands: {
 		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
