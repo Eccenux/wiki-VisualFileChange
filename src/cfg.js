@@ -124,9 +124,9 @@ $.extend(window.VisualFileChange,
 			buttons: dlgButtons,
 			open: function() {
 				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
-				$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } });
-				$buttons.eq(1).button({ icons: { primary: 'ui-icon-circle-close' } });
-				if (!mw.user.anonymous()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } });
+				$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } }).addClass('ui-button-blue');
+				$buttons.eq(1).button({ icons: { primary: 'ui-icon-circle-close' } }).addClass('ui-button-red');
+				if (!mw.user.anonymous()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } }).addClass('ui-button-orange');
 				$buttons.eq(mw.user.anonymous() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
 			}
 		});
