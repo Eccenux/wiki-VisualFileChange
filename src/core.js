@@ -216,7 +216,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.8.0',
+	mdScriptRevision: '0.9.9.0',
 	
 
 	/**
@@ -626,7 +626,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 		o.dlg = $('<div>').append(o.$AjaxMdContainer).dialog({
 			modal: true,
-			closeOnEscape: true,
+			closeOnEscape: false,
 			position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
 			title: o.i18n.mdPerformOnWhichTarget,
 			height: 'auto',
@@ -635,8 +635,8 @@ var VisualFileChange = window.VisualFileChange = {
 			close: o.mdCancel,
 			open: function() {
 				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
-				$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' } });
-				$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } });
+				$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' } }).addClass('ui-button-green');
+				$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }).addClass('ui-button-red');
 			}
 		});
 		o.pb.setZIndex($('.ui-widget-overlay').css('z-index')-0+1);
@@ -971,7 +971,7 @@ var VisualFileChange = window.VisualFileChange = {
 			list: 'usercontribs',
 			ucuser: o.username,
 			ucprop: 'title|comment',
-			uclimit: parseInt(o.mdSettings.maxSimultaneousReq)+10
+			uclimit: parseInt(o.mdSettings.maxSimultaneousReq, 10)+10
 		}, gotResult);
 		xhr.fail(function() {
 			callback(-1, title);
@@ -1069,13 +1069,19 @@ var VisualFileChange = window.VisualFileChange = {
 			
 				// In case we have to solve a captcha - re-enqueue and prompt
 				if (result && result.edit && result.edit.captcha) {
-					var captcha = result.edit.captcha;
-					var $cDlg = $('<div>');
+					var captcha = result.edit.captcha,
+						$buttons,
+						$cDlg = $('<div>', { id: 'vfcCaptchaDialog' });
+
 					$('<p>', { text: 'Either enter the captcha or give it up. You if a template you are inserting contains an URL, you will be prompted each time. Create an account, do some useful stuff and become autoconfirmed.' })
 						.appendTo($cDlg);
-					$('<img>', { alt: 'captcha', src: captcha.url }).appendTo($cDlg);
-					var $w = $('<input>', { type: 'text', size: 30 }).appendTo($cDlg.append(' '));
-					var dlgButtons = {};
+
+					var $img = $('<img>', { id: 'vfcCaptchaImg', alt: 'captcha', src: captcha.url }).appendTo($cDlg),
+						dlgW = Math.min($(window).width(), Math.max(310, $img.width()+30)),
+						$w = $('<input>', { type: 'text', size: 30 }).appendTo($cDlg.append(' ')),
+						dlgButtons = {};
+					$img.load(function() { $cDlg.dialog({ width: Math.min($(window).width(), Math.max(310, $img.width()+30)) }); });
+					$w.keyup(function(e) { if (13 === (e.keyCode-0)) $buttons.eq(0).click(); });
 					dlgButtons['Ok'] = function() {
 						$(this).dialog('close');
 					};
@@ -1083,6 +1089,7 @@ var VisualFileChange = window.VisualFileChange = {
 						title: 'Please enter the letters into the textbox and submit.',
 						buttons: dlgButtons,
 						show: { effect: 'highlight', duration: 1800 },
+						width: dlgW,
 						close: function() {
 							$cDlg.remove();
 							params.captchaid = captcha.id;
@@ -1092,7 +1099,7 @@ var VisualFileChange = window.VisualFileChange = {
 						},
 						open: function() {
 							var $dlg = $(this).parent();
-							var $buttons = $dlg.find('.ui-dialog-buttonpane button');
+							$buttons = $dlg.find('.ui-dialog-buttonpane button');
 							$buttons.eq(0).button({ icons: { primary: 'ui-icon-circle-check' } });
 							$w.focus();
 						}
@@ -1199,7 +1206,7 @@ var VisualFileChange = window.VisualFileChange = {
 	fail: function (err) {
 		err = err.toString();
 		document.body.style.cursor = 'auto';
-		if ('undefined' !== typeof(console)) console.log('Error: ' + err);
+		this.log('Error: ' + err);
 		var msg = this.i18n.taskFailure[this.currentTask] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
  
 		var reportPage = '';
@@ -1213,6 +1220,9 @@ var VisualFileChange = window.VisualFileChange = {
 			this.context = 'MD-Error';
 		}
 		if (this.pb) this.pb.setError(msg + ' ##### ' + err);
+	},
+	log: function(toLog) {
+		if (window.console && $.isFunction(window.console.log)) window.console.log(toLog);
 	},
 	
 	/**
@@ -1255,12 +1265,12 @@ var VisualFileChange = window.VisualFileChange = {
 	/**                                                    **
 	*************** SETTINGS / CONFIGURATION ****************
 	**                                                    **/
-	mdOpt: {	//		0	1						2					3						4		5		6		7												8																									9											10
-	// key,		minLenReq,	acceptReason, 			prefill, 			confirmation, addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
-		'c_replace':[false,	false,					'',					'',						false,	true,	false,	"",												'Doing %replacementcount% replacements.', 															'',											''],
-		'prepend':  [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
-		'prepNf':   [false,	'mdInsertAll',			'',					'',						true,	false,	false,	"",												'Inserting "%pattern%"', 																			'==[[:%FILE%]]==\n',						'There are questions or comments about [[%FILE%]].'],
-		'append':   [false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
+	mdOpt: {	//	0			1					2					3				4			5			6		7												8																									9											10
+	//	key,		minLenReq,	acceptReason, 		prefill, 			confirmation,	addTalkNote, replace, otrsrepl,	tag,											+summary																							talk_tag									talk_summary
+		'c_replace':[false,	false,					'',					'',						false,	true,	false,	"",												'Doing %replacementcount% replacements.',															'',											''],
+		'prepend':	[false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
+		'prepNf':	[false,	'mdInsertAll',			'',					'',						true,	false,	false,	"",												'Inserting "%pattern%"', 																			'==[[:%FILE%]]==\n',						'There are questions or comments about [[%FILE%]].'],
+		'append':	[false,	'mdInsertGeneric',		'',					'',						false,	false,	false,	"",												'Inserting "%pattern%"', 																			'',											''],
 		'cv':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{copyvio|1=%REASON%}}\n",						'%cv% %REASON%', 																					'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations.'],
 		'cv-dw':	[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{Derivative|1=%REASON%}}\n",					'%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright.', 						'{{subst:Derivativenote|1=%FILE%}}',		'Notification of possible copyright violations. (Derivative)'],
 		'cv-fu':	[false,	false,					'',					'',						true,	false,	false,	"{{Fair use}}\n",								'%cv% [[COM:FU|fair use]] media are not allowed on Commons.', 										'{{subst:No fair use|1=%FILE%}}',			'Please do not upload media with fair-use claims on commons.'],
@@ -1608,7 +1618,7 @@ var VisualFileChange = window.VisualFileChange = {
 ******************* PLUGINS / LOAD **********************
 **                                                    **/
 
-/*if (wgUserLanguage != 'en') importScript('MediaWiki:VisualFileChange.js/' + wgUserLanguage);*/
+/*if (wgUserLanguage !== 'en') importScript('MediaWiki:VisualFileChange.js/' + wgUserLanguage);*/
 mediaWiki.loader.using([
 'jquery.ui.dialog',
 'jquery.ui.datepicker',
@@ -1623,7 +1633,7 @@ mediaWiki.loader.using([
 	VisualFileChange.context = "QD";
 	$(document).unbind('vFC.debuglistener');
 	$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
-		if (window.VisualFileChangeDebug && console && console.log) console.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
+		if (window.VisualFileChangeDebug) VisualFileChange.log('VisualFileChange> ' + p1 + (('Settings' === p1) ? ('> ' + p3) : '' ));
 	});
 	VisualFileChange.mdInstall();
 });
