@@ -595,8 +595,8 @@ $.extend(window.VisualFileChange,
 		var $AjaxMdActionConfirm = $('<span>', { id: 'AjaxMdActionConfirm' });
 
 		var $buttons = this.dlg.parent().find('.ui-dialog-buttonpane button'),
-			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' }, label: $('<span>', { text: this.i18n.submitButtonLabel }).append( $AjaxMdActionConfirm ) }),
-			$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }),
+			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' }, label: $('<span>', { text: this.i18n.submitButtonLabel }).append( $AjaxMdActionConfirm ) }).addClass('ui-button-green'),
+			$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }).addClass('ui-button-red'),
 			$mdDeleteReason = $('#mdDeleteReason');
 
 		$mdDeleteReason.keyup( function (event) {
