@@ -1,5 +1,6 @@
-// Main script is at MediaWiki:VisualFileChange.js
+// Main script is at [[MediaWiki:VisualFileChange.js]]
 // These are the delayed loaded edit components in order to speed up loading of the first UI
+// <nowiki>
 
 /*global jQuery:false, mediaWiki:false, alert:false, console:false */
 /*jshint curly:false, maxerr:200, smarttabs:true, loopfunc:true*/
@@ -766,3 +767,4 @@ $.extend(window.VisualFileChange,
 $(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
 
 }(jQuery, mediaWiki));
+// </nowiki>
