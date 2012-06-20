@@ -71,7 +71,7 @@ function ProgressBox(width, o) {
 		'style': 'position:absolute; top:-100px;'
 	}).keydown(function(e) {
 		var tVal = ($(this).val() || '');
-		if (13 === (e.keyCode - 0)) {
+		if (13 === e.which) {
 			switch (tVal) {
 				case 'd':
 					window.VisualFileChangeDebug = true;
@@ -742,7 +742,7 @@ var VisualFileChange = window.VisualFileChange = {
 				$(this).val( getMwDate($(this).val()) );
 			} )
 			.keyup( function( e ) {
-				if ( e.keyCode === 13 ) {
+				if ( e.which === 13 ) {
 					$(this).val( getMwDate($(this).val()) );
 					$submitButton.click();
 				}
@@ -815,7 +815,7 @@ var VisualFileChange = window.VisualFileChange = {
 				$submitButton.button('option', 'disabled', false);
 			}
 			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
-			if (e && e.keyCode && 13 === (e.keyCode - 0)) $submitButton.click();
+			if (e && e.which && 13 === e.which) $submitButton.click();
 		}).keyup().focus();
 		
 		// Load the configuration module
@@ -1095,7 +1095,7 @@ var VisualFileChange = window.VisualFileChange = {
 						$w = $('<input>', { type: 'text', size: 30 }).appendTo($cDlg.append(' ')),
 						dlgButtons = {};
 					$img.load(function() { $cDlg.dialog({ width: Math.min($(window).width(), Math.max(310, $img.width()+30)) }); });
-					$w.keyup(function(e) { if (13 === (e.keyCode-0)) $buttons.eq(0).click(); });
+					$w.keyup(function(e) { if (13 === e.which) $buttons.eq(0).click(); });
 					dlgButtons['Ok'] = function() {
 						$(this).dialog('close');
 					};
