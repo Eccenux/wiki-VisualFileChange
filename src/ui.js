@@ -1,5 +1,6 @@
-// Main script is at MediaWiki:VisualFileChange.js
+// Main script is at [[MediaWiki:VisualFileChange.js]]
 // These are the delayed loaded display components (UI) in order to speed up loading of the first UI
+// <nowiki>
 
 /*global jQuery:false, mediaWiki:false, alert:false */
 /*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
@@ -1626,3 +1627,4 @@ mw.loader.using(['jquery.ui.dialog', 'jquery.ui.button', 'jquery.tipsy', 'jquery
 });
 
 }(jQuery, mediaWiki));
+// </nowiki>
