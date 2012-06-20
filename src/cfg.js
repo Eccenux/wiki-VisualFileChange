@@ -1,5 +1,6 @@
-// Main script is at MediaWiki:VisualFileChange.js
+// Main script is at [[MediaWiki:VisualFileChange.js]]
 // These are the delayed loaded configuration components (user's custom config) in order to speed up loading of the first UI
+// <nowiki>
 
 /*global jQuery:false, mediaWiki:false */
 /*jshint curly:false, smarttabs:true */
@@ -665,3 +666,4 @@ mw.loader.using([
 });
 
 }(jQuery, mediaWiki));
+// </nowiki>
