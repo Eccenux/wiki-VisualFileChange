@@ -610,9 +610,9 @@ $.extend(window.VisualFileChange,
 			}
 		});
 		// Binding enter-key event. -0 ensures number
-		$('#mdDeleteHeading').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
-		$('#mdTalkNote').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
-		$('#mdEditSummary').keyup( function (event) { if (13 === (event.keyCode - 0) && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		$('#mdDeleteHeading').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		$('#mdTalkNote').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		$('#mdEditSummary').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
 		
 		var timoutID = 0;
 		var updateSelectedCount = function () {
