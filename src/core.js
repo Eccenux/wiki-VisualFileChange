@@ -1,11 +1,23 @@
-// It helps performing mass-changes on the uploads of a paricular user.
-// It was composed by [[User:Rillke]] in 2011; Thanks DieBuche for advice; some code stolen from commons:MediaWiki:AjaxQuickDelete.js
+/**
+ **  Read [[Help:VisualFileChange.js]]!
+ **  VisualFileChange, formerly AjaxMassDelete was composed by [[User:Rillke]] in 2011; Thanks DieBuche for advice; some code stolen from commons:MediaWiki:AjaxQuickDelete.js
+ **
+ **  TODO if version 1.18 ready, add possibility to revert all images
+ **  http://svn.wikimedia.org/viewvc/mediawiki/trunk/phase3/includes/api/ApiFileRevert.php?view=log
+ **    action=filerevert&filename=File:MassDeleteOTRS.png&comment=TestingBryanTongMinhRevert&archivename=20110429234711!Wiki.png&token=+\\
+ **  TODO using mockjax for the debugging?
+ **
+ **  Depends on MediaWiki:VisualFileChange.js/exec.js, /ui.js, /cfg.js
+ **
+ **  @description
+ **     Helps performing mass-changes on the uploads of a paricular user or files in one category.
+ **
+ **  @autor Rillke, 2011
+ **  @license GPL v.3
+ **/
+
 // <nowiki>
-// TODO if version 1.18 ready, add possibility to revert all images
-//   http://svn.wikimedia.org/viewvc/mediawiki/trunk/phase3/includes/api/ApiFileRevert.php?view=log
-//   action=filerevert&filename=File:MassDeleteOTRS.png&comment=TestingBryanTongMinhRevert&archivename=20110429234711!Wiki.png&token=+\\
-// TODO using mockjax for the debugger?
-// Depends on MediaWiki:VisualFileChange.js/exec.js, /ui.js, /cfg.js
+
 /***************************************************
 	Event-System:
 	Event: 'vFC' with parameters
@@ -19,8 +31,10 @@
 		console.log('VisualFileChange> ' + p1);
 	});
 ***************************************************/
+
 /*global jQuery:false, mediaWiki:false, Geo:false */
 /*jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
+
 (function ($, mw) {
 'use strict';
 if (window.VisualFileChange) return;
@@ -1409,6 +1423,7 @@ var VisualFileChange = window.VisualFileChange = {
 		[/Items with OTRS permission confirmed.*/,			'opm', 'bcf'],
 		[/OTRS received.*/,									'or',  'cdf'],
 		[/[Aa]dmin[\- ]reviewed [licenses|Flickr images]/,	'lrd', '8fa'],
+		[/Flickr images reviewed by/,						'frd', '8fa'],
 		[/Flickr images needing human review/,				'frR', 'af8'],
 		[/License review needed/,							'lrR', 'af8']
 	],
@@ -1431,7 +1446,7 @@ var VisualFileChange = window.VisualFileChange = {
 		[/Category:Free screenshot.*/i, 						'free-Screenshot'],
 		[/Category:Copyright by Wikimedia.*/i, 					'(c)WMF'],
 		[/Category:Self[\- _]published[ß\- _]work/i, 				'<b>self</b>'],  // rm the next tags from being shown
-		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
+		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Flickr images reviewed by/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
  
 	mdOTRSprefill: '{{PermissionOTRS|id=%ID|~~'+'~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
