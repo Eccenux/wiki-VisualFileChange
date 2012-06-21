@@ -230,7 +230,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.9.0',
+	mdScriptRevision: '0.9.9.1',
 	
 
 	/**
@@ -374,40 +374,8 @@ var VisualFileChange = window.VisualFileChange = {
 				break;
 			case 3: // User_talk
 			case 2: // User
-				this.mdTarget = mw.config.get('wgPageName').match(/.*?\:(.*?)(\/.*)*$/)[1];
-				break;
 			case -1: // Special pages
-				try {
-					switch (mw.config.get('wgCanonicalSpecialPageName')) {
-						case 'Contributions':
-						case 'DeletedContributions':
-						case 'Block':
-						case 'CentralAuth':
-							// Extract target from addressline
-							if ( /Special\:(?:DeletedContributions|Contributions|Block|CentralAuth)\//.test(location.href) ) {
-								this.mdTarget = decodeURI(location.href.match(/Special\:(?:DeletedContributions|Contributions|Block|CentralAuth)\/(.*?)$/)[1]);
-							} else if ( -1 !== location.href.indexOf(mw.config.get('wgScript')) ) {
-								this.mdTarget = mw.util.getParamValue('target');
-							}
-							break;
-						case 'Userrights':
-						case 'Listfiles':
-						case 'Log':
-							// Extract target from addressline
-							if (mw.util.getParamValue('user')) {
-								this.mdTarget = mw.util.getParamValue('user');
-							}
-							if (mw.util.getParamValue('page')) { 
-								if (/User:+./.test(mw.util.getParamValue('page'))) {
-									this.mdTarget = mw.util.getParamValue('page').replace("User:", "");
-								}
-							}
-							if ( /Special\:(?:Log|ListFiles|UserRights)\//.test( location.href )) {
-								this.mdTarget = decodeURI(location.href.match(/Special\:(?:Log|ListFiles|UserRights)\/(.*?)$/)[1]);
-							}
-							break;
-					}
-				} catch (ex) { }
+				this.mdTarget = mw.libs.commons.guessUser();
 				break;
 			case 14: // categories
 				this.mdTarget = mw.config.get('wgPageName');
@@ -1643,6 +1611,7 @@ mediaWiki.loader.using([
 'mediawiki.user',
 'mediawiki.util',
 'ext.gadget.libCommons',
+'ext.gadget.libUtil',
 'ext.gadget.jquery.in-view'
 ], function () {
 	VisualFileChange.context = "QD";
