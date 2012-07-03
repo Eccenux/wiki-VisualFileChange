@@ -497,9 +497,14 @@ $.extend(window.VisualFileChange,
 		
 		var dlgButtons = {};
 		dlgButtons[this.i18n.submitButtonLabel] = function() {
-			var pp = o.i18n.mdPotentialProblems;
+			var pp = o.i18n.mdPotentialProblems,
+				cf = o.mdCommands[$AjaxMdType.val()].confirm;
+				
 			if ($('input[name="mdCheckDelete"]:checked').length === 0) {
 				confirmDlg(pp.titleNf, pp.textNf, pp.back, pp.proceed, o.mdInfoIcon);
+			} else if (cf) {
+				var cfl = o.i18n.mdConfirm;
+				confirmDlg(cfl[cf+'Title'] , cfl[cf], cfl[cf+'Cancel'], cfl[cf+'Ignore'], o.mdQuestionIcon);
 			} else {
 				o.mdSecureCall("mdExecute");
 			}
@@ -511,7 +516,13 @@ $.extend(window.VisualFileChange,
 		var getSelect = function() {
 			var sel = '<select size="1" id="AjaxMdType">';
 			$.each(o.mdOpt, function(id, opt) {
-				sel += '<option value="' + id + '">' + o.i18n.mdOptions[id] + '</option>';
+				var ugs = o.mdCommands[id].userGroups,
+					disabled = '';
+				if ($.isArray(ugs)) {
+					var ugsIntersect = $.map(mw.config.get('wgUserGroups'), function(a) {return $.inArray(a, ugs) < 0 ? null : a;});
+					if (0 === ugsIntersect.length) disabled = 'disabled="disabled"';
+				}
+				sel += '<option value="' + id + '" ' + disabled + '>' + mw.html.escape(o.i18n.mdOptions[id]) + '</option>';
 			});
 			sel += '</select>';
 			return sel;
@@ -822,7 +833,7 @@ $.extend(window.VisualFileChange,
 					} else { isMatch.meta = true; }
  
 					if ( isMatch.cat && isMatch.title && isMatch.content && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
-				} catch (ex) { if ('undefined' !== typeof(console)) console.log('Error: ' + ex); }
+				} catch (ex) { if (window.console && $.isFunction(window.console.log)) window.console.log('Error: ' + ex); }
 			});
 			updateSelectedCount();
 		};
