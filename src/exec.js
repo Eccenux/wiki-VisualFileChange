@@ -761,6 +761,71 @@ $.extend(window.VisualFileChange,
 		} else {
 			this.doAPICall(edit, callback, errCallBack);
 		}
+	},
+	
+	/**
+	** Execute the delete-task.
+	**/
+	mdDelete: function() {
+		this.pb.setCurrentTaskDone();
+		this.pb.setTaskState('mdDelete', 'md-doing');
+		
+		$(document).triggerHandler('vFC', ['deleting files', this]);
+		this.mdUploadCt = 0;
+ 
+		for (var upload in this.iUploads) {
+			if (this.iUploads.hasOwnProperty(upload) && (-2 === this.iUploads[upload].iId)) {
+				this.mdSecureCall('mdDeletePage', upload, this.img_summary);
+			}
+		}
+		if (0 === this.mdUploadCt) this.nextTask();
+	},
+	mdDeletePage: function(page, summary) {
+		var o = this;
+		o.mdUploadCt++;
+		o.totalEdits++;
+		
+		var _always = function() {
+			o.totalEditsDone++;
+			o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+		};
+		var _deleted = function() {
+			o.mdTemplateAdded({ requestid: page }, '');
+			_always();
+		};
+		var _problem = function(text) {
+			o.mdTemplateAdded({ requestid: page }, '', text);
+			_always();
+		};
+		var _err = function(text) {
+			o.mdTemplateAdded({ requestid: page }, '', text);
+			_always();
+		};
+		// emulation possible
+		if (window.VisualFileChangeDebug) {
+			console.log('VisualFileChange> delete: ' + page);
+			console.log(summary);
+			
+			setTimeout(_deleted, Math.round(Math.random() * 9000));
+		} else {
+			mw.loader.using(['ext.gadget.libAPI'], function() {
+				mw.libs.commons.api.deletePage({
+					cb: function() {
+						_deleted();
+					},
+					// r-result, query, text
+					errCb: function(t, r, q) {
+						if (r && r.error && r.error.code === 'missingtitle') {
+							_problem('File not found');
+						} else {
+							_err(t);
+						}
+					},
+					title: page,
+					reason: summary
+				});
+			});
+		}
 	}
 });
 
