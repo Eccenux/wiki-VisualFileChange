@@ -230,7 +230,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.9.1',
+	mdScriptRevision: '0.9.10.0',
 	
 
 	/**
@@ -375,7 +375,7 @@ var VisualFileChange = window.VisualFileChange = {
 			case 3: // User_talk
 			case 2: // User
 			case -1: // Special pages
-				this.mdTarget = mw.libs.commons.guessUser();
+				this.mdTarget = mw.libs.commons.guessUser() || '';
 				break;
 			case 14: // categories
 				this.mdTarget = mw.config.get('wgPageName');
@@ -1263,7 +1263,8 @@ var VisualFileChange = window.VisualFileChange = {
 		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
 		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
 		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
-		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											'']
+		'other':	[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.', 		'',											''],
+		'aDelete':	[false,	'',						'',					'mdDelteConfirmation',	false,	false,	false,	"",												'', 																								'',											'']
 	},
 	mdCommands: {
 		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
@@ -1276,11 +1277,12 @@ var VisualFileChange = window.VisualFileChange = {
 		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'del':		{ cleanReason: true, tasks: ['mdCreateRequestSubpage', 'mdPrependTemplate', 'mdNotifyUploaders', 'mdListRequestSubpage', 'mdRvGenOGallery'] },
-		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
+		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'], userGroups: ['user'] },
 		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
 		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'mdRvGenOGallery'] },
-		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
-		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'] }
+		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
+		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
+		'aDelete':	{ cleanReason: true, tasks: ['mdDelete', 'mdRvGenOGallery'], userGroups: ['sysop'], confirm: 'deleteConfirm' }
 	},
 	mdOptText: {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
@@ -1439,6 +1441,7 @@ var VisualFileChange = window.VisualFileChange = {
 	mdDoneTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
 	mdFailedTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
 	mdInfoIcon: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
+	mdQuestionIcon: '//upload.wikimedia.org/wikipedia/commons/9/98/Crystal_Clear_app_miscellaneous_2.png',
 	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
 	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
 	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
@@ -1480,6 +1483,13 @@ var VisualFileChange = window.VisualFileChange = {
 		optStartAt: "Start listing from a specific date",
 		optStartAtHowTo: 'Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker',
 		optMore: "More options",
+		
+		mdConfirm: {
+			deleteConfirmTitle: 'Confirming deletion',
+			deleteConfirm: 'Do you really want to DELETE these files using your administrator privileges?',
+			deleteConfirmIgnore: 'Yes, delete!',
+			deleteConfirmCancel: 'No, back, please, back!'
+		},
 		
 		mdConfig: {
 			getScriptErr: "Error getting your userscripts!",
@@ -1534,7 +1544,8 @@ var VisualFileChange = window.VisualFileChange = {
 			'c_replace': "custom replace",
 			'prepend': "prepend any text",
 			'append': "append any text",
-			'prepNf': "prepend text, notify uploaders"
+			'prepNf': "prepend text, notify uploaders",
+			'aDelete': "Delete! (admin only)"
 		},
 		
 		task: {
@@ -1552,7 +1563,8 @@ var VisualFileChange = window.VisualFileChange = {
 			mdNotifyUploaders: 'Notifying uploaders.',
 			mdCreateRequestSubpage: 'Creating request subpage.',
 			mdListRequestSubpage: 'Listing request subpage to the daily list.',
-			mdRvGenOGallery: 'Overwritten files can\'t be reverted due to software changes. But hopefully fixed soon.'
+			mdRvGenOGallery: 'Overwritten files can\'t be reverted due to software changes. But hopefully fixed soon.',
+			mdDelete: 'Deleting files',
 		},
  
 		taskFailure: {
@@ -1581,17 +1593,18 @@ var VisualFileChange = window.VisualFileChange = {
 			mdInsertOTRS: "An error occurred while preparing the page-content of the permission.",
 			mdCreateRequestSubpage: "An error occurred creating the deletion-request subpage.",
 			mdListRequestSubpage: "There was an error while listing the request-subpage.",
-			mdPrependText: 'There was an error prepending free-text to files.',
-			mdAppendText: 'There was an error appending free-text to files.',
+			mdPrependText: "There was an error prepending free-text to files.",
+			mdAppendText: "There was an error appending free-text to files.",
 			mdTemplateAdded: "An error occurred after a template has been added to a description page.",
 			mdNotifyUploaders: "An error occurred while notifying uploaders.",
+			mdDelete: "Error deleting files.",
 			mdRvGenOGallery: "An error occurred setting up the selection-revert dialog.",
 			mdRvQueriedFile: "An error occurred after gathering revert-file information and inserting them into the dialog.",
 			mdRvCreateImgRevisionMatrix: "An error occurred trying to obtain image revisions.",
 			mdRvEvalSelction: "An error occurred processing selected files.",
 			mdRevertImage: "There was an error before or while posting the revert-request.",
 			mdReverted: "An error occurred after posting the revert-request.",
-			mdExecuteReady: 'And error occurred after all sheduled tasks are done.'
+			mdExecuteReady: "And error occurred after all sheduled tasks are done."
 		}
 	}
 };
