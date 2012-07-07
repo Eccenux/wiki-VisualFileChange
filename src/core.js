@@ -230,7 +230,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.10.0',
+	mdScriptRevision: '0.9.10.1',
 	
 
 	/**
@@ -1259,7 +1259,7 @@ var VisualFileChange = window.VisualFileChange = {
 		'cv-logo':	[false,	false,					'',					'',						true,	false,	false,	"{{Logo}}\n",									'%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright.', 		'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (Logo)'],
 		'cv-ndw':	[false,	false,					'',					'',						true,	false,	false,	"{{Nonderivative}}\n",							'%cv% no derivatives are allowed, which is [[COM:L|incompatible with commons]].', 					'{{subst:copyvionote|1=%FILE%}}',			'Notification of possible copyright violations. (NoDerivative)'],
 		'del':		[true,	'mdInsertDeleteReasen',	'',					'mdDelteConfirmation',	true,	false,	false,	"{{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", '[[COM:DR|Nominating for deletion]].', 														'{{subst:idw|2=%REQUESTPAGE%|3=plural}}\nAffected:\n* [[:%FILE%]]\n', 'Warning: Some of your [[%FULLREQUESTPAGE%|uploads have been nominated for deletion]].'],
-		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{{subst:image permission|1=%FILE%}}',		'Please send a permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
+		'np':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:npd}}\n",								'Missing [[COM:PERMISSION|permission]].', 															'{{subst:image permission|1=%FILE%}}',		'Please send permission for [[%FILE%]] and some other files to [[COM:OTRS|OTRS]].'],
 		'ns':		[false,	false,					'',					'',						true,	false,	false,	"{{subst:nsd}}\n",								'File has no [[COM:Source|source]].', 																'{{subst:image source|1=%FILE%}}',			'[[%FILE%]] (and maybe some other ones) does not have [[COM:Source|a source]].'],
 		'ns-dw':	[false,	false,					'',					'',						true,	false,	false,	"{{subst:Dw-nsd}}\n",							'File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given.', '{{subst:dw image source|1=%FILE%}}', 	'[[%FILE%]] (and some other files) are a [[COM:DW|derivative works]] and don\'t have sources.' ],
 		'otrs':		[false,	'mdInsertOther',		'mdOTRSprefill',	'mdInsertConfirmation',	false,	false,	true,	"",												'Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.', 	'',											''],
@@ -1455,7 +1455,7 @@ var VisualFileChange = window.VisualFileChange = {
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
 		mdInsertDeleteHeading: "Insert the heading for the mass deletion request, please",
-		mdInsertOther: "Please insert the OTRS (or other) text to add to the permission section",
+		mdInsertOther: "Please insert the OTRS (or other) text to add to the permission-section",
 		mdInsertEditSummary: "An auto-edit summary for the file-pages will be created. Additionally add",
 		mdReplacePermissionText: "Clean permission-section?",
 		mdCustomReplaceText: "Please insert the text that should be inserted instead",
@@ -1464,7 +1464,7 @@ var VisualFileChange = window.VisualFileChange = {
 		mdInsertTalkNote: "Please enter a note to add to the user\'s talk-page",
 		mdInsertReplaceMatch: "What text should become replaced on the selected files?",
 		mdDelteConfirmation: "Your provided reason to delete is",
-		mdInsertConfirmation: "Your provided tag to insert in the permission section is",
+		mdInsertConfirmation: "Your provided tag to insert in the permission-section is",
 		mdSpecifyReason: "Please specify a reason with at least 6 letters.",
 		mdSelectedCount: "You selected %C% files to tag.",
 		mdMore: "more",
@@ -1589,8 +1589,8 @@ var VisualFileChange = window.VisualFileChange = {
 			mdExecute: "An error occurred while fetching your input.",
 			mdExecuteContinue: "An error occurred while preparing the request.",
 			mdRefreshCache: "An error occurred while updating the cached wikitext.",
-			mdInsertPermission: "An error occurred while preparing the insertion of the permission.",
-			mdInsertOTRS: "An error occurred while preparing the page-content of the permission.",
+			mdInsertPermission: "An error occurred while preparing the insertion of permission.",
+			mdInsertOTRS: "An error occurred while preparing the page-content of permission.",
 			mdCreateRequestSubpage: "An error occurred creating the deletion-request subpage.",
 			mdListRequestSubpage: "There was an error while listing the request-subpage.",
 			mdPrependText: "There was an error prepending free-text to files.",
