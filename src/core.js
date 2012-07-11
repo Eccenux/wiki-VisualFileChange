@@ -235,7 +235,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.13.0',
+	mdScriptRevision: '0.9.13.1',
 	
 
 	/**
@@ -487,7 +487,8 @@ var VisualFileChange = window.VisualFileChange = {
 		this.mdLedir = 'older';      // in which direction to enumerate logevents: older/newer
 		this.mdCmdir = 'asc';        // in which direction to sort: asc/desc
 		this.mdCmsort = 'sortkey';   // property to sort by: sortkey/timestamp
-		this.mdCmstart = 0;          // extrawurst für catmembers by date - sorting
+		this.mdCmstart = 0;          // extrawurst for catmembers by date - sorting
+		this.mdCmstartsortkey = '';  // extrawurst for catmembers start sortkey
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
 		this.mdFirstRun = true;      // determining whether it is the first query-cycle
 		this.mdNumberOfExecs = 0;    // Is Execute called already?
