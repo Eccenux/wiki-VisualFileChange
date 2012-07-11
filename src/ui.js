@@ -2,6 +2,8 @@
 // These are the delayed loaded display components (UI) in order to speed up loading of the first UI
 // <nowiki>
 
+// Invoke jsHint-validation
+
 /*global jQuery:false, mediaWiki:false, alert:false */
 /*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
 (function ($, mw) {
@@ -178,43 +180,6 @@ $.extend(window.VisualFileChange,
 			this.mdFirstRun = false;
 			this.nextTask();
 		}
-	},
-	
-	mdParseReason: function(r, cb, obj) {
-		var _this = this;
-		
-		_this.parsertimeout = _this.parsertimeout || 0;
-		if (_this.parserjqXHR) _this.parserjqXHR.abort();
-		
-		if ('' === r) {
-			cb.apply(obj, ['', true]);
-			return;
-		}
-		
-		var gotJSON = function(d) {
-			try {
-				cb.apply(obj, [d.parse.text['*'], true]);
-			} catch (ex) {}
-		};
-		
-		var maybeParse = function() {
-			var query = {
-				format: 'json',
-				action: 'parse',
-				uselang: mw.config.get('wgUserLanguage'),
-				redirects: true,
-				prop: 'text',
-				pst: true,
-				text: r
-			};
-			_this.parserjqXHR = $.getJSON(mw.util.wikiScript('api'), query, function(text) { 
-				gotJSON(text);
-			});
-		};
-		clearTimeout(_this.parsertimeout);
-		_this.parsertimeout = setTimeout(function() { 
-			maybeParse();
-		}, 1000);
 	},
 	
 	mdRegExpFromString: function(st) {
@@ -428,6 +393,63 @@ $.extend(window.VisualFileChange,
 		$newRow();
 		return $rn;
 	},
+	
+	mdMwRTACache: {},
+	mdMwReasonToAutocomplete: function(title, $el) {
+		var _this = this;
+		var mwRTAtoken = _this.mdMwRTAtoken = new Date();
+		if (!title) {
+			// Disable autocomplete
+			$el.autocomplete({ disabled: true });
+			// Discard pending query
+			_this.mdMwRTAtoken = 0;
+			return;
+		}
+		var __gotResult = function(r) {
+			var $r = $(r),
+				suggestions = [];
+			// There is http://jqueryui.com/demos/autocomplete/#categories
+			// But since there are only two groups, is seems to be unnecessary
+			// to group the result
+			$r.find('li > ul > li').each(function(i, li) {
+				var $li = $(li),
+					wikitext = '';
+				$li.contents().each(function(x, n) {
+					var $n = $(n),
+						href = $n.attr('href');
+					if (href) {
+						href = href.match(_this.mdWikipageRegExp);
+						if (href && href[1]) {
+							wikitext += '[[' + decodeURI(href[1]).replace(/^Commons:/, 'COM:').replace(/\%27/g, '\'').replace(/\%22/g, '\"') + '|' + $n.text() + ']]';
+							return;
+						}
+					}
+					wikitext += $n.text();
+				});
+				suggestions.push({ label: $li.text(), value: wikitext });
+			});
+			// Add to cache
+			_this.mdMwRTACache[title] = suggestions;
+			// Upadate if the token matches
+			if (mwRTAtoken === _this.mdMwRTAtoken) $el.autocomplete({ disabled: false, source: suggestions });
+		};
+		if (title in _this.mdMwRTACache) {
+			// If a query for this page is pending, return
+			var rtaItem = _this.mdMwRTACache[title];
+			if (rtaItem instanceof Date) {
+				// Allows updating on callback (__gotResult)
+				_this.mdMwRTAtoken = rtaItem;
+				return;
+			}
+			// Use the cached value
+			$el.autocomplete({ disabled: false, source: rtaItem });
+		} else {
+			_this.mdMwRTACache[title] = mwRTAtoken;
+			mw.loader.using(['ext.gadget.libAPI'], function() {
+				mw.libs.commons.api.parse('{{' + title + '}}', mw.config.get('wgUserLanguage'), 'File:A.png', __gotResult, true);
+			});
+		}
+	},
  
 	/**  
 	**  Mammoth method to set up and manage the UserInterface (UI)
@@ -612,13 +634,16 @@ $.extend(window.VisualFileChange,
 			$mdDeleteReason = $('#mdDeleteReason');
 
 		$mdDeleteReason.keyup( function (event) {
-			if ( ($(this).val().length < 6 ) && o.mdMinLenRequired ) {
+			var thisval = $(this).val();
+			if ( (thisval.length < o.mdMinReasonLen ) && o.mdMinLenRequired ) {
 				$submitButton.button('option', 'disabled', true);
-				o.pb.setHelp2(o.i18n.mdSpecifyReason);
+				o.pb.setHelp2(o.i18n.mdSpecifyReason.replace('%mdMinReasonLen%', o.mdMinReasonLen), true);
 			} else {
 				$submitButton.button('option', 'disabled', false);
-				o.pb.setHelp2($(this).val());
-				o.mdParseReason($(this).val(), o.pb.setHelp2, o.pb);
+				o.pb.setHelp2(thisval, true);
+				mw.loader.using(['ext.gadget.libAPI'], function() {
+					mw.libs.commons.api.parse(thisval, mw.config.get('wgUserLanguage'), '', $.proxy(o.pb.setHelp2, o.pb));
+				});
 			}
 		});
 		// Binding enter-key event. -0 ensures number
@@ -683,9 +708,10 @@ $.extend(window.VisualFileChange,
 		//
 		this.$AjaxMdType = $AjaxMdType = $('#AjaxMdType');
 		$AjaxMdType.change( function (event) {
-			var optConfig = o.mdOpt[$(this).val()];
+			var thisval = $(this).val(),
+				optConfig = o.mdOpt[thisval];
 			if (!optConfig) return;
-			if ('del' === $(this).val()) { 
+			if ('del' === thisval) { 
 				$('#mdRequestPageTitle').show(); 
 			} else { 
 				$('#mdRequestPageTitle').hide(); 
@@ -740,7 +766,10 @@ $.extend(window.VisualFileChange,
 			} else {
 				$('#mdReplacePermissionWrapper').hide();
 			}
-			$AjaxMdActionConfirm.text(' (' + o.i18n.mdOptions[$(this).val()] + ')');
+			$AjaxMdActionConfirm.text(' (' + o.i18n.mdOptions[thisval] + ')');
+			
+			// Reason autocomplete
+			o.mdMwReasonToAutocomplete(o.i18n.reasonAutoSuggest[thisval], $('#mdEditSummary'));
 		});
 		$AjaxMdType.val(this.mdSettings.defaultAction);
 		$AjaxMdType.change();
