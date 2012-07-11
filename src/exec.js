@@ -2,6 +2,8 @@
 // These are the delayed loaded edit components in order to speed up loading of the first UI
 // <nowiki>
 
+// Invoke jsHint-validation
+
 /*global jQuery:false, mediaWiki:false, alert:false, console:false */
 /*jshint curly:false, maxerr:200, smarttabs:true, loopfunc:true*/
 (function ($, mw) {
@@ -101,7 +103,7 @@ $.extend(window.VisualFileChange,
 		try {
 			o.mdSaveProfileToClient('auto-exec');
 		} catch (e) {
-			o.pb.setHelp2('Could not save your current inputs into your browser');
+			o.pb.setHelp2(o.i18n.mdProfileCantSave);
 		}
 		o.addTask('mdExecuteContinue');
 		o.nextTask();
@@ -787,7 +789,7 @@ $.extend(window.VisualFileChange,
 		
 		var _always = function() {
 			o.totalEditsDone++;
-			o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+			o.pb.showProgress(o.totalEdits, o.totalEditsDone, 'deletions');
 		};
 		var _deleted = function() {
 			o.mdTemplateAdded({ requestid: page }, '');
