@@ -235,7 +235,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.12.0',
+	mdScriptRevision: '0.9.13.0',
 	
 
 	/**
@@ -741,12 +741,26 @@ var VisualFileChange = window.VisualFileChange = {
 				,type: 'text'
 				,title: o.i18n.optStartAt
 				,placeholder: 'Start file (sortkey)'
-			} ).hide();
+			} )
+			.keyup( function( e ) {
+				if ( e.which === 13 ) {
+					$submitButton.click();
+				}
+			} )
+			.tipsy({
+				trigger: 'focus'
+				,gravity: 's'
+				,html: false
+				,title: function() {
+					return o.i18n.optStartFileHowTo;
+				} })
+			.hide();
 		$gStartFileL = $('<label>', {
 				'for': 'gStartFile'
 				,title: o.i18n.optStartAt
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
-			} ).hide();
+			} )
+			.hide();
 			
 			
 		$gSortBy = $('<select>', {
@@ -1524,6 +1538,7 @@ var VisualFileChange = window.VisualFileChange = {
 		
 		optStartAt: "Start listing from a specific date",
 		optStartAtHowTo: 'Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker',
+		optStartFileHowTo: "Start sortkey (finding a sortkey: [[Category:Name|>>>sortkey<<<]], equals file name if no sortkey specified). Case sensitive. Usually you want upper case!",
 		optMore: "More options",
 		
 		mdConfirm: {
