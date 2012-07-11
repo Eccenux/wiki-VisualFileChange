@@ -149,6 +149,7 @@ $.extend(window.VisualFileChange,
 			cmsort: this.mdCmsort
 		};
 		if (this.mdCmstart) query.cmstart = this.mdCmstart;
+		if (this.mdCmstartsortkey) query.cmstartsortkey = this.mdCmstartsortkey;
 		$(document).triggerHandler('vFC', ['catmembers', this, query]);
 		
 		this.doAPICall(query, 'mdFindCatMembersCB');
