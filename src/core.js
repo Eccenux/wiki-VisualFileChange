@@ -32,6 +32,8 @@
 	});
 ***************************************************/
 
+// Invoke automated jsHint-validation on save: A feature on WikimediaCommons
+// Interested? See [[:commons:MediaWiki:JSValidator.js]].
 /*global jQuery:false, mediaWiki:false, Geo:false */
 /*jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
 
@@ -178,11 +180,11 @@ ProgressBox.prototype.setTaskState = function (taskname, state) {
 ProgressBox.prototype.setHelp = function (help) {
 	this.$aHelpHead.text(help);
 };
-ProgressBox.prototype.setHelp2 = function (help, html) {
-	if (html) {
-		this.$aHelpCont.html(help);
-	} else {
+ProgressBox.prototype.setHelp2 = function (help, text) {
+	if (text) {
 		this.$aHelpCont.text(help);
+	} else {
+		this.$aHelpCont.html(help);
 	}
 };
 ProgressBox.prototype.setHelp3 = function (help) {
@@ -198,13 +200,13 @@ ProgressBox.prototype.setZIndex = function (zIndex) {
 ProgressBox.prototype.isHidden = function () {
 	return ('none' === this.$cont.css('display'));
 };
-ProgressBox.prototype.showProgress = function(total, done) {
+ProgressBox.prototype.showProgress = function(total, done, type) {
 	var _this = this;
 	if (_this.progressTimeout) clearTimeout(_this.progressTimeout);
 	_this.progressTimeout = setTimeout(function() {
 		mw.loader.using('jquery.ui.progressbar', function() {
 			_this.$progressBar.progressbar({ value: (done) / (total) * 100 });
-			_this.$progressText.text('remaining ' + (total - done) + ' edits');
+			_this.$progressText.text('remaining ' + (total - done) + ' ' + type);
 			if (total === done) {
 				_this.$progressWrap.stop().fadeOut();
 			} else {
@@ -230,7 +232,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.10.1',
+	mdScriptRevision: '0.9.11.0',
 	
 
 	/**
@@ -979,7 +981,7 @@ var VisualFileChange = window.VisualFileChange = {
 		if (!isRetry) {
 			isRetry = 0;
 			if (params.action && 'edit' === params.action) o.totalEdits++;
-			o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+			o.pb.showProgress(o.totalEdits, o.totalEditsDone, 'edits');
 		}
 		
 		if (o.mdSettings.maxSimultaneousReq > 0 && (o.apiRunningRequests >= o.mdSettings.maxSimultaneousReq)) {
@@ -1021,7 +1023,7 @@ var VisualFileChange = window.VisualFileChange = {
 				o.editedPageLast(params.title, params.summary, function(edited) {
 					switch (edited) {
 						case  1: o.totalEditsDone++;
-							o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+							o.pb.showProgress(o.totalEdits, o.totalEditsDone, 'edits');
 							o.mdSecureCall(callback, {}, params);
 							return;
 						case  0: setTimeout(function () {
@@ -1131,7 +1133,7 @@ var VisualFileChange = window.VisualFileChange = {
 				}
 				if (isEdit) {
 					o.totalEditsDone++;
-					o.pb.showProgress(o.totalEdits, o.totalEditsDone);
+					o.pb.showProgress(o.totalEdits, o.totalEditsDone, 'edits');
 				}
 				o.mdSecureCall(callback, result, params);
 			},
@@ -1426,11 +1428,13 @@ var VisualFileChange = window.VisualFileChange = {
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
+	mdWikipageRegExp: new RegExp($.escapeRE(mw.config.get('wgArticlePath').replace('$1', '')) + '(.+)'),
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ':',
 	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ':',
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
+	mdMinReasonLen: 11,
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
 	mdSuccessIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/120px-Crystal_Project_success.png',
@@ -1465,8 +1469,9 @@ var VisualFileChange = window.VisualFileChange = {
 		mdInsertReplaceMatch: "What text should become replaced on the selected files?",
 		mdDelteConfirmation: "Your provided reason to delete is",
 		mdInsertConfirmation: "Your provided tag to insert in the permission-section is",
-		mdSpecifyReason: "Please specify a reason with at least 6 letters.",
+		mdSpecifyReason: "Please specify a reason with at least %mdMinReasonLen% letters.",
 		mdSelectedCount: "You selected %C% files to tag.",
+		mdProfileCantSave: "Could not save your current inputs into your browser",
 		mdMore: "more",
 		mdNoResult: "Script cannot find any file / initial upload in / by %TARGET%.",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
@@ -1547,6 +1552,10 @@ var VisualFileChange = window.VisualFileChange = {
 			'prepNf': "prepend text, notify uploaders",
 			'aDelete': "Delete! (admin only)"
 		},
+
+		reasonAutoSuggest: {
+			'aDelete': 'MediaWiki:Deletereason-dropdown'
+		},
 		
 		task: {
 			start: 'Starting and gathering information.',
@@ -1564,7 +1573,7 @@ var VisualFileChange = window.VisualFileChange = {
 			mdCreateRequestSubpage: 'Creating request subpage.',
 			mdListRequestSubpage: 'Listing request subpage to the daily list.',
 			mdRvGenOGallery: 'Overwritten files can\'t be reverted due to software changes. But hopefully fixed soon.',
-			mdDelete: 'Deleting files',
+			mdDelete: 'Deleting files'
 		},
  
 		taskFailure: {
