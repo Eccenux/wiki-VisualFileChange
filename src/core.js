@@ -153,67 +153,70 @@ function ProgressBox(width, o) {
 		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
 	);
 }
-ProgressBox.prototype.show = function () {
-	this.$cont.show();
-};
-ProgressBox.prototype.hide = function () {
-	this.$cont.hide();
-};
-ProgressBox.prototype.remove = function () {
-	this.$cont.remove();
-};
-ProgressBox.prototype.addTask = function (task) {
-	var n = $('<div>', { text: this.usingObj.i18n.task[task], 'class': 'md-notdone' });
-	this.t[task] = n;
-	this.$tasklist.append( n );
-};
-ProgressBox.prototype.setCurrentTaskState = function (state) {
-	if (this.ct) this.ct.removeClass('md-notdone md-doing md-done md-attention').addClass(state);
-};
-ProgressBox.prototype.setCurrentTaskDone = function () {
-	if (this.ct && this.ct.hasClass('md-doing')) this.ct.removeClass('md-doing').addClass('md-done');
-};
-ProgressBox.prototype.setTaskState = function (taskname, state) {
-	this.t[taskname].removeClass('md-notdone md-doing md-done md-attention').addClass(state);
-	this.ct = this.t[taskname];
-};
-ProgressBox.prototype.setHelp = function (help) {
-	this.$aHelpHead.text(help);
-};
-ProgressBox.prototype.setHelp2 = function (help, text) {
-	if (text) {
-		this.$aHelpCont.text(help);
-	} else {
-		this.$aHelpCont.html(help);
+ProgressBox.fn = ProgressBox.prototype = {
+	constructor: ProgressBox,
+	show: function () {
+		this.$cont.show();
+	},
+	hide: function () {
+		this.$cont.hide();
+	},
+	remove: function () {
+		this.$cont.remove();
+	},
+	addTask: function (task) {
+		var n = $('<div>', { text: this.usingObj.i18n.task[task], 'class': 'md-notdone' });
+		this.t[task] = n;
+		this.$tasklist.append( n );
+	},
+	setCurrentTaskState: function (state) {
+		if (this.ct) this.ct.removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+	},
+	setCurrentTaskDone: function () {
+		if (this.ct && this.ct.hasClass('md-doing')) this.ct.removeClass('md-doing').addClass('md-done');
+	},
+	setTaskState: function (taskname, state) {
+		this.t[taskname].removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+		this.ct = this.t[taskname];
+	},
+	setHelp: function (help) {
+		this.$aHelpHead.text(help);
+	},
+	setHelp2: function (help, text) {
+		if (text) {
+			this.$aHelpCont.text(help);
+		} else {
+			this.$aHelpCont.html(help);
+		}
+	},
+	setHelp3: function (help) {
+		this.$aHelpCont2.text(help);
+	},
+	setError: function (err) {
+		this.$error.text(err);
+		this.$errorCont.show();
+	},
+	setZIndex: function (zIndex) {
+		this.$cont.css('z-index', zIndex);
+	},
+	isHidden: function () {
+		return ('none' === this.$cont.css('display'));
+	},
+	showProgress: function(total, done, type) {
+		var _this = this;
+		if (_this.progressTimeout) clearTimeout(_this.progressTimeout);
+		_this.progressTimeout = setTimeout(function() {
+			mw.loader.using('jquery.ui.progressbar', function() {
+				_this.$progressBar.progressbar({ value: (done) / (total) * 100 });
+				_this.$progressText.text('remaining ' + (total - done) + ' ' + type);
+				if (total === done) {
+					_this.$progressWrap.stop().fadeOut();
+				} else {
+					_this.$progressWrap.stop().fadeTo(0, 1);
+				}
+			});
+		}, 10);
 	}
-};
-ProgressBox.prototype.setHelp3 = function (help) {
-	this.$aHelpCont2.text(help);
-};
-ProgressBox.prototype.setError = function (err) {
-	this.$error.text(err);
-	this.$errorCont.show();
-};
-ProgressBox.prototype.setZIndex = function (zIndex) {
-	this.$cont.css('z-index', zIndex);
-};
-ProgressBox.prototype.isHidden = function () {
-	return ('none' === this.$cont.css('display'));
-};
-ProgressBox.prototype.showProgress = function(total, done, type) {
-	var _this = this;
-	if (_this.progressTimeout) clearTimeout(_this.progressTimeout);
-	_this.progressTimeout = setTimeout(function() {
-		mw.loader.using('jquery.ui.progressbar', function() {
-			_this.$progressBar.progressbar({ value: (done) / (total) * 100 });
-			_this.$progressText.text('remaining ' + (total - done) + ' ' + type);
-			if (total === done) {
-				_this.$progressWrap.stop().fadeOut();
-			} else {
-				_this.$progressWrap.stop().fadeTo(0, 1);
-			}
-		});
-	}, 10);
 };
 
 var isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
@@ -232,7 +235,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.11.0',
+	mdScriptRevision: '0.9.12.0',
 	
 
 	/**
@@ -538,7 +541,7 @@ var VisualFileChange = window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
+			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var getMwDate = function(dateX) {
@@ -560,6 +563,7 @@ var VisualFileChange = window.VisualFileChange = {
 			o.lastContinues.setVals = ['mdLestart'];
 			o.$AjaxMdContainer.text(o.i18n.mdPleaseWait);
 			if (mwDateRx.test($gStartAt.val())) o.mdLestart = $gStartAt.val();
+			var startFile = $gStartFile.val().replace(/^File:/, '');
 			switch ($gSortBy.val()) {
 				case 'of': // oldest first
 					o.mdLedir = 'newer';
@@ -578,10 +582,12 @@ var VisualFileChange = window.VisualFileChange = {
 				case 'ca': // cat asc
 					o.mdCmdir = 'asc';
 					o.mdCmsort = 'sortkey';
+					o.mdCmstartsortkey = startFile;
 					break;
 				case 'cd': // cat desc
 					o.mdCmdir = 'desc';
 					o.mdCmsort = 'sortkey';
+					o.mdCmstartsortkey = startFile;
 					break;
 				case 'default':
 					o.mdLedir = 'older';
@@ -730,6 +736,18 @@ var VisualFileChange = window.VisualFileChange = {
 				,title: o.i18n.optStartAt
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} );
+		$gStartFile = $('<input>', {
+				id: 'gStartFile'
+				,type: 'text'
+				,title: o.i18n.optStartAt
+				,placeholder: 'Start file (sortkey)'
+			} ).hide();
+		$gStartFileL = $('<label>', {
+				'for': 'gStartFile'
+				,title: o.i18n.optStartAt
+				,html: " &nbsp;Start&nbsp;at&nbsp;"
+			} ).hide();
+			
 			
 		$gSortBy = $('<select>', {
 				id: 'gSortBy'
@@ -739,7 +757,24 @@ var VisualFileChange = window.VisualFileChange = {
 				,$('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)')
 				,$('<option>', { 'value': 'ca' }).text('asc, alphabetical')
 				,$('<option>', { 'value': 'cd' }).text('desc, alphabetical')
-			);
+			)
+			.change(function() {
+				var $t = $(this),
+					methodDate,
+					methodFile;
+					
+				if ($t.val().slice(0,1) === 'c') {
+					methodDate = 'none';
+					methodFile = 'inline-block';
+				} else {
+					methodFile = 'none';
+					methodDate = 'inline-block';
+				}
+				$gStartAtL.css('display', methodDate);
+				$gStartAt.css('display', methodDate);
+				$gStartFileL.css('display', methodFile);
+				$gStartFile.css('display', methodFile);
+			});
 		$gSortByL = $('<label>', {
 				'for': 'gSortBy'
 				,title: 'Sorting'
@@ -749,6 +784,8 @@ var VisualFileChange = window.VisualFileChange = {
 		$gMoreOptions = $('<div>').append(
 			$gStartAtL
 			,$gStartAt
+			,$gStartFileL
+			,$gStartFile
 			,' '
 			,$gSortByL
 			,$gSortBy
