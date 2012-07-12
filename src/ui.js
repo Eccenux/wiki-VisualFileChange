@@ -958,6 +958,7 @@ $.extend(window.VisualFileChange,
 			},
 			autoOpen: false
 		});
+		this.$dialogsToClose.push(this.mdCuteSelectDlg);
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
@@ -1652,6 +1653,7 @@ $.extend(window.VisualFileChange,
 			width: Math.min(450, $(window).width())
 		});
 		document.title = "VisualFileChange: Ready!";
+		o.$dialogsToClose.push($dlgNode);
 	},
 
 	mdGoToSite: function (target) {
