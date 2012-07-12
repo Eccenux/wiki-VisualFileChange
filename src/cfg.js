@@ -2,6 +2,8 @@
 // These are the delayed loaded configuration components (user's custom config) in order to speed up loading of the first UI
 // <nowiki>
 
+// Invoke jsHint-validation
+
 /*global jQuery:false, mediaWiki:false */
 /*jshint curly:false, smarttabs:true */
 (function ($, mw) {
