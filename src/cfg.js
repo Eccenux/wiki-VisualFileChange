@@ -131,6 +131,7 @@ $.extend(window.VisualFileChange,
 				$buttons.eq(mw.user.anonymous() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
 			}
 		});
+		this.$configDlgNode = $dlgNode;
 	},
 	
 	mdPublishSettings: function(dlgNode, cfg) {
@@ -532,7 +533,7 @@ $.extend(window.VisualFileChange,
 			});
 		};
 		
-		$dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.' });
+		this.$profileDlgNode = $dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.' });
 		$profileSelect = $('<select>', { size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
 			var $sel = $profileSelect,
 				$selVal = $sel.val() || '',
