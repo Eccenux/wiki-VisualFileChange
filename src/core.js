@@ -235,7 +235,7 @@ var VisualFileChange = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.13.1',
+	mdScriptRevision: '0.9.14.0',
 	
 
 	/**
@@ -862,7 +862,7 @@ var VisualFileChange = window.VisualFileChange = {
 		$(document).triggerHandler('vFC', ['closing dialog', o, o.dlg]);
 		
 		if ( o.mdBusy ) {     // Call myself later if script is busy
-			setTimeout(o.mdDlgThumbDlgClose(), 10);
+			setTimeout(o.mdDlgThumbDlgClose, 20);
 			return true;
 		}
 		
@@ -882,16 +882,19 @@ var VisualFileChange = window.VisualFileChange = {
 			catch (ex) {
 				o.dlg = 0;
 			}
-			try {
-				o.mdCuteSelectDlg.dialog("destroy");
-				o.mdCuteSelectDlg.remove();
-			} catch (ex) {}
 		} else if ( 'AjaxMdContainer' === $(this).children('div').eq(0).attr('id') ) {
 			this.dialog("destroy");
 			this.parent.remove();
 			document.body.style.cursor = 'auto';
 			o.context = 'MD-postDlg';
 		}
+		$.each(o.$dialogsToClose, function(i, $el) {
+			try {
+				$el.dialog('close');
+				//$el.dialog('destroy');
+				$el.remove();
+			} catch (ex) {}
+		});
 	},
 	
 	mdCloseAndContinue: function() {
@@ -1274,6 +1277,8 @@ var VisualFileChange = window.VisualFileChange = {
 			o.fail(ex);
 		}
 	},
+	
+	$dialogsToClose: [],
 	
 	/**
 	** Simple task queue.  addTask() adds a new task to the queue, nextTask() executes
