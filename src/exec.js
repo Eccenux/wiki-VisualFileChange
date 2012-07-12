@@ -811,6 +811,8 @@ $.extend(window.VisualFileChange,
 			setTimeout(_deleted, Math.round(Math.random() * 9000));
 		} else {
 			mw.loader.using(['ext.gadget.libAPI'], function() {
+				// Delete 3 pages the same time
+				mw.libs.commons.api.config.maxSimultaneousReq = 3;
 				mw.libs.commons.api.deletePage({
 					cb: function() {
 						_deleted();
