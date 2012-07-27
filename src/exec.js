@@ -110,7 +110,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	formatDate: function (fmt, date) {
-		return mw.libs.commons.formatDate(date, this.startDate);
+		return mw.libs.commons.formatDate(fmt, date, this.startDate);
 	},
 
 	/**  
