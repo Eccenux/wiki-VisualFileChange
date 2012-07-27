@@ -110,17 +110,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	formatDate: function (fmt, date) {
-		var pad0 = function (s) {
-				s = "" + s;
-				return (s.length > 1 ? s : "0" + s);
-			}; // zero-pad to two digits
-		if (!date) date = this.startDate;
-		fmt = fmt.replace(/YYYY/g, date.getUTCFullYear());
-		fmt = fmt.replace(/MM/g, pad0(date.getUTCMonth() + 1));
-		fmt = fmt.replace(/DD/g, pad0(date.getUTCDate()));
-		fmt = fmt.replace(/MON/g, mw.config.get('wgMonthNames')[date.getUTCMonth()+1]);
-		fmt = fmt.replace(/DAY/g, date.getUTCDate());
-		return fmt;
+		return mw.libs.commons.formatDate(date, this.startDate);
 	},
 
 	/**  
