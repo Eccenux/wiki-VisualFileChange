@@ -612,7 +612,7 @@ $.extend(window.VisualFileChange,
 			clearTimeout(keyTimeout);
 			keyTimeout = setTimeout(function() {
 				if (text.replace(/^User\:/, '') === lookFor) {
-					o.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automtatically saved the files that were loaded last so you can continue there. ');
+					o.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there. ');
 					o.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).click(function(e) {
 						e.preventDefault();
 						$.each(autoExecProfile.objectMembers, function(memberName, memberValue) {
