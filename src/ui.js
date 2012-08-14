@@ -6,7 +6,7 @@
 
 /*global jQuery:false, mediaWiki:false, alert:false */
 /*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
-(function ($, mw) {
+(function ($, mw, undefined) {
 'use strict';
 
 // Return if Main Script is not loaded
@@ -14,30 +14,53 @@ if (!window.VisualFileChange) return;
 // Return if this script is already loaded
 if (window.VisualFileChange.displayComponents) return;
 
-mw.util.addCSS( ' .rgallery { background-color:#FFF !important; }\n'
+var css,
+	vfc = window.VisualFileChange;
+	
+css = ' .rgallery { background-color:#FFF !important; }\n'
+	+ ' #AjaxMdContainer { position:relative; }\n'
+	+ ' .md-toggle-pane { position:absolute; }\n'
+	+ ' .md-nav-button { display:inline-block; background-color:white; border:2px solid #f3f3f3; -webkit-border-radius:10px; -moz-border-radius:10px; border-radius:10px } '
+	+ ' .md-nav-button:hover, .md-nav-button:focus { background-color:#f0f0fd; }'
+	+ ' .md-nav-button:active { border-color:#ccc }'
+	+ ' .md-nav-button-container { position:fixed; top:4em; right:1.5em; max-width:18px }\n'
+	+ ' .md-nav-button-wrap { display:inline-block; background:none!important; border:none!important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
 	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
 	+ ' a:link.md-loglink { color:#BB6!important; display:inline-block; }\n'
-	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; }\n'
-	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block }\n'
+	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; cursor:help }\n'
+	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; cursor:help }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
+	+ ' li.gallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
+	+ ' li.md-selected { background-color:#BBE; }\n'
+	+ ' li.md-selected div.thumb { background-color:#DDE; border:#FFF 1px solid; }\n'
+	+ ' div.jImage { position:relative }\n'
+	+ ' div.jProgress { position:absolute; top:0px; left:0px; height:16px; width:16px }\n'
+	+ ' div.jImage.progress-doing div.jProgress { background:url(\'' + vfc.mdThisTaskIcon + '\') no-repeat center; }\n'
+	+ ' div.jImage.progress-done div.jProgress { background:url(\'' + vfc.mdDoneTaskIcon + '\') no-repeat center; }\n'
+	+ ' div.jImage.progress-failed div.jProgress { background:url(\'' + vfc.mdFailedTaskIcon + '\') no-repeat center; }\n'
+	+ ' div.jImage.progress-nochange div.jProgress { background:url(\'' + vfc.mdNoChangeTaskIcon + '\') no-repeat center; }\n'
+	+ ' div.jGU { position:absolute; right:0px; bottom:0px; height:0px; width:0px; overflow:visible; cursor:pointer }\n'
+	+ ' li.gallerybox div.jImage.progress-done { border:2px solid #393; }\n'
+	+ ' li.gallerybox div.jImage.progress-failed { background-color:#ebb; border:2px solid #933; }\n'
+	+ ' li.gallerybox div.jImage.progress-nochange { background-color:#eeb; border:2px solid #993; }\n'
 	+ ' .md-re-escape-helper { position:absolute; z-index:1002; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
 	+ ' .md-examine-contents { display:inline-block; width:49%; white-space:pre-wrap; font-family:monospace; border:1px solid #362B36; text-align:left; word-wrap:break-word; }\n'
-	+ ' li.gallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
-	+ ' li.md-selected { background-color:#BBE; }\n'
-	+ ' li.md-selected div.thumb { background-color:#DDE; border:#FFF 1px solid; }\n'
-	+ ' li#mdLastSelected { border:#447 2px solid; }\n'
-);
-
+	+ ' li#mdLastSelected { border:#447 2px solid; }\n';
+	
 // Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
-if ('vector' === mw.config.get('skin')) mw.util.addCSS(' .ui-buttonset .ui-button { margin-left:0px!important; margin-right:-.3em!important; }\n' 
-		+ ' .ui-buttonset .ui-button > .ui-button-text { padding-left:0.5em !important; padding-right:0.5em !important; }'
-		+ ' .md-examine-contents { font-size:1.2em; }');
+if ('vector' === mw.config.get('skin')) css += ' .ui-buttonset .ui-button { margin-left:0px!important; margin-right:-.3em!important; }\n' 
+		+ ' .ui-buttonset .ui-button > .ui-button-text { padding-left:0.5em !important; padding-right:0.5em !important; }\n'
+		+ ' .ui-buttonset > label.ui-state-active { background:#F0F0F0 !important; }\n'
+		+ ' .md-examine-contents { font-size:1.2em; }';
+	
+mw.util.addCSS(css);
 
+		
 $.extend(window.VisualFileChange,
 {
 	displayComponents: true,
@@ -53,9 +76,8 @@ $.extend(window.VisualFileChange,
 		}
 		if (this.mdListUploadsPending > 0) {
 			$(document).triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
-			var o = this;
 			setTimeout(function () { 
-				o.mdCreateList();
+				vfc.mdCreateList();
 			}, 200); // See me later ...
 			return true;
 		}
@@ -71,12 +93,12 @@ $.extend(window.VisualFileChange,
 		if (this.context !== 'MD') return;
 		this.mdListUploadsPending++;
 		
-		if (this.mdModeCat) this.mdSecureCall('mdFindCatMembers'); else this.mdSecureCall('mdFindUploads');
+		if (this.mdModeCat) this.secureCall('mdFindCatMembers'); else this.secureCall('mdFindUploads');
 	},
 	
 	mdSaveContinueKey: function (key) {
-		this.lastContinues.vals.push(key);
-		if (this.lastContinues.vals.length > 2) this.lastContinues.vals.shift();
+		vfc.lastContinues.vals.push(key);
+		if (vfc.lastContinues.vals.length > 2) vfc.lastContinues.vals.shift();
 	},
 	
 	mdFindUploads: function () {
@@ -85,54 +107,53 @@ $.extend(window.VisualFileChange,
 			list: 'logevents',
 			leprop: 'title|type|timestamp',
 			leaction: 'upload/upload',
-			leuser: this.mdTarget,
-			lelimit: this.mdSettings.loadBatchSize,
-			ledir: this.mdLedir
+			leuser: vfc.mdTarget,
+			lelimit: vfc.mdSettings.loadBatchSize,
+			ledir: vfc.mdLedir
 		};
-		if (this.mdLestart) query.lestart = this.mdLestart;
-		$(document).triggerHandler('vFC', ['useruploads', this, query]);
-		this.doAPICall(query, 'mdFindUploadsCB');
+		if (vfc.mdLestart) query.lestart = vfc.mdLestart;
+		$(document).triggerHandler('vFC', ['useruploads', vfc, query]);
+		vfc.queryAPI(query, 'mdFindUploadsCB');
 	},
 	
 	mdFindUploadsCB: function (result) {
-		this.mdListUploadsPending--;
-		$(document).triggerHandler('vFC', ['got useruploads', this, result]);
-		this.pb.setCurrentTaskDone();
+		vfc.mdListUploadsPending--;
+		$(document).triggerHandler('vFC', ['got useruploads', vfc, result]);
+		vfc.pb.setCurrentTaskDone();
 		
 		var allFileChanges = result.query.logevents;
-		var _this = this;
 		$.each(allFileChanges, function(id, fc) { // loop through all filechanges (upload-events) (array)
 		
 			// This file was initially uploaded by the user.
 			if ('upload' === fc.action) { 
 				// Do not mess-up numbers when a file was deleted and re-uploaded
-				if (fc.title in _this.iUploads) return; 
-				_this.iUploads[fc.title] = { uploader: [] };
-				_this.iUploads[fc.title].iId = _this.iiUploads;
-				_this.iUploads[fc.title].time = fc.timestamp;
-				_this.iiUploads++;
+				if (fc.title in vfc.iUploads) return; 
+				vfc.iUploads[fc.title] = { uploader: [] };
+				vfc.iUploads[fc.title].iId = vfc.iiUploads;
+				vfc.iUploads[fc.title].time = fc.timestamp;
+				vfc.iiUploads++;
 			// User overwrote file.
 			} else if ('overwrite' === fc.action) {
-				_this.oUploads[fc.title] = {};
-				_this.oUploads[fc.title].iId = _this.ioUploads;
-				_this.oUploads[fc.title].time = fc.timestamp;
-				_this.ioUploads++;
+				vfc.oUploads[fc.title] = {};
+				vfc.oUploads[fc.title].iId = vfc.ioUploads;
+				vfc.oUploads[fc.title].time = fc.timestamp;
+				vfc.ioUploads++;
 			}
 			
 		});
 		
 		if (!result['query-continue']) { 
-			this.mdNoMoreFiles = true;
+			vfc.mdNoMoreFiles = true;
 		}
-		if (!this.mdNoMoreFiles) {
-			this.mdLestart = result['query-continue'].logevents.lestart;
-			this.mdSaveContinueKey(this.mdLestart);
+		if (!vfc.mdNoMoreFiles) {
+			vfc.mdLestart = result['query-continue'].logevents.lestart;
+			vfc.mdSaveContinueKey(vfc.mdLestart);
 		}
-		if (this.mdFirstRun) {			// Call nextTask the first time only
-			this.mdFirstRun = false;
-			this.nextTask();
+		if (vfc.mdFirstRun) {			// Call nextTask the first time only
+			vfc.mdFirstRun = false;
+			vfc.nextTask();
 		} else {
-			if (!this.mdActualResultCount) this.mdSecureCall('mdQueryMore');
+			if (!vfc.mdActualResultCount) vfc.secureCall('mdQueryMore');
 		}
 	},
 	
@@ -140,51 +161,49 @@ $.extend(window.VisualFileChange,
 		var query = {
 			action: 'query',
 			list: 'categorymembers',
-			cmtitle: this.mdTarget,
+			cmtitle: vfc.mdTarget,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
-			cmlimit: this.mdSettings.loadBatchSize,
-			cmcontinue: this.mdLestart,
-			cmdir: this.mdCmdir,
-			cmsort: this.mdCmsort
+			cmlimit: vfc.mdSettings.loadBatchSize,
+			cmcontinue: vfc.mdLestart,
+			cmdir: vfc.mdCmdir,
+			cmsort: vfc.mdCmsort
 		};
-		if (this.mdCmstart) query.cmstart = this.mdCmstart;
-		if (this.mdCmstartsortkey) query.cmstartsortkey = this.mdCmstartsortkey;
-		$(document).triggerHandler('vFC', ['catmembers', this, query]);
+		if (vfc.mdCmstart) query.cmstart = vfc.mdCmstart;
+		if (vfc.mdCmstartsortkey) query.cmstartsortkey = vfc.mdCmstartsortkey;
+		$(document).triggerHandler('vFC', ['catmembers', vfc, query]);
 		
-		this.doAPICall(query, 'mdFindCatMembersCB');
+		vfc.queryAPI(query, 'mdFindCatMembersCB');
 	},
 	
 	mdFindCatMembersCB: function (result) {
-		this.mdListUploadsPending--;
-		$(document).triggerHandler('vFC', ['got catmembers', this, result]);
-		this.pb.setCurrentTaskDone();
-		
-		var _this = this;
+		vfc.mdListUploadsPending--;
+		$(document).triggerHandler('vFC', ['got catmembers', vfc, result]);
+		vfc.pb.setCurrentTaskDone();
 		
 		// loop through all category-members (object)
 		$.each(result.query.categorymembers, function(id, fc) {
-			_this.iUploads[fc.title] = { uploader: [], comments: [] };
-			_this.iUploads[fc.title].iId = _this.iiUploads;
-			_this.iUploads[fc.title].time = fc.timestamp;
-			_this.iiUploads++;
+			vfc.iUploads[fc.title] = { uploader: [], comments: [] };
+			vfc.iUploads[fc.title].iId = vfc.iiUploads;
+			vfc.iUploads[fc.title].time = fc.timestamp;
+			vfc.iiUploads++;
 		});
 		if (!result['query-continue']) { 
-			this.mdNoMoreFiles = true;
+			vfc.mdNoMoreFiles = true;
 		}
-		if (!this.mdNoMoreFiles) {
-			this.mdLestart = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
-			if (result['query-continue'].categorymembers.cmstart) this.mdCmstart = result['query-continue'].categorymembers.cmstart;
-			this.mdSaveContinueKey(this.mdCmstart || this.mdLestart);
+		if (!vfc.mdNoMoreFiles) {
+			vfc.mdLestart = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
+			if (result['query-continue'].categorymembers.cmstart) vfc.mdCmstart = result['query-continue'].categorymembers.cmstart;
+			vfc.mdSaveContinueKey(vfc.mdCmstart || vfc.mdLestart);
 		}
-		if (this.mdFirstRun) {			// Call nextTask the first time only
-			this.mdFirstRun = false;
-			this.nextTask();
+		if (vfc.mdFirstRun) {			// Call nextTask the first time only
+			vfc.mdFirstRun = false;
+			vfc.nextTask();
 		}
 	},
 	
 	mdRegExpFromString: function(st) {
-		var match, m = st.match(this.mdRegExpPattern);
+		var match, m = st.match(vfc.mdRegExpPattern);
 		if (m && m[0] && m[1]) {
 			match = new RegExp(m[1], m[2]);
 		} else {
@@ -206,33 +225,56 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdCreateExamineNode: function() {
-		var o = this;
 		var $examineToggler, $examineInput, $examineButton, $loadDivButton, $examineFirstDiv, $examineSecondDiv, $examineDiffDiv, $examineOuterDiv;
 			
+		var _getRenderLink = function(text, title, $node) {
+			var rl, 
+				blockCSS = { width: '99%' }, 
+				__doUnblock   = function() { $node.unblock(); return false; },
+				$blockNode    = $('<div>', { style: 'text-align:left;', title: "Click to hide preview", click: __doUnblock }),
+				$closeButton  = $.createIcon('ui-icon-close').css({ cursor: 'pointer', 'float': 'right' }).click(__doUnblock).appendTo($blockNode),
+				$blockContent = $('<div>').appendTo($blockNode);
+				
+			var _gotParsedText = function(t) {
+				$blockContent.html(t);
+				// Block again in order to vertically center text
+				$node.block({ css: blockCSS, message: $blockNode });
+			};
+			rl = $('<a>', { href: '#render', text: 'Render preview', style: 'display:inline-block; float:right; font-family:sans-serif;' }).button().click(function(e) {
+				e.preventDefault();
+				$blockContent.html('').append($('<div>', { style: "text-align:center; font-size:2em; line-height:1.5em", text: "Server is parsing wiki-markup" }));
+				$node.block({ css: blockCSS, message: $blockNode });
+				mw.libs.commons.api.parse(text, mw.config.get('wgUserLanguage'), title, _gotParsedText);
+			});
+			return rl;
+		};
 		$examineInput = $('<input>', { type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: 'file number' }).placeholder();
 		$examineButton = $('<button>', { text: 'Compare!' }).click(function() {
 			$examineFirstDiv.text('');
 			$examineSecondDiv.text('');
 			if (!$examineInput.val()) return;
-			var replaceSecurityLevel = o.$selPreserve.val();
+			var replaceSecurityLevel = vfc.$selPreserve.val();
 
-			$.each(o.iUploads, function(upload, curUpld) {
+			$.each(vfc.iUploads, function(upload, curUpld) {
 				if (!curUpld.content || (($examineInput.val()-0) !== curUpld.iId)) return;
 
-				var replaceContainer = o.nowikiEscaper(curUpld.content);
-				replaceContainer.alsoPreserve(o.$alsoPreserve.val());
+				var newText,
+					oldText = curUpld.content,
+					replaceContainer = vfc.nowikiEscaper(oldText);
+					
+				replaceContainer.alsoPreserve(vfc.$alsoPreserve.val());
 
-				$.each(o.mdReplacementMatrix, function(i, rObj) {
+				$.each(vfc.mdReplacementMatrix, function(i, rObj) {
 					var match, replace;
 					match = rObj.match.val();
 					replace = rObj.replace.val();
 					
 					if (rObj.regex[0].checked && match) {
-						match = o.mdRegExpFromString(match);
+						match = vfc.mdRegExpFromString(match);
 					}
 					if (!match) return;
 					
-					if (rObj.vars[0].checked) replace = o.mdVarReplacements(replace, upload, curUpld);
+					if (rObj.vars[0].checked) replace = vfc.mdVarReplacements(replace, upload, curUpld);
 					
 					switch (replaceSecurityLevel) {
 						case 'secure':
@@ -246,29 +288,39 @@ $.extend(window.VisualFileChange,
 							break;
 					}
 				});
-				$examineFirstDiv.text(curUpld.content);
-				$examineSecondDiv.text(replaceContainer.doCleanUp());
+
+				newText = replaceContainer.doCleanUp();
+				
+				// Side by side
+				$examineFirstDiv.text(oldText);
+				$examineSecondDiv.text(newText);
+				$examineSecondDiv.prepend(_getRenderLink(newText, upload, $examineOuterDiv));
+				
+				// Diff
 				if (mw.libs.schnark_diff && mw.libs.schnark_diff.html_diff) {
-					$examineDiffDiv.html('<div style="float:right; font-family:sans-serif;">Powered by SchnarkDiff</div>' + mw.libs.schnark_diff.html_diff(curUpld.content, replaceContainer.getText(), true));
+					$examineDiffDiv.html('<a target="_blank" href="//de.wikipedia.org/wiki/Benutzer:Schnark/js/diff/core" style="display:inline-block; float:right; font-family:sans-serif;">Powered by SchnarkDiff</a>' + mw.libs.schnark_diff.html_diff(oldText, newText, true));
 				}
 			});
 		}).button({ icons: { primary: 'ui-icon-search' } });
-		$loadDivButton = $('<button>', { text: 'Diff- Loading from [[:de:Benutzer:Schnark/js/diff.js/core.js]]' }).click(function() {
-			$(this).button('option', 'disabled', true);
-			o.loadModule('diff', function() {
+		$loadDivButton = $('<button>', { text: 'Diff' }).click(function() {
+			var $btn = $(this);
+			$btn.button({ disabled: true, label: 'Loading from [[:de:Benutzer:Schnark/js/diff.js/core.js]]' });
+			vfc.loadModule('diff', function() {
+				$btn.button({ label: 'Diff loaded' });
 				$examineButton.click();
 			});
-		}).button();
+		}).button({ icons: { primary: 'ui-icon-shuffle' } });
+		
 		$examineFirstDiv = $('<div>', { 'class': 'md-examine-contents' });
 		$examineSecondDiv = $('<div>', { 'class': 'md-examine-contents' });
 		$examineDiffDiv = $('<div>', { 'class': 'md-examine-contents', style: 'width:98%' });
-		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $loadDivButton, ' ', $('<div>').append($examineFirstDiv, $examineSecondDiv, $examineDiffDiv));
+		$examineOuterDiv = $('<div>', { style: 'text-align:center;' }).append($examineInput, ' ', $examineButton, ' ', $loadDivButton, ' ', $('<div>').append($examineDiffDiv, $examineFirstDiv, $examineSecondDiv));
 		
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
 
-		return o.createToggler('Examine scheduled changes', $examineOuterDiv.hide());
+		return vfc.createToggler('Examine scheduled changes', $examineOuterDiv.hide());
 	},
 	
 	mdEscapeSpecial: function(string) {
@@ -281,42 +333,52 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdCreateReplaceNode: function() {
-		var o = this;
 		var rowCount = 0;
 		var $lastBigArea = 0;
 		
-		var $desc = $('<p>', { text: 'Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped. When not using RegExp-replace only the first occurrence of the pattern in each file will be replaced.' });
-		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', html: 'R. → /R\\./g', title: 'Make a match-all-occurrences-RegExp from' }).click(function() {
-			var $serviceFor = $(this).data('mdServiceFor');
-			$serviceFor.val('/' + o.mdEscapeSpecial($.escapeRE( $serviceFor.val().replace(/\//g, '\\/') )) + '/g').keyup();
+		var $desc = $('<p>', { text: "Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped. When not using RegExp-replace only the first occurrence of the pattern in each file will be replaced." });
+		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', html: 'R. → /R\\./g', title: "Convert pattern to a \'match-all-occurrences-RegExp\'" }).click(function() {
+			var $rREH = $(this),
+				$serviceFor = $rREH.data('mdServiceFor'),
+				$serviceForEnable = $rREH.data('mdServiceForEnable');
+				
+			$serviceFor.val('/' + vfc.mdEscapeSpecial($.escapeRE( $serviceFor.val() )) + '/g').keyup();
+			if (!$serviceForEnable[0].checked) $serviceForEnable.click();
+			
 			$(this).hide();
 		});
 		var $table = $('<table>', { style: 'border:1px solid #BBB', width: '100%', cellspacing: 0, cellpadding: 0 });
 		var $thead = $('<thead>').append(
-			$('<th>', { text: 'Nr ' }),
-			$('<th>').append($('<abbr>', { title: 'Flags (=options) control how to treat your input.', text: 'Flags' })),
-			$('<th>', { text: 'Pattern to match' }),
-			$('<th>', { text: 'Text to insert instead' })
+			$('<th>').append($('<abbr>', { title: "Replacing is done for each selected file from top to bottom", text: 'Nr ' })),
+			$('<th>').append($('<a>', { title: "Flags (=options) control how to treat your input.", text: 'Flags', target: '_blank', href: mw.util.wikiGetlink('Help:VisualFileChange.js') + '#Custom_replace:_Flags' })),
+			$('<th>').append($('<abbr>', { title: "Simple string or a /Regular Expression/ \nSimple strings are only replaced once per file", text:  'Pattern to match' })),
+			$('<th>').append($('<abbr>', { title: "Text, %variables% and/or submatches of a RegExp ($1-$9) like /abc(.+?)ghi/", text: 'Text to insert instead' }))
 		).appendTo($table);
-		var $selPreserve = o.$selPreserve = $('<select>', { id: 'selPreserve', size: 1 }).append(
+		var $selPreserve = vfc.$selPreserve = $('<select>', { id: 'selPreserve', size: 1 }).append(
 			$('<option>', { text: 'Preserve nowikis, comments. Do this as secure as possible (internal split into array). (recommended)', value: 'secure' }),
 			$('<option>', { text: 'Preserve nowikis, comments. Allow usage of substring and $1 (internal usage of placeholders (%v%f%c%\\d+)).', value: 'placeholder' }),
 			$('<option>', { text: 'Do not preserve nowikis and comments.', value: 'none' })
 		);
-		var $alsoPreserveL = o.$alsoPreserve = $('<label>', { 'for': 'alsoPreserve', text: 'Also preserve the following areas from being replaced.' });
-		var $alsoPreserve = o.$alsoPreserve = $('<input>', { type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' }).placeholder();
+		var $alsoPreserveL = vfc.$alsoPreserve = $('<label>', { 'for': 'alsoPreserve', text: 'Also preserve the following areas from being replaced.' });
+		var $alsoPreserve = vfc.$alsoPreserve = $('<input>', { type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' }).placeholder();
 		var $tbody = $('<tbody>', { id: 'mdRTableBody' }).appendTo($table);
-		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, $selPreserve, $('<br/>'), $alsoPreserveL, $alsoPreserve, $('<br/>'), o.mdCreateExamineNode()));
+		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, $selPreserve, $('<br/>'), $alsoPreserveL, $alsoPreserve, $('<br/>'), vfc.mdCreateExamineNode()));
 		
 		var regExTester = function($text, $cb, $replace) {
 			var testConditions = function() {
-				var isRE = o.mdRegExpPattern.test($text.val());
+				var val = $text.val(),
+					isRE = vfc.mdRegExpPattern.test(val);
 				$cb.parent().css('background', '');
 				$text.css('background', '');
 				if (isRE && !$cb[0].checked) {
 					$cb.parent().css('background', '#FCC');
 				} else if (!isRE && $cb[0].checked) {
 					$text.css('background', '#FCC');
+				}
+				if (!val || isRE) {
+					$regExpEscapeHelper.hide();
+				} else {
+					$regExpEscapeHelper.show();
 				}
 			};
 			var testEmptyReplace = function() {
@@ -339,8 +401,9 @@ $.extend(window.VisualFileChange,
 				$v   = $newVarCheckBox(),
 				$vL  = $newVarLabel();
 			
-			o.mdReplacementMatrix.push({ match: $mA, replace: $rA, regex: $rE, vars: $v });
+			vfc.mdReplacementMatrix.push({ match: $mA, replace: $rA, regex: $rE, vars: $v });
 			
+			$mA.data('mdServiceForEnable', $rE);
 			$rE.click(function(e) {
 				e.stopPropagation();
 			});
@@ -364,20 +427,27 @@ $.extend(window.VisualFileChange,
 			return $el;
 		};
 		var $newMatchArea = function() {
-			return resizeHandler($('<textarea></textarea>', { id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%' }).bind('input.resize keyup.resize change.resize', function(e) {
+			return resizeHandler($('<textarea></textarea>', { id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%', placeholder: "text or pattern to be replaced" }).bind('input.resize keyup.resize change.resize', function(e) {
 				var $el = $(this);
 				if (!$el.val()) return;
 				$el.unbind('input.resize keyup.resize change.resize');
 				$newRow();
 			})).focus(function() {
-				var $el = $(this);
-				var pos = $el.position();
+				var $el = $(this),
+					val = $el.val(),
+					pos = $el.position();
+					
 				$regExpEscapeHelper.show().css('top', pos.top + 5).css('left', pos.left - $regExpEscapeHelper.width() - 6);
 				$regExpEscapeHelper.data('mdServiceFor', $el);
+				$regExpEscapeHelper.data('mdServiceForEnable', $el.data('mdServiceForEnable'));
+				
+				if (!val || vfc.mdRegExpPattern.test(val)) {
+					$regExpEscapeHelper.hide();
+				}
 			});
 		};
 		var $newReplaceArea = function() {
-			return resizeHandler($('<textarea></textarea>', { id: 'mdReplaceText'+rowCount, rows: 1, cols: 50, style: 'width:98%' }));
+			return resizeHandler($('<textarea></textarea>', { id: 'mdReplaceText'+rowCount, rows: 1, cols: 50, style: 'width:98%', placeholder: "text or variables to be inserted instead" }));
 		};		
 		var $newRegexCheckBox = function() {
 			return $('<input>', { type: 'checkbox', id: 'mdRRegEx'+rowCount });
@@ -396,19 +466,27 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdMwRTACache: {},
-	mdMwReasonToAutocomplete: function(title, $el) {
-		var _this = this;
-		var mwRTAtoken = _this.mdMwRTAtoken = new Date();
+	mdMwReasonToAutocomplete: function(title, $el, saveKey) {
+		var mwRTAtoken = vfc.mdMwRTAtoken = new Date();
 		if (!title) {
 			// Disable autocomplete
 			$el.autocomplete({ disabled: true });
 			// Discard pending query
-			_this.mdMwRTAtoken = 0;
+			vfc.mdMwRTAtoken = 0;
 			return;
 		}
 		var __gotResult = function(r) {
 			var $r = $(r),
-				suggestions = [];
+				suggestions = [],
+				lastSummaries = $.jStorage.get(vfc.summaryChageKey);
+				
+			// Add last used summaries
+			if (lastSummaries && lastSummaries[saveKey]) {
+				suggestions = $.map(lastSummaries[saveKey], function(txt, i) {
+					return { value: txt };
+				});
+			}
+			
 			// There is http://jqueryui.com/demos/autocomplete/#categories
 			// But since there are only two groups, is seems to be unnecessary
 			// to group the result
@@ -419,7 +497,7 @@ $.extend(window.VisualFileChange,
 					var $n = $(n),
 						href = $n.attr('href');
 					if (href) {
-						href = href.match(_this.mdWikipageRegExp);
+						href = href.match(vfc.mdWikipageRegExp);
 						if (href && href[1]) {
 							wikitext += '[[' + decodeURI(href[1]).replace(/^Commons:/, 'COM:').replace(/\%27/g, '\'').replace(/\%22/g, '\"') + '|' + $n.text() + ']]';
 							return;
@@ -430,25 +508,23 @@ $.extend(window.VisualFileChange,
 				suggestions.push({ label: $li.text(), value: wikitext });
 			});
 			// Add to cache
-			_this.mdMwRTACache[title] = suggestions;
+			vfc.mdMwRTACache[title] = suggestions;
 			// Upadate if the token matches
-			if (mwRTAtoken === _this.mdMwRTAtoken) $el.autocomplete({ disabled: false, source: suggestions });
+			if (mwRTAtoken === vfc.mdMwRTAtoken) $el.autocomplete({ disabled: false, source: suggestions });
 		};
-		if (title in _this.mdMwRTACache) {
+		if (title in vfc.mdMwRTACache) {
 			// If a query for this page is pending, return
-			var rtaItem = _this.mdMwRTACache[title];
+			var rtaItem = vfc.mdMwRTACache[title];
 			if (rtaItem instanceof Date) {
 				// Allows updating on callback (__gotResult)
-				_this.mdMwRTAtoken = rtaItem;
+				vfc.mdMwRTAtoken = rtaItem;
 				return;
 			}
 			// Use the cached value
 			$el.autocomplete({ disabled: false, source: rtaItem });
 		} else {
-			_this.mdMwRTACache[title] = mwRTAtoken;
-			mw.loader.using(['ext.gadget.libAPI'], function() {
-				mw.libs.commons.api.parse('{{' + title + '}}', mw.config.get('wgUserLanguage'), 'File:A.png', __gotResult, true);
-			});
+			vfc.mdMwRTACache[title] = mwRTAtoken;
+			mw.libs.commons.api.parse('{{' + title + '}}', mw.config.get('wgUserLanguage'), 'File:A.png', __gotResult, true);
 		}
 	},
  
@@ -456,23 +532,22 @@ $.extend(window.VisualFileChange,
 	**  Mammoth method to set up and manage the UserInterface (UI)
 	**/
 	mdGenIGallery: function() {
-		$(document).triggerHandler('vFC', ['preparing initial uploads dialog', this]);
+		$(document).triggerHandler('vFC', ['preparing initial uploads dialog', vfc]);
 	
-		this.mdUploadCt = 0;              // Number of pending API queries
-		this.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
-		this.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
-		this.mdThumbsOnDlg = 0;           // How many thumbs on the dialog?
-		this.mdReplacementMatrix = [];    // Contains pointers to jQuery-Array-Inputfields for the custom replace
-		this.mdDateOldestDataFetched = new Date();
-		
-		var o = this;
+		vfc.mdUploadCt = 0;              // Number of pending API queries
+		vfc.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
+		vfc.mdPendingBatchQueries = 0;   // Number of batches currently on query; should be max. 1
+		vfc.mdThumbsOnDlg = 0;           // How many thumbs on the dialog?
+		vfc.mdReplacementMatrix = [];    // Contains pointers to jQuery-Array-Inputfields for the custom replace
+		vfc.mdDateOldestDataFetched = new Date();
+		vfc.$ctrs = {};
 		
 		// Tipsy-tooltips for metadata and categories
 		$('.tipsymetadata').die();
 		$('.tipsymetadata').tipsy( {
 			title: function() {
 				$('.tipsy').remove();
-				return o.mdSecureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), o);
+				return vfc.secureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), vfc);
 			},
 			live: true,
 			html: true,
@@ -482,7 +557,7 @@ $.extend(window.VisualFileChange,
 		$('.tipsycategory').tipsy( {
 			title: function() { 
 				$('.tipsy').remove();
-				return o.mdSecureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), o, false).html(); 
+				return vfc.secureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), vfc, false).html(); 
 			},
 			live: true,
 			html: true,
@@ -491,9 +566,23 @@ $.extend(window.VisualFileChange,
 		} );
 
 		/*  The UI  */
-		this.mdMinLenRequired = true;     // Is a reason required?
-
-		var confirmDlg = function(title, text, cancel, ignore, icon) {
+		var _callExec = function(action) {
+			// Save suggestions:
+			if (vfc.i18n.reasonAutoSuggest[action]) {
+				var s  = $.jStorage.get(vfc.summaryChageKey) || {},
+					ss = s[action] || [],
+					nv = vfc.$ctrs.editSummary.val();
+					
+				while (ss.length > vfc.summaryChacheLen) {
+					ss.pop();
+				}
+				if (nv) ss.unshift(nv);
+				s[action] = ss;
+				$.jStorage.set(vfc.summaryChageKey, s);
+			}
+			vfc.secureCall('mdExecute');
+		};
+		var confirmDlg = function(title, text, cancel, ignore, icon, action) {
 			var dlg2Btns = {};
 			var dlgWidth = Math.min(600, $(window).width() - 250);
 			dlg2Btns[cancel] = function() {
@@ -501,7 +590,7 @@ $.extend(window.VisualFileChange,
 			};
 			dlg2Btns[ignore] = function() {
 				$(this).dialog("close");
-				o.mdSecureCall("mdExecute");
+				_callExec(action);
 			};
 			$('<div>').append($('<img>', { src: icon, height: 128, width: 128, style: 'float:left;' }), $('<div>', { style: 'margin-top: 30px' }).text(text))
 				.dialog({
@@ -516,48 +605,47 @@ $.extend(window.VisualFileChange,
 				});
 		};
 		
-		var $AjaxMdType;
-		
 		var dlgButtons = {};
-		dlgButtons[this.i18n.submitButtonLabel] = function() {
-			var pp = o.i18n.mdPotentialProblems,
-				cf = o.mdCommands[$AjaxMdType.val()].confirm;
+		dlgButtons[vfc.i18n.submitButtonLabel] = function() {
+			var action = vfc.$ctrs.ajaxMdType.val(),
+				pp = vfc.i18n.mdPotentialProblems,
+				cf = vfc.mdCommandsExec[action].confirm;
 				
 			if ($('input[name="mdCheckDelete"]:checked').length === 0) {
-				confirmDlg(pp.titleNf, pp.textNf, pp.back, pp.proceed, o.mdInfoIcon);
+				confirmDlg(pp.titleNf, pp.textNf, pp.back, pp.proceed, vfc.mdInfoIcon, action);
 			} else if (cf) {
-				var cfl = o.i18n.mdConfirm;
-				confirmDlg(cfl[cf+'Title'] , cfl[cf], cfl[cf+'Cancel'], cfl[cf+'Ignore'], o.mdQuestionIcon);
+				var cfl = vfc.i18n.mdConfirm;
+				confirmDlg(cfl[cf+'Title'] , cfl[cf], cfl[cf+'Cancel'], cfl[cf+'Ignore'], vfc.mdQuestionIcon, action);
 			} else {
-				o.mdSecureCall("mdExecute");
+				_callExec(action);
 			}
 		};
-		dlgButtons[this.i18n.cancelButtonLabel] = function() {
+		dlgButtons[vfc.i18n.cancelButtonLabel] = function() {
 			$(this).dialog("close");
 		};
 
 		var getSelect = function() {
 			var sel = '<select size="1" id="AjaxMdType">';
-			$.each(o.mdOpt, function(id, opt) {
-				var ugs = o.mdCommands[id].userGroups,
+			$.each(vfc.mdOpt, function(id, opt) {
+				var ugs = vfc.mdCommandsExec[id].userGroups,
 					disabled = '';
 				if ($.isArray(ugs)) {
 					var ugsIntersect = $.map(mw.config.get('wgUserGroups'), function(a) {return $.inArray(a, ugs) < 0 ? null : a;});
 					if (0 === ugsIntersect.length) disabled = 'disabled="disabled"';
 				}
-				sel += '<option value="' + id + '" ' + disabled + '>' + mw.html.escape(o.i18n.mdOptions[id]) + '</option>';
+				sel += '<option value="' + id + '" ' + disabled + '>' + mw.html.escape(vfc.i18n.mdOptions[id]) + '</option>';
 			});
 			sel += '</select>';
 			return sel;
 		};
 
 		var dlgResizeTimeout = 0;
-		this.dlg.dialog({
+		vfc.dlg.dialog({
 			modal: false,
-			title: this.mdHelpNode +
+			title: vfc.mdHelpNode +
 				' Action:&nbsp;' +
 				getSelect() +
-				this.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
+				vfc.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
 			width: $(window).width() - 250,
 			height: $(window).height(),
 			buttons: dlgButtons,
@@ -568,107 +656,157 @@ $.extend(window.VisualFileChange,
 				}, 500);
 			} // Fire scroll evt on resize for (continue query if btn gets visible)
 		});
-		this.dlg.dialog( 'option', 'position', 'right' );
-		this.dlg.dialog( 'option', 'modal', 'false' );
+		vfc.dlg.dialog( 'option', 'position', 'right' ).dialog( 'option', 'modal', 'false' ).css('padding', '3px 6px');
 		var windowRezizeTimeout = 0;
 		$(window).resize(function() {
 			clearTimeout(windowRezizeTimeout);
 			windowRezizeTimeout = setTimeout(function() {
-				if (o && o.dlg) o.dlg.dialog('option', 'width', $(window).width() - (o.pb.isHidden() ? 0 : 250));
+				if (vfc && vfc.dlg) vfc.dlg.dialog('option', 'width', $(window).width() - (vfc.pb.isHidden() ? 0 : 250));
 			}, 1000);
 		});
-
-		var $AjaxMdContainer = this.$AjaxMdContainer.text('');
-		this.$mdControls = $('<div>');
-
-		if (!this.dlg) return 0;
 		
-		$('<a>', { href: '#', text: this.i18n.mdCuteSelectLabel }).click(function(e) {
-			e.preventDefault();
-			o.mdCuteSelectDlg.dialog("open");
-		}).appendTo( $('#AjaxMdIa').parent() );
+		var subHeading = vfc.mdModeCat ? 'Files in -' : 'Initally uploaded files by -',
+			targetHref = mw.util.wikiGetlink((vfc.mdModeCat ? '' : vfc.mdUserTalkPrefix) + vfc.mdTarget),
+			defaultHeading = (vfc.mdModeCat ? 'Files in [[:' + vfc.mdTarget + ']] ' : ('Files uploaded by [[' + vfc.mdUserPrefix + vfc.mdTarget + '|' + vfc.mdTarget + ']] '
+				+ '([[' + vfc.mdUserTalkPrefix + vfc.mdTarget + '|talk]] · [[' + vfc.mdContribPrefix + vfc.mdTarget + '|contribs]])'));
+		
+		// Build the input-ui
+		// Save the controls into a var that's reference we need later
+		$.extend(vfc.$ctrs, {
+			ajaxMdType: $('#AjaxMdType'),
+			ajaxMdIa: $('#AjaxMdIa'),
+			taskForUser: $('<label>', { id: 'mdTaskForUser', 'for': 'mdDeleteReason', text: vfc.i18n.mdInsertDeleteReasen }),
+			deleteReason: $('<textarea></textarea>', { id: 'mdDeleteReason', style: 'width: 99%; height: 40px;' }),
+			editSummaryL: $('<label>', { 'for': 'mdEditSummary', text: vfc.i18n.mdInsertEditSummary }),
+			editSummary: $('<input>', { type: 'text', id: 'mdEditSummary', style: 'width: 70%;', maxlength: 255, placeholder: "+Edit summary or reason" }),
+			replacePermission: $('<input>', { type: 'checkbox', id: 'mdReplacePermission' }),
+			deleteHeading: $('<input>', { type: 'text', id: 'mdDeleteHeading', style: 'width: 99%;', value: defaultHeading, placeholder: "Heading for deletion request" }),
+			talkNote: $('<input>', { type: 'text', id: 'mdTalkNote', style: 'width: 99%;', value: vfc.mdSettings.userNote, placeholder: "Comments for the uploader" }),
+			ajaxDeletedUploads: $('<ul>', { id: 'AjaxDeletedUploads', 'class': 'md-deleted-uploads' }),
+			ajaxMdNotReady: $('<div>', { id: 'AjaxMdNotReady', text: "Please wait while enumerating uploads…" }),
+			ajaxMdUlContainer: $('<ul>', { id: 'AjaxMdUlContainer', 'class': 'gallery rgallery' }),
+			ajaxMdActionConfirm: $('<span>', { id: 'AjaxMdActionConfirm' })
+		});
 
-		var subHeading = this.mdModeCat ? 'Files in -' : 'Initally uploaded files by -';
-		var targetHref = mw.util.wikiGetlink((this.mdModeCat ? '' : o.mdUserTalkPrefix) + this.mdTarget);
-		var defaultHeading = (this.mdModeCat ? 'Files in [[:' + this.mdTarget + ']] ' : ('Files uploaded by [[' + this.mdUserPrefix + this.mdTarget + '|' + this.mdTarget + ']] '
-				+ '([[' + this.mdUserTalkPrefix + this.mdTarget + '|talk]] · [[' + this.mdContribPrefix + this.mdTarget + '|contribs]])'));
+		var $AjaxMdContainer = vfc.$AjaxMdContainer.text('');
+		vfc.$ctrs.container = $('<div>', { id: 'mdControlContainer', 'class': 'ui-widget-content' }).css('padding', '6px 10px');
+
+		var zIndexNavBtns = parseInt(vfc.dlg.parents('div.ui-dialog').css('z-index'), 10) + 1,
+			$toTop = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-n', href: '#goToTop', text: '↑', title: "To top" })),
+			$toBottom = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-s', href: '#goToBottom', text: '↓', title: "To bottom" })),
+			$navButtonContainer = $('<div>', { 'class': 'md-nav-button-container' }).css('z-index', zIndexNavBtns).append($toTop, ' ', $toBottom).appendTo(vfc.dlg),
+			__onHover = function() { $(this).addClass('ui-state-hover'); },
+			__onOut = function() { $(this).removeClass('ui-state-hover'); },
+			__onDown = function() { var $i = $(this); $(this).addClass('ui-state-active'); $(document).one('mouseup', function() { $i.removeClass('ui-state-active'); }); };
+		
+		$toTop.hover(__onHover, __onOut).focus(__onHover).blur(__onOut).mousedown(__onDown).click(function(e) { 
+			e.preventDefault();
+			vfc.dlg.scrollTop(0);
+		});
+		$toBottom.hover(__onHover, __onOut).focus(__onHover).blur(__onOut).mousedown(__onDown).click(function(e) { 
+			e.preventDefault();
+			vfc.dlg.scrollTop($AjaxMdContainer.height());
+			vfc.dlg.triggerHandler('scroll');
+		});
+
+		if (!vfc.dlg) return 0;
+		
+		$('<a>', { href: '#', text: vfc.i18n.mdCuteSelectLabel }).click(function(e) {
+			e.preventDefault();
+			vfc.mdCuteSelectDlg.dialog("open");
+		}).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
 
 		// Change the title of the browser tab/window
-		document.title = "VisualFileChange: " + subHeading + this.mdTarget + "- ";
+		document.title = "VisualFileChange: " + subHeading + vfc.mdTarget + "- ";
 		
 		// Append controls to the dialog
-		this.$mdControls.append(
-			subHeading, $('<a>', { href: targetHref, target: '_blank', text: this.mdTarget }), "-. ",
-			$('<label>', { id: 'mdTaskForUser', 'for': 'mdDeleteReason', text: this.i18n.mdInsertDeleteReasen }), ": ",
-			$('<textarea></textarea>', { id: 'mdDeleteReason', style: 'width: 99%; height: 40px;' }), $('<br/>'),
-			$('<label>', { 'for': 'mdEditSummary', text: this.i18n.mdInsertEditSummary }), ": ",
-			$('<input>', { type: 'text', id: 'mdEditSummary', style: 'width: 70%;', maxlength: 100 }),
-			$('<span>', { id: 'mdReplacePermissionWrapper' }).append(
-				$('<input>', { type: 'checkbox', id: 'mdReplacePermission' }), 
-				$('<label>', { 'for': 'mdReplacePermission', text: ' ' + this.i18n.mdReplacePermissionText })
-			))
+		vfc.$ctrs.container
 			.append(
-			$('<table>', { cellspacing: 0, cellpadding: 0, style: 'position:relative;', width: '100%' })
-				.append($('<tr>', { id: 'mdRequestPageTitle' }).append(
-					$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: this.i18n.mdInsertDeleteHeading })),
-					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdDeleteHeading', style: 'width: 99%;', value: defaultHeading }))
-				)).append($('<tr>', { id: 'mdTalkNoteNode' }).append(
-					$('<td>').append($('<label>', { 'for': 'mdTalkNote', text: this.i18n.mdInsertTalkNote })),
-					$('<td>', { width: '70%' }).append($('<input>', { type: 'text', id: 'mdTalkNote', style: 'width: 99%;', value: this.mdSettings.userNote }))
-				)).append(o.mdCreateReplaceNode())
+				subHeading, $('<a>', { href: targetHref, target: '_blank', text: vfc.mdTarget }), "-. ",
+				vfc.$ctrs.taskForUser, ": ",
+				vfc.$ctrs.deleteReason, $('<br/>'),
+				vfc.$ctrs.editSummaryL, ": ",
+				vfc.$ctrs.editSummary,
+				$('<span>', { id: 'mdReplacePermissionWrapper' }).append(
+					vfc.$ctrs.replacePermission, 
+					$('<label>', { 'for': 'mdReplacePermission', text: ' ' + vfc.i18n.mdReplacePermissionText })
+				)
+			)
+			.append(
+				$('<table>', { cellspacing: 0, cellpadding: 0, style: 'position:relative;', width: '100%' })
+					.append($('<tr>', { id: 'mdRequestPageTitle' }).append(
+						$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: vfc.i18n.mdInsertDeleteHeading })),
+						$('<td>', { width: '70%' }).append(vfc.$ctrs.deleteHeading)
+					)).append($('<tr>', { id: 'mdTalkNoteNode' }).append(
+						$('<td>').append($('<label>', { 'for': 'mdTalkNote', text: vfc.i18n.mdInsertTalkNote })),
+						$('<td>', { width: '70%' }).append(vfc.$ctrs.talkNote)
+					)).append(vfc.mdCreateReplaceNode())
 			)
 			.appendTo($AjaxMdContainer);
 
 			$AjaxMdContainer
-			.append(o.createToggler(this.i18n.mdDelContribsButtonLabel, $('<ul>', { 
-				id: 'AjaxDeletedUploads', 
-				'class': 'md-deleted-uploads'
-			})))
-			.append('<div id="AjaxMdNotReady">Please wait while enumerating uploads ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
+				.append(vfc.createToggler(vfc.i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads))
+				.append(vfc.$ctrs.ajaxMdNotReady, vfc.$ctrs.ajaxMdUlContainer);
  
 		// Add label to the button
-		var $AjaxMdActionConfirm = $('<span>', { id: 'AjaxMdActionConfirm' });
+		var $buttons = vfc.dlg.parent().find('.ui-dialog-buttonpane button'),
+			$submitButton = $buttons.eq(0).specialButton('proceed').button({ 
+				label: $('<span>', { text: vfc.i18n.submitButtonLabel }).append( vfc.$ctrs.ajaxMdActionConfirm ) 
+			}),
+			$cancelButton = $buttons.eq(1).specialButton('cancel');
 
-		var $buttons = this.dlg.parent().find('.ui-dialog-buttonpane button'),
-			$submitButton = $buttons.eq(0).button({ icons: { primary: 'ui-icon-check' }, label: $('<span>', { text: this.i18n.submitButtonLabel }).append( $AjaxMdActionConfirm ) }).addClass('ui-button-green'),
-			$cancelButton = $buttons.eq(1).button({ icons: { primary: 'ui-icon-close' } }).addClass('ui-button-red'),
-			$mdDeleteReason = $('#mdDeleteReason');
-
-		$mdDeleteReason.keyup( function (event) {
-			var thisval = $(this).val();
-			if ( (thisval.length < o.mdMinReasonLen ) && o.mdMinLenRequired ) {
+		var keyTimout = 0;
+		var _handleCriticalKey = function () {
+			clearTimeout(keyTimout);
+			keyTimout = setTimeout(__handleCriticalKey, 85);
+		};
+		var __handleCriticalKey = function (event) {
+			var reason = vfc.$ctrs.deleteReason.val(),
+				summary = vfc.$ctrs.editSummary.val();
+			
+			if ( (reason.length < vfc.minLenReq ) || (summary.length < vfc.summaryMinLen) ) {
 				$submitButton.button('option', 'disabled', true);
-				o.pb.setHelp2(o.i18n.mdSpecifyReason.replace('%mdMinReasonLen%', o.mdMinReasonLen), true);
+				if (vfc.minLenReq) {
+					vfc.pb.setHelp2(vfc.i18n.mdSpecifyReason.replace('%mdMinReasonLen%', vfc.minLenReq), true);
+				}
 			} else {
 				$submitButton.button('option', 'disabled', false);
-				o.pb.setHelp2(thisval, true);
-				mw.loader.using(['ext.gadget.libAPI'], function() {
-					mw.libs.commons.api.parse(thisval, mw.config.get('wgUserLanguage'), '', $.proxy(o.pb.setHelp2, o.pb));
-				});
+				if (vfc.minLenReq) { 
+					vfc.pb.setHelp2(reason, true);
+					mw.libs.commons.api.parse(reason, mw.config.get('wgUserLanguage'), '', $.proxy(vfc.pb.setHelp2, vfc.pb));
+				}
 			}
-		});
-		// Binding enter-key event. -0 ensures number
-		$('#mdDeleteHeading').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
-		$('#mdTalkNote').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
-		$('#mdEditSummary').keyup( function (event) { if (13 === event.which && ($mdDeleteReason.val().length > 5 || !o.mdMinLenRequired)) $submitButton.click(); });
+		};
+		vfc.$ctrs.deleteReason.bind( 'input keyup change autocompleteselect', _handleCriticalKey );
+		vfc.$ctrs.editSummary.bind( 'input keyup change autocompleteselect', _handleCriticalKey );
+		
+		// Binding enter-key event.
+		var __submitOnEnter = function(e) {
+			if (13 === e.which && (vfc.$ctrs.deleteReason.val().length >= vfc.minLenReq) && vfc.$ctrs.editSummary.val().length >= vfc.summaryMinLen) {
+				$submitButton.click();
+			}
+		};
+		vfc.$ctrs.deleteHeading.keyup( __submitOnEnter );
+		vfc.$ctrs.talkNote.keyup( __submitOnEnter );
+		vfc.$ctrs.editSummary.keyup( __submitOnEnter );
 		
 		var timoutID = 0;
 		var updateSelectedCount = function () {
 			var $inputs = $('input[name="mdCheckDelete"]');
 			var $checkedInputs = $inputs.filter(':checked');
-			o.pb.setHelp3(o.i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
+			vfc.pb.setHelp3(vfc.i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
 			$inputs.closest('li.gallerybox').removeClass('md-selected');
 			$checkedInputs.closest('li.gallerybox').addClass('md-selected');
 		};
 		updateSelectedCount();
-		$('#AjaxMdIa').change( function (event) {
+		vfc.$ctrs.ajaxMdIa.change( function (event) {
 			var tmpChecked = this.checked;
 			$('input[name="mdCheckDelete"]').each(function(index) {
 				this.checked = tmpChecked;
 			});
 			clearTimeout(timoutID);
 			timoutID = setTimeout(updateSelectedCount, 200);
-		});
+		} );
 		$('input[name="mdCheckDelete"]').die( 'change' );
 		$('input[name="mdCheckDelete"]').live( 'change', function (e) {
 			clearTimeout(timoutID);
@@ -700,90 +838,98 @@ $.extend(window.VisualFileChange,
 			$this.attr('id', 'mdLastSelected');
 		});
 		
-		this.$AjaxDeletedUploads = $('#AjaxDeletedUploads'); // For later usage to speed up gallery-box creating
-		this.$AjaxMdUlContainer = $('#AjaxMdUlContainer');
-		this.$AjaxMdNotReady = $('#AjaxMdNotReady');
-		
 		//
 		// Event handler for the selection box (task to perform)
 		//
-		this.$AjaxMdType = $AjaxMdType = $('#AjaxMdType');
-		$AjaxMdType.change( function (event) {
-			var thisval = $(this).val(),
-				optConfig = o.mdOpt[thisval];
-			if (!optConfig) return;
-			if ('del' === thisval) { 
+		vfc.$ctrs.ajaxMdType.change( function (event) {
+			var action = $(this).val(),
+				opt   = vfc.mdOpt[action],
+				uTags = vfc.mdUserTags[action];
+				
+			if (!opt) return;
+			if ('del' === action) { 
 				$('#mdRequestPageTitle').show(); 
 			} else { 
 				$('#mdRequestPageTitle').hide(); 
 			}
 
 			// minLenReq
-			if (optConfig[0]) {
-				o.mdMinLenRequired = true;
-				$mdDeleteReason.keyup();
-			} else {
-				o.mdMinLenRequired = false;
-				$mdDeleteReason.keyup();
+			vfc.minLenReq = opt.minLenReq || 0;
+			vfc.summaryMinLen = opt.summaryMinLen || 0;
+			vfc.$ctrs.deleteReason.keyup();
+			
+			// byte limit
+			// PlugIn has a bug: It attaches multiple handlers
+			// So start unbinding them.
+			vfc.$ctrs.editSummary.unbind('keypress');
+			vfc.$ctrs.editSummary.byteLimit(opt.bLimit);
+			var summary = vfc.$ctrs.editSummary.val();
+			while ($.byteLength(summary) > opt.bLimit) {
+				summary = $.trim(summary.slice(0, summary.length-1));
 			}
+			vfc.$ctrs.editSummary.val(summary);
+			
 			// acceptReason
-			if (optConfig[1]) {
-				$('#mdTaskForUser').text(o.i18n[optConfig[1]]);
-				$('#mdTaskForUser').show();
-				$mdDeleteReason.show();
+			if (opt.reasonText) {
+				vfc.$ctrs.taskForUser.text(vfc.i18n[opt.reasonText]);
+				vfc.$ctrs.taskForUser.show();
+				vfc.$ctrs.deleteReason.show();
 			} else {
-				$('#mdTaskForUser').hide();
-				$mdDeleteReason.hide();
+				vfc.$ctrs.taskForUser.hide();
+				vfc.$ctrs.deleteReason.hide();
 			}
 			// prefill
-			if (optConfig[2]) {
-				if (!$mdDeleteReason.val()) $mdDeleteReason.val(o[optConfig[2]]);
+			if (opt.prefill) {
+				if (!vfc.$ctrs.deleteReason.val()) vfc.$ctrs.deleteReason.val(vfc[opt.prefill]);
 				// For some reason RegExp.$1 will not work in the following line
-				if ( /(\d{16})/g.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o[optConfig[2]].replace(/\%ID/g, /(\d{16})/g.exec($mdDeleteReason.val())[0]) ); 
-				if ( o.mdURLPattern.test($mdDeleteReason.val()) ) $mdDeleteReason.val( o.mdOTRSTicketPrefill.replace(/\%URL/g, $mdDeleteReason.val()) );
+				if ( /(\d{16})/g.test(vfc.$ctrs.deleteReason.val()) ) vfc.$ctrs.deleteReason.val( vfc[opt.prefill].replace(/\%ID/g, /(\d{16})/g.exec(vfc.$ctrs.deleteReason.val())[0]) ); 
+				if ( vfc.mdURLPattern.test(vfc.$ctrs.deleteReason.val()) ) vfc.$ctrs.deleteReason.val( vfc.mdOTRSTicketPrefill.replace(/\%URL/g, vfc.$ctrs.deleteReason.val()) );
 			}
 			// confirmation
-			if (optConfig[3]) {
-				o.pb.setHelp(o.i18n[optConfig[3]]);
+			if (opt.reasonParse) {
+				vfc.pb.setHelp(vfc.i18n[opt.reasonParse]);
 			} else {
-				o.pb.setHelp2('');
-				o.pb.setHelp('');
+				vfc.pb.setHelp2('');
+				vfc.pb.setHelp('');
 			}
 			// talk note
-			if (optConfig[4]) {
+			if (uTags.summary) {
 				$('#mdTalkNoteNode').show();
 			} else {
 				$('#mdTalkNoteNode').hide();
 			}
 			// replace node
-			if (optConfig[5]) {
+			if (opt.replaceNode) {
 				$('#mdReplaceTextNode').show();
 			} else {
 				$('#mdReplaceTextNode').hide();
 			}
 			// OTRS replace node
-			if (optConfig[6]) {
+			if (opt.permissionWrapper) {
 				$('#mdReplacePermissionWrapper').show();
 			} else {
 				$('#mdReplacePermissionWrapper').hide();
 			}
-			$AjaxMdActionConfirm.text(' (' + o.i18n.mdOptions[thisval] + ')');
+			vfc.$ctrs.ajaxMdActionConfirm.text(' (' + vfc.i18n.mdOptions[action] + ')');
+			
+			// Summary / Reason input
+			vfc.$ctrs.editSummaryL.text(vfc.i18n[(opt.addSummary || 'mdInsertEditSummary')]);
 			
 			// Reason autocomplete
-			o.mdMwReasonToAutocomplete(o.i18n.reasonAutoSuggest[thisval], $('#mdEditSummary'));
+			vfc.mdMwReasonToAutocomplete(vfc.i18n.reasonAutoSuggest[action], vfc.$ctrs.editSummary, action);
 		});
-		$AjaxMdType.val(this.mdSettings.defaultAction);
-		$AjaxMdType.change();
-		$AjaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
-		$('#AjaxMdIa').bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
-		$mdDeleteReason.keyup();
- 
- 
+		vfc.$ctrs.ajaxMdType.val(vfc.mdSettings.defaultAction);
+		vfc.$ctrs.ajaxMdType.change();
+		vfc.$ctrs.ajaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
+		vfc.$ctrs.ajaxMdIa.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
+		vfc.$ctrs.deleteReason.keyup();
  
 		// cute-selection dialog
-		var $metaSelect = $('<select>', { style: 'width:10em;', size: 1 });
+		var $metaSelect = $('<select>', { style: 'width:10em;', size: 1 }),
+			$uploaderSelect = $('<select>', { type: 'text', id: 'txtAjaxMdSelectUploader', 'size': 1, placeholder: vfc.i18n.mdCuteSelect.uploader });
+			
 		var dlgSelectButtons = {};
-		dlgSelectButtons[this.i18n.mdCuteSelect.button] = function () { 
+		dlgSelectButtons[vfc.i18n.mdCuteSelect.button] = function () { 
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, "").replace(/_/g, ''));
@@ -793,6 +939,7 @@ $.extend(window.VisualFileChange,
 			if (v_txtAjaxMdSelectWikitext) v_txtAjaxMdSelectWikitext = new RegExp(v_txtAjaxMdSelectWikitext, '');
 			var v_txtAjaxMdSelectSize = $('#txtAjaxMdSelectSize').val();
 			var vl_selAjaxMdSelectSize = ( ($('#selAjaxMdSelectSize').val() + '') === 'l' );
+			var vl_selAjaxMdSelectUploader = $uploaderSelect.val();
 			var v_txtAjaxMdSelectMeta = new RegExp($.trim($('#txtAjaxMdSelectMeta').val()), '');
 			var vl_selAjaxMdSelectMeta = $metaSelect.val();
 			var v_txtAjaxMdSelectDate0 = $('#txtAjaxMdSelectDate0').val();
@@ -814,7 +961,7 @@ $.extend(window.VisualFileChange,
 				if (!v_txtAjaxMdSelectDate1) { alert('Invalid end-date'); return; }
 			}
 
-			$.each(o.iUploads, function(upload, curUpld) {
+			$.each(vfc.iUploads, function(upload, curUpld) {
 				try {
 					var isMatch = {};
 					// yyyy    mm     dd
@@ -845,6 +992,10 @@ $.extend(window.VisualFileChange,
 					if ( '' !== v_txtAjaxMdSelectSize ) {
 						if ( (vl_selAjaxMdSelectSize && (curUpld.size < v_txtAjaxMdSelectSize)) || (!vl_selAjaxMdSelectSize && (curUpld.size > v_txtAjaxMdSelectSize)) ) isMatch.size = true;
 					} else {isMatch.size = true;}
+					
+					if (vl_selAjaxMdSelectUploader) {
+						if (-1 !== $.inArray(vl_selAjaxMdSelectUploader, curUpld.uploader)) isMatch.uploder = true;
+					} else {isMatch.uploder = true;}
  
 					if ( 'object' === typeof(v_txtAjaxMdSelectDate0) ) { // between -> start date -> must be in the past
 						if (curUpldDate >= v_txtAjaxMdSelectDate0) isMatch.date0 = true;
@@ -863,43 +1014,46 @@ $.extend(window.VisualFileChange,
 					} else { isMatch.meta = true; }
  
 					if ( isMatch.cat && isMatch.title && isMatch.content && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
-				} catch (ex) { if (window.console && $.isFunction(window.console.log)) window.console.log('Error: ' + ex); }
+				} catch (ex) { vfc.log('Error: ' + ex); }
 			});
 			updateSelectedCount();
 		};
 		
 		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
-			.append(this.i18n.mdCuteSelect.intro)
+			.append(vfc.i18n.mdCuteSelect.intro)
 			.append($('<table>').append(
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'chkAjaxMdSelect', text: this.i18n.mdCuteSelect.select })),
+					$('<td>').append($('<label>', { 'for': 'chkAjaxMdSelect', text: vfc.i18n.mdCuteSelect.select })),
 					$('<td>').append($('<input>', { type: 'checkbox', id: 'chkAjaxMdSelect', 'value': 1, 'checked': '' }))),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectCat', text: this.i18n.mdCuteSelect.inCat })),
-					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), this.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectCat', text: vfc.i18n.mdCuteSelect.inCat })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), vfc.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: this.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
-					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: this.i18n.mdCuteSelect.titleplaceholder }), this.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: vfc.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: vfc.i18n.mdCuteSelect.titleplaceholder }), vfc.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: this.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{[Tt]emplate\\}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
-					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: this.i18n.mdCuteSelect.wikitextplaceholder }), this.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: vfc.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{[Tt]emplate\\}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: vfc.i18n.mdCuteSelect.wikitextplaceholder }), vfc.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append( this.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
+					$('<td>').append( vfc.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
-						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', this.i18n.mdCuteSelect.and)),
+						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', vfc.i18n.mdCuteSelect.and)),
+				vfc.mdModeCat ? $('<tr>').append(
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectUploader', text: vfc.i18n.mdCuteSelect.uploader })),
+					$('<td>').append($uploaderSelect, vfc.i18n.mdCuteSelect.and)) : '',
 				$('<tr>').append(
 					$('<td>').append($metaSelect),						
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectMeta', text: this.i18n.mdCuteSelect.matches }), 
-						$('<input>', { type: 'text', placeholder: this.i18n.mdCuteSelect.titleplaceholder, id: 'txtAjaxMdSelectMeta', 'size': 41 }), this.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectMeta', text: vfc.i18n.mdCuteSelect.matches }), 
+						$('<input>', { type: 'text', placeholder: vfc.i18n.mdCuteSelect.titleplaceholder, id: 'txtAjaxMdSelectMeta', 'size': 41 }), vfc.i18n.mdCuteSelect.and)),
 				$('<tr>').append(
-					$('<td>').append(this.i18n.mdCuteSelect.date),
+					$('<td>').append(vfc.i18n.mdCuteSelect.date),
 					$('<td>').append(
 						$('<label>', { 'for': 'txtAjaxMdSelectDate0' }).append($('<abbr>', { 
-							text: this.i18n.mdCuteSelect.between,
-							title: this.i18n.mdCuteSelect.after
+							text: vfc.i18n.mdCuteSelect.between,
+							title: vfc.i18n.mdCuteSelect.after
 						})),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: vfc.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -912,13 +1066,13 @@ $.extend(window.VisualFileChange,
 								gravity: 's',
 								html: true,
 								title: function() {
-									return o.i18n.optStartAtHowTo;
+									return vfc.i18n.optStartAtHowTo;
 							} }),
 						$('<label>', { 'for': 'txtAjaxMdSelectDate1' }).append($('<abbr>', { 
-							text: this.i18n.mdCuteSelect.and,
-							title: this.i18n.mdCuteSelect.before
+							text: vfc.i18n.mdCuteSelect.and,
+							title: vfc.i18n.mdCuteSelect.before
 						})),
-						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: this.i18n.mdCuteSelect.dateplaceholder })
+						$('<input>', { type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: vfc.i18n.mdCuteSelect.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -931,15 +1085,15 @@ $.extend(window.VisualFileChange,
 								gravity: 's',
 								html: true,
 								title: function() {
-									return o.i18n.optStartAtHowTo;
+									return vfc.i18n.optStartAtHowTo;
 							} })
 					))
 			)
 			);
 		
-		var pbWidth = (this.pb.isHidden() ? 0 : 250);
+		var pbWidth = (vfc.pb.isHidden() ? 0 : 250);
 		var dlgWidth = Math.min(600, $(window).width() - pbWidth);
-		this.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
+		vfc.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
 			resizable: false,
 			closeOnEscape: true,
@@ -950,15 +1104,20 @@ $.extend(window.VisualFileChange,
 			buttons: dlgSelectButtons,
 			open: function(evt, ui) {
 				$metaSelect.children().remove();
-				$('<option>', { text: ' ', value: '' }).appendTo($metaSelect);
-				o.metaKeys.sort();
-				$.each(o.metaKeys, function(k, val) {
+				$('<option>', { text: ' ', value: '' }).appendTo($metaSelect).clone().appendTo($uploaderSelect);
+				vfc.metaKeys.sort();
+				vfc.allUploaders.sort();
+				$.each(vfc.metaKeys, function(k, val) {
 					$('<option>', { text: val }).appendTo($metaSelect);
+				});
+				$.each(vfc.allUploaders, function(k, val) {
+					$('<option>', { text: val }).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
 		});
 		this.$dialogsToClose.push(this.mdCuteSelectDlg);
+		
 		$('.numbersOnly').keyup(function () { 
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
@@ -974,20 +1133,20 @@ $.extend(window.VisualFileChange,
 			id: "mdQueryMore",
 			align: "center"
 		});
-		this.$mdQueryMoreBtn = $('<button>', { id: 'mdQueryMoreBtn', text: this.i18n.mdMore })
+		vfc.$mdQueryMoreBtn = $('<button>', { id: 'mdQueryMoreBtn', text: vfc.i18n.mdMore })
 				.button({ disabled: true, icons: { primary: 'ui-icon-arrowthick-1-s', secondary: 'ui-icon-arrowthick-1-s' } })
-				.click( function (event) { o.mdQueryMore(); })
+				.click( function (event) { vfc.mdQueryMore(); })
 				.appendTo($queryMore);
 		
 		$AjaxMdContainer.append($queryMore).append('<div style="height:100px">&nbsp;</div>');
 		/* End of UI */
 		
-		$(document).triggerHandler('vFC', ['initial uploads dialog', this, this.dlg]);
+		$(document).triggerHandler('vFC', ['initial uploads dialog', vfc, vfc.dlg]);
 		// Temporary fix
 		$('.vFCConfigRequired').removeClass('ui-state-disabled');
  
-		this.iCurrentIId = -1;     // Last queried file to continue obtaining detail-info
-		this.mdSecureCall('mdSendNextQueries');
+		vfc.iCurrentIId = -1;     // Last queried file to continue obtaining detail-info
+		vfc.secureCall('mdSendNextQueries');
 	},
  
 	/**  
@@ -1001,7 +1160,6 @@ $.extend(window.VisualFileChange,
 			this.mdPendingBatchQueries++;
 			var collectedFiles = [];
 			var collectedCount = 0;
-			var _this = this;
 			
 			var sendReq = function (files) {
 				if (0 === files.length) {
@@ -1011,7 +1169,6 @@ $.extend(window.VisualFileChange,
 					action: 'query',
 					prop: 'imageinfo|info|revisions|categories',
 					rvprop: 'timestamp|content',
-					intoken: ('undefined' === typeof _this.edittoken) ? 'edit' : '',
 					iiprop: 'url|size|metadata',
 					iiurlwidth: 120,
 					iiurlheight: 120,
@@ -1019,19 +1176,19 @@ $.extend(window.VisualFileChange,
 					clprop: 'hidden',
 					cllimit: 500
 				};
-				if (_this.mdModeCat) {
+				if (vfc.mdModeCat) {
 					query.iiprop += '|user|sha1|comment';
 					query.iilimit = 500;
 				}
 				
-				$(document).triggerHandler('vFC', ['detail-info', _this, query]);
+				$(document).triggerHandler('vFC', ['detail-info', vfc, query]);
 				
-				_this.mdUploadCt++;
-				_this.doAPICall(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
+				vfc.mdUploadCt++;
+				vfc.queryAPI(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
 			};
 
 			$.each(this.iUploads, function(upload, upli) {
-				if ((_this.iCurrentIId + 1) > upli.iId) return;
+				if ((vfc.iCurrentIId + 1) > upli.iId) return;
 				collectedFiles.push(upload);
 				collectedCount++;
 				if (collectedCount > 9) {  // only 10 at once
@@ -1039,8 +1196,8 @@ $.extend(window.VisualFileChange,
 					sendReq(collectedFiles);
 					collectedFiles = [];
 				}
-				_this.iCurrentIId = upli.iId;
-				if (Math.round(_this.mdSettings.loadBatchSize / 10) === _this.mdUploadCt) {
+				vfc.iCurrentIId = upli.iId;
+				if (Math.round(vfc.mdSettings.loadBatchSize / 10) === vfc.mdUploadCt) {
 					return false;
 				}
 			});
@@ -1052,11 +1209,14 @@ $.extend(window.VisualFileChange,
 	},
 	
 	/* Helper function: Creating a gallery box for gallery view */
-	mdCreateGalleryBox: function( img, txt, height, style, imgTitle, imgH ) {
+	mdCreateGalleryBox: function( img, txt, height, style, imgTitle, imgH, addGU ) {
 		var id,
 			$ih = $('<div>', { style: 'margin:' + (imgH ? (Math.round((height - imgH) / 2) + 'px auto;') : '15px auto;') } ),
 			$th = $('<div>', { 'class': 'gallerytext', 'tipsy-title': imgTitle }),
-			$galleryBox = $('<li>', { 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($('<div>', { style: 'width: 150px;', 'class': 'thumb'}).css('height', height).append($ih)).append($th));
+			$gbProgress = $('<div>', { 'class': 'jProgress' }),
+			$gbGU = $('<div>', { 'class': 'jGU', title: "GlobalUsage" }),
+			$thumb = $('<div>', { style: 'width: 150px;', 'class': 'thumb jImage'}).css('height', height).append($ih, $gbProgress, $gbGU),
+			$galleryBox = $('<li>', { 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($thumb).append($th));
 		if ('string' === typeof style) $th.attr('style', style);
 		
 		$.each(img, function(id, imgi) {
@@ -1065,9 +1225,28 @@ $.extend(window.VisualFileChange,
 		$.each(txt, function(id, txti) {
 			$th.append(txti);
 		});
+		$galleryBox.$thumb = $thumb;
+		if (addGU) {
+			$gbGU.badge('?');
+			$galleryBox.$gbGU = $gbGU;
+		}
 		return $galleryBox;
 	},
-	
+	fillGlobalUsage: function() {
+		mw.loader.using('ext.gadget.GlobalUsage', function() {
+			vfc.secureCall('_fillGlobalUsage');
+		});
+	},
+	_fillGlobalUsage: function() {
+		var gu = window.mw.libs.GlobalUsage(5, 15, 3, true);
+		gu.tipsyGravity = 'se';
+		gu.query(vfc.gbu).done(function() { 
+			$.each(vfc.gbu, function(i, $el) {
+				$el.unbind('click');
+			});
+			vfc.gbu = {};
+		});
+	},
 	/** Helper function: Creating a link to the log of a deleted item **/
 	mdCreateDelUploadItem: function (img) {
 		return $('<li>').append($('<a>', { href: mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=Special:Log&page=' + img, target: '_blank' }).append(mw.html.escape(img)))
@@ -1092,7 +1271,7 @@ $.extend(window.VisualFileChange,
 		$catWrap.append($catsList);
 		
 		$.each(cats, function(id, tCat) {
-			if ('undefined' === typeof cats[id].hidden) $catsList.append( 
+			if (undefined === cats[id].hidden) $catsList.append( 
 				$('<li>', { 'class': (asTags ? ' j-cat-label' : '') }).append($('<a>', 
 					{	'class': (asTags ? ' j-cat-label' : ''), 
 						href: mw.util.wikiGetlink(tCat.title), 
@@ -1206,36 +1385,34 @@ $.extend(window.VisualFileChange,
 	**  API-Call-back method to eval the queried file and add a thumb
 	**/
 	mdQueriedFile: function (result) {
-		this.mdUploadCt--;
+		vfc.mdUploadCt--;
 		
-		$(document).triggerHandler('vFC', ['got detail-info', this, result]);
+		$(document).triggerHandler('vFC', ['got detail-info', vfc, result]);
 		
-		if ('MD-Error' === this.context || 'MD-postDlg' === this.context) return; // don't try to add something if there was an error.
+		if ('MD-Error' === vfc.context || 'MD-postDlg' === vfc.context) return; // don't try to add something if there was an error.
 		var pages = result.query.pages;
-		
-		var o = this;
+		vfc.mdBusy = true;
 
 		$.each(pages, function(id, pg) {
 			var dirtyTitle = pg.title,
-				uItem = o.iUploads[dirtyTitle],
+				uItem = vfc.iUploads[dirtyTitle],
 				i, ii,
 				seenHash = {};
 			
-			o.$AjaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (o.mdUploadCt) + 
-			' batch-queries pending. Total files: ' + (o.iiUploads) + '. Current image: ' + dirtyTitle); 
+			vfc.$ctrs.ajaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (vfc.mdUploadCt) + 
+			' batch-queries pending. Total files: ' + (vfc.iiUploads) + '. Current image: ' + dirtyTitle); 
 
-			if ('undefined' === typeof pg.imageinfo) { 
+			if (undefined === pg.imageinfo) { 
 				try { 
-					o.$AjaxDeletedUploads.append(o.mdSecureCall('mdCreateDelUploadItem', dirtyTitle));
+					vfc.$ctrs.ajaxDeletedUploads.append(vfc.secureCall('mdCreateDelUploadItem', dirtyTitle));
 				} catch (e) {} 
 				return; 
 			} // The file has been deleted
 
 			/*  Adding a thumbnail to the dialog  */
-			o.mdBusy = true;
-			o.mdActualResultCount++;
+			vfc.mdActualResultCount++;
 			
-			if (o.mdModeCat) {
+			if (vfc.mdModeCat) {
 				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
 					if (ii.sha1 && !seenHash[ii.sha1]) {
@@ -1244,6 +1421,7 @@ $.extend(window.VisualFileChange,
 						if (ii.user) {
 							uItem.uploader.push(ii.user);
 							uItem.comments.push(ii.comment || '');
+							if (-1 === $.inArray(ii.user, vfc.allUploaders)) vfc.allUploaders.push(ii.user);
 						}
 					}
 				}
@@ -1264,15 +1442,15 @@ $.extend(window.VisualFileChange,
 				$.each(ii.metadata, function(i, m) {
 					var tp = typeof m.value;
 					if (tp === 'string' || tp === 'number' || tp === 'boolean') {
-						if (-1 === $.inArray(m.name, o.metaKeys)) o.metaKeys.push(m.name);
+						if (-1 === $.inArray(m.name, vfc.metaKeys)) vfc.metaKeys.push(m.name);
 					}
 				});
 			}
 			
-			var camModel = o.mdSecureCall('mdGetCamModel', uItem);
+			var camModel = vfc.secureCall('mdGetCamModel', uItem);
 			var loglink = mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=Special:Log&page=' + mw.util.wikiUrlencode(dirtyTitle);
 			
-			var $galleryBox = o.mdCreateGalleryBox(
+			var $galleryBox = vfc.mdCreateGalleryBox(
 				[ $('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image' })
 					.append( $('<img>', { src: ii.thumburl, width: ii.thumbwidth, height: ii.thumbheight, alt: dirtyTitle }) ) ],
 				[ ('<i>' + uItem.iId + ': </i>'),
@@ -1282,94 +1460,97 @@ $.extend(window.VisualFileChange,
 					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm') : 
 					''), 
 				$('<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' }), '<br/>',
-				(o.mdSecureCall('mdExtractTags', pg.categories)), ' ',
+				(vfc.secureCall('mdExtractTags', pg.categories)), ' ',
 				$('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image jFileTitle' })
 					.text(dirtyTitle),
 				$('<div>', { 'class': 'jFileTime' }).text(uItem.time.replace(/[T|Z]/g, " ")),
 				$('<div>', { 'class': 'jFileSize' }).html(
-					o.mdSecureCall('mdFormattNumber', uItem.size) 
+					vfc.secureCall('mdFormattNumber', uItem.size) 
 					+ '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>&nbsp; '
-					+ (o.mdSecureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + o.mdSecureCall('mdFormattNumber', ii.height)) 
+					+ (vfc.secureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + vfc.secureCall('mdFormattNumber', ii.height)) 
 					+ 'px')
 				],
 				150,
 				'',
 				dirtyTitle,
-				ii.thumbheight
+				ii.thumbheight,
+				true
 			);
-			o.gbs[dirtyTitle] = $galleryBox;
-			o.mdBusy = false;
- 
-			if ( pg.edittoken ) { // prevent assigning an empty edit token
-				o.edittoken = pg.edittoken; 
-			} 
+			vfc.gbs[dirtyTitle] = $galleryBox;
+			vfc.gbu[dirtyTitle] = $galleryBox.$gbGU.click(vfc.fillGlobalUsage);
 		});
-		if (0 === this.mdUploadCt) this.nextTask();
+		vfc.mdBusy = false;
+		if (0 === vfc.mdUploadCt) vfc.nextTask();
 	},
  
 	/**  
 	**  Called when a batch of files has been queried  
 	**/
-	mdQueryFileDone: function () {
-		var o = this;
-		
+	mdQueryFileDone: function () {		
 		// Append all queried files to the screen-container
-		$.each(this.iUploads, function(id, uItem) {
+		$.each(vfc.iUploads, function(id, uItem) {
 			if (!uItem.gbInUse) {
-				var $galleryBox = o.gbs[id];
+				var $galleryBox = vfc.gbs[id];
 				if ($galleryBox) {
 					uItem.gbInUse = true;
-					o.$AjaxMdUlContainer.append($galleryBox);
-					o.mdThumbsOnDlg++;
+					vfc.$ctrs.ajaxMdUlContainer.append($galleryBox);
+					vfc.mdThumbsOnDlg++;
 				}
 			}
 		});
 
-		this.mdBusy = false;
-		this.mdPendingBatchQueries--;
-		$('#AjaxMdNotReady').hide();
-		this.pb.setCurrentTaskDone();
+		vfc.mdBusy = false;
+		vfc.mdPendingBatchQueries--;
+		vfc.$ctrs.ajaxMdNotReady.hide();
+		vfc.pb.setCurrentTaskDone();
 		
-		$(document).triggerHandler('vFC', ['detail-info processed', o]);
+		$(document).triggerHandler('vFC', ['detail-info processed', vfc]);
  
-		if ( (o.iiUploads > (o.iCurrentIId + 1))  || !o.mdNoMoreFiles) {
-			o.$mdQueryMoreBtn.button('option', 'disabled', false);
-			$('.ui-dialog > .ui-dialog-content').bind('scroll', function() {
-				if ( o.$mdQueryMoreBtn.visible().length > 0 ) {
-					o.mdSecureCall('mdQueryMore');
+		if ( (vfc.iiUploads > (vfc.iCurrentIId + 1))  || !vfc.mdNoMoreFiles) {
+			vfc.$mdQueryMoreBtn.button('option', 'disabled', false);
+			
+			var __onScroll = function() {
+				if ( vfc.$mdQueryMoreBtn.inView().length > 0 ) {
+					vfc.secureCall('mdQueryMore');
 				}
-			});
+			};
+			vfc.dlg.unbind('scroll', __onScroll);
+			vfc.dlg.bind('scroll', __onScroll);
 		}
-		if (!o.mdNoMoreFiles) { // silently run the next upload-list-query in background
-			o.mdSecureCall('mdCreateList');
+		if (!vfc.mdNoMoreFiles) { // silently run the next upload-list-query in background
+			vfc.secureCall('mdCreateList');
 		}
  
 		document.body.style.cursor = 'auto';
-		if (0 === o.mdActualResultCount) { // If there are no thumbs on the dialog, continue
-			if ('MD-RevertImage' !== o.context) { // Don't shedule further tasks if called from revert part
-				if ('MD' === o.context) {
-					if (!o.mdModeCat && !o.mdNoMoreFiles) {	
+		if (0 === vfc.mdActualResultCount) { // If there are no thumbs on the dialog, continue
+			if ('MD-RevertImage' !== vfc.context) { // Don't shedule further tasks if called from revert part
+				if ('MD' === vfc.context) {
+					if (!vfc.mdModeCat && !vfc.mdNoMoreFiles) {	// When no files in cat-mode are found, it's clear there are no more files
 						return;
 					} else {
-						alert(o.i18n.mdNoResult.replace("%TARGET%", o.mdTarget));
+						vfc.infoTextToEndDlg.push(vfc.i18n.mdNoResult.replace("%TARGET%", vfc.mdTarget));
 					}
 				}
-				o.mdDlgThumbDlgClose(); // remove the dialog
-				if (!o.mdModeCat) o.addTask('mdRvGenOGallery');
-				o.addTask('mdExecuteReady');
+				if (!vfc.mdModeCat) {
+					$.each(vfc.mdCommandsPostExec[vfc.mdSettings.defaultAction], function(id, task) {
+						vfc.addTask(task);
+						if (task in vfc.i18n.task) vfc.pb.addTask(task);
+					});
+				}
+				vfc.addTask('mdExecuteReady');
 			}
-			o.nextTask();
+			vfc.nextTask();
 		}
 	},
  
 	/**  
-	**  Called by scroll-event when the button "more" becomes visible (mdQueryFileDone binds the evt) or onClick on the button
+	**  Called by scroll-event when the button "more" is scrolled to view (mdQueryFileDone binds the evt) or onClick on the button
 	**/
 	mdQueryMore: function () {
-		if (0 === this.mdPendingBatchQueries) {
+		if (0 === this.mdPendingBatchQueries && 0 === this.mdNumberOfExecs) {
 			this.mdUploadCt = 0;
 			this.addTask('mdQueryFileDone');
-			this.mdSecureCall('mdSendNextQueries');
+			this.secureCall('mdSendNextQueries');
 		}
 	},
  
@@ -1379,7 +1560,9 @@ $.extend(window.VisualFileChange,
 	**/
 	mdRvGenOGallery: function () {
 		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('mdRvGenOGallery', 'md-doing');
+		if ('mdRvGenOGallery' in this.pb.t) this.pb.setTaskState('mdRvGenOGallery', 'md-doing');
+		
+		this.pb.setHelp("We are working to re-add the possibility to rollback overwritten files to combat vandalism");
 
 		///////////////////////////////////////////
 		//   SKIP THIS - TEMPORARY NOT WORKING   //
@@ -1387,232 +1570,16 @@ $.extend(window.VisualFileChange,
 		this.nextTask();
 		return;
 		///////////////////////////////////////////
-
-		this.context = "MD-RevertImage";
-		this.mdUploadCt = 0;
-		if ( this.progressDialog ) this.progressDialog.remove();
-		this.mdActualResultCount = 0;
-		
-		var o = this;
-		
-		var dlgButtons = {};
-		dlgButtons[this.i18n.mdRevertButtonLabel] = function () { 
-			o.mdSecureCall("mdRvEvalSelction");
-		};
-		dlgButtons[this.i18n.cancelButtonLabel] = function () {
-			$(this).dialog("close");
-			if ( o.mdInsertedTag ) {
-				o.addTask('mdExecuteReady');
-				o.nextTask();
-			}
-		};
-		this.mdDlgThumbDlgClose();
-		this.dlg = $('<div></div>').html('<div id="AjaxMdContainer"></div>').dialog({
-			modal: true,
-			closeOnEscape: true,
-			position: 'center',
-			title: this.mdHelpNode + 
-				'Batch Surgery Script in Beta-Mode.' + 
-				' Report bugs and ideas to <a href="' + this.mdErrorsReportPath + '" target="_blank">Rillke</a>.' + 
-				' Action: Revert overwritten images' + 
-				' (Dis-)select&nbsp;all:&nbsp;<input type="checkbox" id="AjaxMdIa" value="1"/>',
-			height: $(window).height() * 0.97,
-			width: $(window).width() * 0.99,
-			buttons: dlgButtons,
-			close: this.mdCancel
-		});
-		if (this.dlg) {
-			$('#AjaxMdIa').change( function (event) {
-				var tmpChecked = this.checked;
-				$('input[name="mdCheckDelete"]').each(function(index) {
-					this.checked = tmpChecked;
-				});
-			});
-			$('#AjaxMdContainer').append('<div id="AjaxMdNotReady">Please wait while enumerating overwritten files ...</div><ul id="AjaxMdUlContainer" class="gallery rgallery"></ul>');
-			for (var upload in this.oUploads) {
-				if (this.oUploads.hasOwnProperty(upload)) {
-					var query = {
-						action: 'view',
-						title: upload
-					};
-					$('#AjaxMdNotReady').contents().eq(0).replaceWith("Obtaining information from index.php for " + upload);
-					this.doHTTPRequest(query, 'mdRvQueriedFile', 'GET');
-					this.mdUploadCt++;
-				}
-			}
-		}
-		if (0 === this.mdUploadCt) this.nextTask();
-	},
- 
-	mdRvQueriedFile: function (result) {
-		this.mdUploadCt--;
-		if ('MD-Error' === this.context || 'MD-postDlg' === this.context) {
-			this.mdRvAllFilesQueried();
-			return;
-		}
-		var parsedDOM = $(result);
-		var pageTitle = $('#firstHeading', parsedDOM).contents().eq(0).text();
-		if (pageTitle && -1 !== pageTitle.indexOf('File:')) {
-			$('#AjaxMdNotReady').contents().eq(0).replaceWith('Querying detailed information and obtaining edittoken. Pending ' + (this.mdUploadCt) + 
-			' of ' + (this.ioUploads) + ' total uploads current image: ' + pageTitle); 
-			var rvMatrix = this.mdSecureCall("mdRvCreateImgRevisionMatrix", parsedDOM);
-			var preVandalRv = 0;
-			if (0 === rvMatrix.length || 'object' !== typeof rvMatrix[0] || rvMatrix[0].user !== this.mdTarget) { 
-				this.mdRvAllFilesQueried();
-				return;
-			}
-			for (var rv in rvMatrix) {
-				// Find the first revision of another user
-				if (rvMatrix.hasOwnProperty(rv) && (rvMatrix[rv].user !== this.mdTarget)) {
-					preVandalRv = rvMatrix[rv];
-					break;
-				}
-			}
-			if ('object' === typeof(preVandalRv)) {
-				if ('object' !== typeof(this.oUploads[pageTitle])) { // Is this upload in the list?
-					var pageTitleR = $('#contentSub > a', parsedDOM).eq(0).attr('title'); // Redirect
-					if ('' === pageTitleR || 'object' !== typeof this.oUploads[pageTitleR]) {
-						this.mdRvAllFilesQueried();
-						return;
-					}
-					else {
-						this.oUploads[pageTitleR].iId = 'redir';
-						this.oUploads[pageTitle] = {};
-						this.oUploads[pageTitle].iId = 'redir';
-					}
-				}
-				this.oUploads[pageTitle].editToken = preVandalRv.editToken;
-				this.oUploads[pageTitle].oldImage = preVandalRv.oldImage;
-				this.oUploads[pageTitle].preVandalUser = preVandalRv.user;
-				this.mdBusy = true;
- 
-				var imgDescrPageLink = mw.config.get('wgServer') + mw.config.get('wgArticlePath').replace("$1", pageTitle.replace(/ /g, '_'));
- 
-				var $galleryBox = this.mdCreateGalleryBox(
-					[ $('<a>', { href: imgDescrPageLink, target: '_blank', 'class': 'image' })
-						.append( $('<img>', { style: 'vertical-align:top', src: rvMatrix[0].img, width: (0 !== rvMatrix[0].imgWidth ? rvMatrix[0].imgWidth : ''), height: (0 !== rvMatrix[0].imgHeight ? rvMatrix[0].imgHeight : ''), alt: pageTitle })), 
-					('<p style="vertical-align:middle">revert to ' + preVandalRv.user + '</p>'), 
-					$('<a>', { href: preVandalRv.href, target: '_blank', 'class': 'image' })
-						.append( $('<img>', { style: 'vertical-align:bottom', src: preVandalRv.img, width: (0 !== preVandalRv.imgWidth ? preVandalRv.imgWidth : ''), height: (0 !== preVandalRv.imgHeight ? preVandalRv.imgHeight : ''), alt: pageTitle }) ) ],
-					[ ('<i>' + this.oUploads[pageTitle].iId + ': </i>'),
-					$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: pageTitle } ),
-					('<a' + imgDescrPageLink + '>' + pageTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</a>') ],
-					310,
-					'',
-					pageTitle,
-					rvMatrix[0].imgHeight
-				);
-				$('#AjaxMdUlContainer').append($galleryBox);
- 
-				this.mdBusy = false;
-				this.mdActualResultCount++;
-			}
-		}
-		this.mdSecureCall("mdRvAllFilesQueried");
-	},
- 
-	mdRvAllFilesQueried: function () {
-		if (0 === this.mdUploadCt) {
-			this.mdBusy = false;
-			this.context = "MD-RevertImage";
-			$('#AjaxMdNotReady').hide();
-			document.body.style.cursor = 'auto';
-			if (0 === this.mdActualResultCount) {
-				this.mdQueryFileDone();
-			}
-		}
-	},
- 
-	mdRvCreateImgRevisionMatrix: function (parsedDOM) {
-		var revArray = [];
-		var cols = 6; // 6 is the number of columns; change this if number of col changes
-		var iCell = -2;
-		$('table.filehistory  > tbody > tr > td', parsedDOM).each(function(index, val) {
-			try { // silently fail - result will be checked
-				iCell++;
-				if ('object' !== typeof(revArray[Math.floor(iCell/cols)]) && Math.floor(iCell/cols) >= 0) revArray[Math.floor(iCell/cols)] = {};
-				if ( $(val).children('a').length ) {
-					var aNode = $(val).children('a').eq(0),
-						hrefContent;
-
-					if ( -1 !== $(aNode).attr('href').indexOf("wpEditToken=") ) {
-						hrefContent = $(aNode).attr('href'); // with (revArray[Math.floor(iCell/cols)]) { - why it doesn't work?
-						revArray[Math.floor(iCell/cols)].editToken = hrefContent.match(/wpEditToken=[a-fA-F0-9]{32}\%2B\%5C/)[0].replace('wpEditToken=', '').replace('%2B%5C', '+\\');
-						revArray[Math.floor(iCell/cols)].oldImage = hrefContent.match(/oldimage=\d+\%21/)[0].replace('oldimage=', '').replace('%21', '');
-						return true;
-					}
-					if ( -1 !== $(aNode).attr('class').indexOf("mw-userlink") ) {
-						revArray[Math.floor(iCell/cols)].user = $(aNode).contents().eq(0).text();
-						return true; // skip the other tests, like continue in a loop
-					}
-					if ( -1 !== $(aNode).attr('href').indexOf("//upload.wikimedia.org/wikipedia/")) {
-						hrefContent = $(aNode).attr('href');
-						var imgNode = $(aNode).children('img').eq(0);
-						if ( $(aNode).children('img').length ) {
-							revArray[Math.floor(iCell/cols)].href = hrefContent;
-							revArray[Math.floor(iCell/cols)].img = $(imgNode).attr('src');
-							revArray[Math.floor(iCell/cols)].imgWidth = $(imgNode).attr('width');
-							revArray[Math.floor(iCell/cols)].imgHeight = $(imgNode).attr('height');
-						}
-						return true;
-					}
-				}
-			} catch (ex) {}
-		});
-		return revArray;
-	},
- 
-	mdRvEvalSelction: function () {
-		var o = this;
-		
-		this.mdUploadCt = 0;
-		$('#AjaxMdContainer').hide();
-		$('#AjaxMdContainer').parent().append('<div id="mdWaitContainer">' + this.i18n.mdExecutingTaskEnumerateFiles + this.mdReLoader + '</div>');
- 
-		$('input[name="mdCheckDelete"]').each(function(index) {
-			if (this.checked) {
-				o.mdUploadCt++;
-				o.mdSecureCall("mdRevertImage", this.value);
-			}
-		});
-		if (0 === this.mdUploadCt) {
-			this.mdDlgThumbDlgClose();
-			this.nextTask();
-		}
-	},
- 
-	mdRevertImage: function (title) {
-		var pageTitle = title.replace(/ /g, '_');
-		var data = {
-			wpEditToken: this.oUploads[title].editToken,
-			wpComment: 'Reverting this image to previous revision of ' + this.oUploads[title].preVandalUser + ' using [[' + this.mdSelfPath + '|VisualFileChange.js]]'
-		};
- 
-		$('#mdWaitContainer').replaceWith('<div id="mdWaitContainer">Posting the revert request for ' + title + ' via index.php ' + this.mdReLoader + '</div>');
-		this.doHTTPRequest(data, 'mdReverted', 'POST', mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=' + pageTitle + '&action=revert&oldimage=' 
-			+ this.oUploads[title].oldImage + '!' + pageTitle.replace('File:', '') );
-	},
- 
-	mdReverted: function (result) {
-		this.mdUploadCt--;
-		if (!$('#mw-returnto', $(result)).children().length) { 
-			// Error!
-		}
-		if (0 === this.mdUploadCt) {
-			this.mdDlgThumbDlgClose();
-			this.nextTask();
-		}
 	},
  
 	mdExecuteReady: function () {
 		this.context = "QD";
 		this.pb.setCurrentTaskDone();
-		var o = this;
 
 		var $dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: 'What would you like to do next?', text: 'Note: You cannot execute new requests without reloading this page. ' })
 			.append($('<br/>'), $('<a>', { href: '#', text: 'But you can save your inputs into a profile.' }).click(function(e) {
 				e.preventDefault();
-				o.mdProfile();
+				vfc.mdProfile();
 			}))
 			.append($('<br/>'), mw.html.escape('The inputs of the last executed requests are automatically saved.'));
 		var $ulNode = $('<ul>');
@@ -1628,11 +1595,14 @@ $.extend(window.VisualFileChange,
 		
 		if (this.mdWasAPIError) {
 			$dlgNode.append(
-				o.createNotifyArea('We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
+				$.createNotifyArea('We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
 				'Please check your contributions, whether something went wrong.',
 				'ui-icon-alert', 'ui-state-error')
 			);
 		}
+		$.each(this.infoTextToEndDlg, function(i, text) {
+			$dlgNode.append($.createNotifyArea(text, 'ui-icon-info', 'ui-state-highlight'));			
+		});
 		addLink('Special:MyContributions', "Check your contributions", 'contribswindow');
 		
 		if ( this.mdInsertedTag ) {
@@ -1653,19 +1623,23 @@ $.extend(window.VisualFileChange,
 			width: Math.min(450, $(window).width())
 		});
 		document.title = "VisualFileChange: Ready!";
-		o.$dialogsToClose.push($dlgNode);
-	},
-
-	mdGoToSite: function (target) {
-		if (!window.VisualFileChangeDebug && !this.mdWasAPIError) {
-			setTimeout(function() {
-				location.href = target;
-			}, 5000);
-		}
+		vfc.$dialogsToClose.push($dlgNode);
 	}
 });
 
-mw.loader.using(['jquery.ui.dialog', 'jquery.ui.button', 'jquery.tipsy', 'jquery.placeholder'], function() {
+mw.loader.using([
+	'jquery.ui.dialog', 
+	'jquery.ui.button', 
+	'jquery.tipsy', 
+	'jquery.placeholder', 
+	'jquery.byteLimit',
+	'jquery.byteLength',
+	'jquery.badge',
+	'ext.gadget.jStorage',
+	'ext.gadget.libAPI',
+	'ext.gadget.libJQuery',
+	'ext.gadget.jquery.blockUI'
+], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'displayComponents']);
 });
 
