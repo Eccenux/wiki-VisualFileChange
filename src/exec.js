@@ -14,6 +14,8 @@ if (!window.VisualFileChange) return;
 // Return if this script is already loaded
 if (window.VisualFileChange.editComponents) return;
 
+var vfc = window.VisualFileChange;
+
 $.extend(window.VisualFileChange,
 {
 	editComponents: true,
@@ -21,92 +23,86 @@ $.extend(window.VisualFileChange,
 	**  Reads user's input to the thumbnail-dialog; Called when user clicked next
 	**/
 	mdExecute: function () {
-		var o = this;
-		o.mdTaskToPerform = o.$AjaxMdType.val();
-		var cmdConfig = o.mdCommands[o.mdTaskToPerform];
+		vfc.mdTaskToPerform = vfc.$ctrs.ajaxMdType.val();
+		var cmdConfig = vfc.mdCommandsExec[vfc.mdTaskToPerform];
 		
-		o.startDate = new Date();
-		o.apiEditFirstTestCountDown = o.mdSettings.firstTest-1;
-		o.totalEdits = 0;
-		o.totalEditsDone = 0;
+		vfc.startDate = new Date();
+		vfc.api.eFirst = vfc.mdSettings.firstTest-1;
+		vfc.api.total = 0;
+		vfc.api.done = 0;
 		
-		if (0 !== o.mdNumberOfExecs || 0 !== o.mdListUploadsPending) return; // refuse futher exec request
-		if (0 !== o.mdPendingBatchQueries) { // call me later
+		if (0 !== vfc.mdNumberOfExecs || 0 !== vfc.mdListUploadsPending) return; // refuse futher exec request
+		if (0 !== vfc.mdPendingBatchQueries) { // call me later
 			setTimeout(function () { 
-				o.mdExecute();
+				vfc.mdExecute();
 			}, 1000);
 			return;
 		}
-		o.mdNumberOfExecs++;
+		vfc.mdNumberOfExecs++;
 
-		$(document).triggerHandler('vFC', ['processing user\'s input', o]);
-		o.pb.addTask('inputcheck');
-		o.pb.setTaskState('inputcheck', 'md-doing');
-		o.pb.setHelp(o.i18n.mdPleaseWait);
-		o.pb.setHelp2('');
-		o.pb.setHelp3('');
+		$(document).triggerHandler('vFC', ['processing user\'s input', vfc]);
+		vfc.pb.addTask('inputcheck');
+		vfc.pb.setTaskState('inputcheck', 'md-doing');
+		vfc.pb.setHelp(vfc.i18n.mdPleaseWait);
+		vfc.pb.setHelp2('');
+		vfc.pb.setHelp3('');
 
 		var filesToTag = 0;
  
 		$('input[name="mdCheckDelete"]').each(function(index) {
 			if (this.checked) {
-				o.iUploads[this.value].iId = -2; // Indicate the action will be performed on this file
+				vfc.iUploads[this.value].iId = -2; // Indicate the action will be performed on this file
 				filesToTag++;
-				var $gb = o.gbs[this.value];
+				var $gb = vfc.gbs[this.value];
 				if ($gb) {
-					$gb.find('img').attr({
-						'src': o.mdDoingIcon, 
-						'width': 120, 
-						'height': 120
-					}).css('height', 120).css('width', 120);
-					$gb.find('div.thumb > div').css('margin', '15px auto');
+					$gb.$thumb.addClass('progress-doing');
 				}
 			}
 		});
  
 		if (0 === filesToTag) {
-			if ( ('other' !== o.mdTaskToPerform ) && ('otrs' !== o.mdTaskToPerform) && (0 < o.ioUploads) ) {
-				o.addTask('mdRvGenOGallery');
+			if ( ('other' !== vfc.mdTaskToPerform ) && ('otrs' !== vfc.mdTaskToPerform) && (0 < vfc.ioUploads) ) {
+				vfc.addTask('mdRvGenOGallery');
 			}
-			o.addTask('mdExecuteReady');
-			o.dlg.dialog('close');
-			o.nextTask();
+			vfc.addTask('mdExecuteReady');
+			vfc.dlg.dialog('close');
+			vfc.nextTask();
 			return;
 		} else {
-			o.mdInsertedTag = true;
+			vfc.mdInsertedTag = true;
 		}
  
-		o.mdDeleteHeading = o.cleanReason($('#mdDeleteHeading').val());
+		vfc.mdDeleteHeading = vfc.cleanReason(vfc.$ctrs.deleteHeading.val());
  
-		if ($('#mdDeleteReason').val()) {
-			o.reason = cmdConfig.cleanReason ? o.cleanReason($('#mdDeleteReason').val()) : $('#mdDeleteReason').val();
+		if (vfc.$ctrs.deleteReason.val()) {
+			vfc.reason = cmdConfig.cleanReason ? vfc.cleanReason(vfc.$ctrs.deleteReason.val()) : vfc.$ctrs.deleteReason.val();
 		} else {
-			o.reason = '';
+			vfc.reason = '';
 		}
-		o.mdReplacePermission = $('#mdReplacePermission')[0].checked;
-		o.mdTalkNote = $('#mdTalkNote').val();
-		o.mdAddEditSummary = $('#mdEditSummary').val();
+		vfc.mdReplacePermission = vfc.$ctrs.replacePermission[0].checked;
+		vfc.mdTalkNote = vfc.$ctrs.talkNote.val();
+		vfc.mdAddEditSummary = vfc.$ctrs.editSummary.val() || '';
 
 		// Processing for custom replace
-		$.each(o.mdReplacementMatrix, function(i, rObj) {
+		$.each(vfc.mdReplacementMatrix, function(i, rObj) {
 			rObj.match = rObj.match.val();
 			rObj.replace = rObj.replace.val();
 			rObj.regex = rObj.regex[0].checked;
 			rObj.vars = rObj.vars[0].checked;
 			if (rObj.regex && rObj.match) {
-				rObj.match = o.mdRegExpFromString(rObj.match);
-				if (!rObj.match) o.pb.setError('INVALIDINPUT: -' + rObj.match + '- is not a valid RegExp!');
+				rObj.match = vfc.mdRegExpFromString(rObj.match);
+				if (!rObj.match) vfc.pb.setError('INVALIDINPUT: -' + rObj.match + '- is not a valid RegExp!');
 			}
 		});
 		
 		// Try to save the current input state into the automatically generated client profile
 		try {
-			o.mdSaveProfileToClient('auto-exec');
+			vfc.mdSaveProfileToClient('auto-exec');
 		} catch (e) {
-			o.pb.setHelp2(o.i18n.mdProfileCantSave);
+			vfc.pb.setHelp2(vfc.i18n.mdProfileCantSave);
 		}
-		o.addTask('mdExecuteContinue');
-		o.nextTask();
+		vfc.addTask('mdExecuteContinue');
+		vfc.nextTask();
 	},
 	
 	formatDate: function (fmt, date) {
@@ -117,88 +113,96 @@ $.extend(window.VisualFileChange,
 	**  Preparing to perform our edits
 	**/
 	mdExecuteContinue: function () {
-		$(document).triggerHandler('vFC', ['generating page messages and summaries', this]);
+		$(document).triggerHandler('vFC', ['generating page messages and summaries', vfc]);
  
 		// set up some page names we'll need later
-		var mdRequestPage = (this.mdModeCat ? 'Files in ' : 'Files uploaded by ') + this.mdTarget;
-		this.requestPage =  this.mdRequestPagePrefix + mdRequestPage;
-		this.dailyLogPage = this.mdRequestPagePrefix + this.formatDate("YYYY/MM/DD");
- 
-		var uploadCt = 0;
+		var mdRequestPage = (vfc.mdModeCat ? 'Files in ' : 'Files uploaded by ') + vfc.mdTarget;
+		vfc.requestPage =  vfc.mdRequestPagePrefix + mdRequestPage;
+		vfc.dailyLogPage = vfc.mdRequestPagePrefix + vfc.formatDate("YYYY/MM/DD");
 
-		var optConfig = this.mdOpt[this.mdTaskToPerform];
-		var cmdConfig = this.mdCommands[this.mdTaskToPerform];
-		this.tag = optConfig[7].replace('%REASON%', this.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', this.formatDate('year=YYYY|month=MON|day=DAY'));
+		var uploadCt = 0,
 		
-		this.img_summary = (this.mdAddEditSummary ? (this.mdAddEditSummary + ' - ') : '') + 
-			optConfig[8].replace('%pattern%', this.reason).replace('%replacementcount%', this.mdReplacementMatrix.length-1).replace('%REASON%', this.reason) + 
-			' Using [[' + this.mdSelfPath + '|VisualFileChange.js]].';
-		var r = this.img_summary.match(/\%(.{1,9})\%/);
-		if (r && r[1]) this.img_summary = this.img_summary.replace('%' + r[1] + '%', this.mdOptText[r[1]]);
+			action = vfc.mdTaskToPerform,
+			opt = vfc.mdOpt[action],
+			cmdConfig = vfc.mdCommandsExec[action],
+			cmdConfigPostExec = vfc.mdCommandsPostExec[action],
+			fTag = vfc.mdFileTags[action],
+			uTag = vfc.mdUserTags[action];
+			
+			
+		vfc.tag = fTag.tag && fTag.tag.replace('%REASON%', vfc.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', vfc.formatDate('year=YYYY|month=MON|day=DAY'));
 		
-		this.uploaders = {};
-		var _this = this;
+		vfc.file_summary = (vfc.mdAddEditSummary && (vfc.mdAddEditSummary + ' - ')) + 
+			(fTag.summary && fTag.summary.replace('%pattern%', vfc.reason).replace('%replacementcount%', vfc.mdReplacementMatrix.length-1).replace('%REASON%', vfc.reason)) + 
+			' Using [[' + vfc.mdSelfPath + '|VisualFileChange.js]].';
+		var r = vfc.file_summary.match(/\%(.{1,9})\%/);
+		if (r && r[1]) vfc.file_summary = vfc.file_summary.replace('%' + r[1] + '%', vfc.mdOptText[r[1]]);
+		
+		vfc.uploaders = {};
 		
 		// Reverse-mapping: files-uploader --- > uploader-files
-		$.each(this.iUploads, function(upload, uItem) {
+		$.each(vfc.iUploads, function(upload, uItem) {
 			if ( -2 === uItem.iId )  {
-				if (_this.mdModeCat) {
+				if (vfc.mdModeCat) {
 					// Remember: u is just an index of an array
 					$.each(uItem.uploader, function(u, ul) {
 						ul = mw.libs.commons.getUploadBotUser(ul, uItem.content, uItem.comments[u]);
-						if (!_this.uploaders[ul]) {
-							_this.uploaders[ul] = { uploads: {} };
+						if (!vfc.uploaders[ul]) {
+							vfc.uploaders[ul] = { uploads: {} };
 						}
-						_this.uploaders[ul].uploads[upload] = true;
+						vfc.uploaders[ul].uploads[upload] = true;
 					});
 				} else {
-					if (!_this.uploaders[_this.mdTarget]) {
-						_this.uploaders[_this.mdTarget] = { uploads: {} };
+					if (!vfc.uploaders[vfc.mdTarget]) {
+						vfc.uploaders[vfc.mdTarget] = { uploads: {} };
 					}
-					_this.uploaders[_this.mdTarget].uploads[upload] = true;
+					vfc.uploaders[vfc.mdTarget].uploads[upload] = true;
 				}
 			}
 		});
 		
-		$.each(this.uploaders, function(uploader, uploaderItem) {
+		$.each(vfc.uploaders, function(uploader, uploaderItem) {
 			uploadCt = 0;
 			
-			uploaderItem.talk_tag = optConfig[9].replace('%REQUESTPAGE%', mdRequestPage);
-			uploaderItem.talk_summary = optConfig[10].replace('%FULLREQUESTPAGE%', _this.requestPage);
-			if (/\%FILE\%/.test(uploaderItem.talk_tag)) {
+			uploaderItem.tag = (uTag.tag && uTag.tag.replace('%REQUESTPAGE%', mdRequestPage)) || '';
+			uploaderItem.summary = (uTag.summary && uTag.summary.replace('%FULLREQUESTPAGE%', vfc.requestPage)) || '';
+			if (/\%FILE\%/.test(uploaderItem.tag)) {
 				$.each(uploaderItem.uploads, function(userUpload, unused) {
 					if ( 0 === uploadCt ) {
-						uploaderItem.talk_tag = uploaderItem.talk_tag.replace('%FILE%', userUpload);
-						uploaderItem.talk_summary = uploaderItem.talk_summary.replace('%FILE%', userUpload);
+						uploaderItem.tag = uploaderItem.tag.replace('%FILE%', userUpload);
+						uploaderItem.summary = uploaderItem.summary.replace('%FILE%', userUpload);
 					} else if ( 1 === uploadCt ) {
-						uploaderItem.talk_tag += '\nAnd also: \n* [[:' + userUpload + ']] '; 
+						uploaderItem.tag += "\nAnd also: \n* [[:" + userUpload + "]] "; 
 					} else {
-						uploaderItem.talk_tag += '\n* [[:' + userUpload + ']] '; 
+						uploaderItem.tag += '\n* [[:' + userUpload + ']] '; 
 					}
 					uploadCt++;
 				});
 			}
-			if (optConfig[4]) {
-				if ( _this.mdTalkNote ) uploaderItem.talk_tag += '\n\n' + _this.mdTalkNote;
+			if (uTag.summary) {
+				if (vfc.mdTalkNote) uploaderItem.tag += '\n\n' + vfc.mdTalkNote;
 			}
 		});
 		
 		// Prepare for createRequestSubpage
-		this.requestPageContents = this.reason;
-		$.each(this.iUploads, function(upload, upli) {
-			if ( _this.iUploads.hasOwnProperty(upload) && (-2 === upli.iId) )  { 
-				_this.requestPageContents += '\n* [[:' + upload + ']]'; 
+		vfc.requestPageContents = vfc.reason;
+		$.each(vfc.iUploads, function(upload, upli) {
+			if ( vfc.iUploads.hasOwnProperty(upload) && (-2 === upli.iId) )  { 
+				vfc.requestPageContents += '\n* [[:' + upload + ']]'; 
 			}
 		});
 				
 		// Task sheduling
 		$.each(cmdConfig.tasks, function(id, task) {
-			if ('mdRvGenOGallery' === task && 0 === _this.ioUploads) return;
-			_this.addTask(task);
-			if (task in _this.i18n.task) _this.pb.addTask(task);
+			vfc.addTask(task);
+			if (task in vfc.i18n.task) vfc.pb.addTask(task);
 		});
-		this.addTask('mdExecuteReady');
-		this.nextTask();
+		$.each(cmdConfigPostExec.tasks, function(id, task) {
+			vfc.addTask(task);
+			if (task in vfc.i18n.task) vfc.pb.addTask(task);
+		});
+		vfc.addTask('mdExecuteReady');
+		vfc.nextTask();
 	},
 	
 	mdPrependText: function () {
@@ -218,13 +222,13 @@ $.extend(window.VisualFileChange,
 	mdPrependTemplate: function () {
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdPrependTemplate', 'md-doing');
-		this.mdSecureCall('mdAddTemplate', 'prependtext');
+		this.secureCall('mdAddTemplate', 'prependtext');
 	},
 	
 	mdAppendTemplate: function () {
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdAppendTemplate', 'md-doing');
-		this.mdSecureCall('mdAddTemplate', 'appendtext');
+		this.secureCall('mdAddTemplate', 'appendtext');
 	},
 	
 	mdAddTemplate: function (edittype) {
@@ -240,7 +244,7 @@ $.extend(window.VisualFileChange,
 				page.watchlist = this.mdSettings.watchlistFiles;
 				
 				this.mdUploadCt++;
-				this.mdSavePage(page, this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
+				this.mdEdit(page, this.file_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 			}
 		}
 		if (0 === this.mdUploadCt) this.nextTask();
@@ -477,18 +481,17 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdRefreshCache: function () {
-		$(document).triggerHandler('vFC', ['refreshing cache of file-wikitext', this]);
-		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('mdRefreshCache', 'md-doing');
+		$(document).triggerHandler('vFC', ['refreshing cache of file-wikitext', vfc]);
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('mdRefreshCache', 'md-doing');
 		
 		// Test how old the data are
-		if (new Date().getTime() - this.mdDateOldestDataFetched.getTime() < 60000) {
-			this.nextTask();
+		if (new Date().getTime() - vfc.mdDateOldestDataFetched.getTime() < 60000) {
+			vfc.nextTask();
 			return;
 		}
-		this.refreshRequests = 0;
-		var o = this,
-			i = 0, 
+		vfc.refreshRequests = 0;
+		var i = 0, 
 			titles = [],
 			query = {
 				action: 'query',
@@ -499,102 +502,97 @@ $.extend(window.VisualFileChange,
 			i = -1;
 			query.titles = titles.join('|');
 			titles = [];
-			o.refreshRequests++;
-			o.doAPICall(query, 'mdRefreshCacheCB');
+			vfc.refreshRequests++;
+			vfc.queryAPI(query, 'mdRefreshCacheCB');
 		};
-		$.each(this.iUploads, function(upload, upli) {
-			if (!o.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
+		$.each(vfc.iUploads, function(upload, upli) {
+			if (!vfc.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
 			titles.push(upload);
 			if (10 === i) makeRequest();
 			i++;
 		});
 		if (titles.length) makeRequest();
-		if (0 === o.refreshRequests) this.nextTask();
+		if (0 === vfc.refreshRequests) vfc.nextTask();
 	},
 	
 	mdRefreshCacheCB: function (result) {
-		var o = this;
-		$(document).triggerHandler('vFC', ['got fresh page contents', this, result]);
+		$(document).triggerHandler('vFC', ['got fresh page contents', vfc, result]);
 		
-		o.refreshRequests--;
+		vfc.refreshRequests--;
 		$.each(result.query.pages, function(id, pg) {
-			o.iUploads[pg.title].content = pg.revisions[0]['*'];
+			vfc.iUploads[pg.title].content = pg.revisions[0]['*'];
 		});
-		if (0 === o.refreshRequests) this.nextTask();
+		if (0 === vfc.refreshRequests) vfc.nextTask();
 	},
 
 	mdInsertPermission: function () {
-		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', this]);
-		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('mdInsertPermission', 'md-doing');
-		this.mdUploadCt = 0;
+		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', vfc]);
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('mdInsertPermission', 'md-doing');
+		vfc.mdUploadCt = 0;
 
-		var _this = this,
-			replaceSecurityLevel = _this.$selPreserve.val(),
-			replaceContainer = _this.nowikiEscaper();
+		var replaceSecurityLevel = vfc.$selPreserve.val(),
+			replaceContainer = vfc.nowikiEscaper();
 
-			if ('c_replace' === _this.mdTaskToPerform) replaceContainer.alsoPreserve(_this.$alsoPreserve.val());
+			if ('c_replace' === vfc.mdTaskToPerform) replaceContainer.alsoPreserve(vfc.$alsoPreserve.val());
 
-		$.each(this.iUploads, function(upload, upli) {
-			if (!_this.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
+		$.each(vfc.iUploads, function(upload, upli) {
+			if (!vfc.iUploads.hasOwnProperty(upload) || -2 !== upli.iId) return;
  
 			var page = {};
 			
 			replaceContainer.setText(upli.content);
 
 			page.title = upload;
-			page.watchlist = 'nochange';
+			page.watchlist = vfc.mdSettings.watchlistOTRS;
 			page.basetimestamp = upli.basetimestamp;
+			page.editType = 'text';
  
-			if ('otrs' === _this.mdTaskToPerform) { // drop out other permission templates
+			if ('otrs' === vfc.mdTaskToPerform) { // drop out other permission templates
 				var iCt = 0;
-				$.each(_this.mdTagRemoval, function(id, tri) {
+				$.each(vfc.mdTagRemoval, function(id, tri) {
 					iCt++;
 					if (1 === iCt) return; // Skip first pattern
 					replaceContainer.secureReplace(tri[0], '');
 				});
 			}
-			if ('c_replace' !== _this.mdTaskToPerform) {
-				replaceContainer.setText( _this.mdSecureCall( 'mdInsertOTRS', replaceContainer.getText(), _this.reason ) );
+			if ('c_replace' !== vfc.mdTaskToPerform) {
+				replaceContainer.setText( vfc.secureCall( 'mdInsertOTRS', replaceContainer.getText(), vfc.reason ) );
 			} else {
 				switch (replaceSecurityLevel) {
 				 case 'secure':
-					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+					$.each(vfc.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.secureReplace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
+						replaceContainer.secureReplace(rObj.match, (rObj.vars ? vfc.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				 case 'placeholder':
-					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+					$.each(vfc.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.replace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
+						replaceContainer.replace(rObj.match, (rObj.vars ? vfc.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				 case 'none':
-					$.each(_this.mdReplacementMatrix, function(i, rObj) {
+					$.each(vfc.mdReplacementMatrix, function(i, rObj) {
 						if ('' === rObj.match) return;
-						replaceContainer.ordinaryReplace(rObj.match, (rObj.vars ? _this.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
+						replaceContainer.ordinaryReplace(rObj.match, (rObj.vars ? vfc.mdVarReplacements(rObj.replace, upload, upli) : rObj.replace));
 					});
 					break;
 				}
-			}
- 
-			page.editType = 'text';
-			if (window.AjaxDeleteWatchFile && ('c_replace' !== _this.mdTaskToPerform)) {
-				page.watchlist = 'watch';
+				page.watchlist = vfc.mdSettings.watchlistReplace;
 			}
  
 			if (upli.content === replaceContainer.getText()) {
-				var $gb = _this.gbs[upload];
-				if ($gb) $gb.find('img').attr('src', _this.mdNoChangeIcon);
+				var $gb = vfc.gbs[upload];
+				if ($gb) $gb.$thumb.removeClass('progress-doing').addClass('progress-nochange');
 			} else {
 				page.text = replaceContainer.doCleanUp();
-				_this.mdUploadCt++;
-				_this.mdSavePage(page, _this.img_summary, 'mdTemplateAdded', 'mdTemplateAdded');
+				vfc.mdUploadCt++;
+				vfc.mdEdit(page, vfc.file_summary, 'mdTemplateAdded', 'mdTemplateAdded');
 			}
 		});
 		
-		if (0 === this.mdUploadCt) this.nextTask();
+		if (0 === vfc.mdUploadCt) vfc.nextTask();
 	},
  
 	mdInsertOTRS: function (sitetext, insert) {
@@ -629,7 +627,7 @@ $.extend(window.VisualFileChange,
 		page.create = true;
 		
 		$(document).triggerHandler('vFC', ['request subpage', this, page]);
-		this.mdSavePage(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
+		this.mdEdit(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
 	},
 	
 	mdCreateRequestSubpageCB: function (result, query, err) {
@@ -657,7 +655,7 @@ $.extend(window.VisualFileChange,
 		page.watchlist = 'nochange';
 		page.editType = 'appendtext';
 
-		this.mdSavePage(page, "Listing [[" + this.requestPage + "]]", 'mdListRequestSubpageCB', 'mdListRequestSubpageCB');
+		this.mdEdit(page, "Listing [[" + this.requestPage + "]]", 'mdListRequestSubpageCB', 'mdListRequestSubpageCB');
 	},
 	
 	mdListRequestSubpageCB: function (result, query, err) {
@@ -671,51 +669,49 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdTemplateAdded: function (result, query, err) {
-		this.mdUploadCt--;
+		vfc.mdUploadCt--;
 
-		var _this = this,
-			pgTitle = (result.requestid || query.title),
-			$gb = this.gbs[pgTitle];
+		var pgTitle = (result.requestid || query.title),
+			$gb = vfc.gbs[pgTitle];
 
 		if ($gb) {
-			$gb.find('img').attr('src', (err ? this.mdFailIcon : this.mdSuccessIcon));
+			$gb.$thumb.removeClass('progress-doing').addClass(err ? 'progress-failed' : 'progress-done');
 			if (err) $gb.find('.gallerytext').prepend($('<span>', { 'class': 'error' }).text(err), '<br/>');
 			if (0 === $gb.visible().length) {
-				if (this.gbScrollTimeout) clearTimeout(this.gbScrollTimeout);
-				this.gbScrollTimeout = setTimeout(function() {
-					_this.dlg.stop().animate({scrollTop: $gb.position().top - _this.$AjaxMdContainer.position().top}, 1000);
+				if (vfc.gbScrollTimeout) clearTimeout(vfc.gbScrollTimeout);
+				vfc.gbScrollTimeout = setTimeout(function() {
+					vfc.dlg.stop().animate({scrollTop: $gb.position().top - vfc.$AjaxMdContainer.position().top}, 1000);
 				}, 200);
 			}
 		}
 		if (result.error) {
-			this.pb.setCurrentTaskState('md-attention');
+			vfc.pb.setCurrentTaskState('md-attention');
 		}
-		if (0 === this.mdUploadCt) this.nextTask();
+		if (0 === vfc.mdUploadCt) vfc.nextTask();
 	},
 	
 	mdNotifyUploaders: function () {
-		$(document).triggerHandler('vFC', ['notifying uploaders', this, this.uploaders]);
-		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('mdNotifyUploaders', 'md-doing');
-		this.totalEdits = 0;
-		this.totalEditsDone = 0;
+		$(document).triggerHandler('vFC', ['notifying uploaders', vfc, vfc.uploaders]);
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('mdNotifyUploaders', 'md-doing');
+		vfc.api.total = 0;
+		vfc.api.done = 0;
 		
-		this.uploadersToNotify = 0;
-		var _this = this;
-		$.each(this.uploaders, function(user, upli) {
-			if (-1 !== _this.excludedBots.indexOf(user)) return;
+		vfc.uploadersToNotify = 0;
+		$.each(vfc.uploaders, function(user, upli) {
+			if (-1 !== vfc.excludedBots.indexOf(user + ',')) return;
 			var page = {};
-			page.title = _this.mdUserTalkPrefix + user;
-			page.text = "\n" + upli.talk_tag + " ~~" + "~~\n";
+			page.title = vfc.mdUserTalkPrefix + user;
+			page.text = "\n" + upli.tag + " ~~" + "~~\n";
 			page.editType = 'appendtext';
 			page.redirect = true;
 			page.create = true;
-			page.watchlist = _this.mdSettings.watchlistUserTalk;
-			_this.mdSavePage(page, upli.talk_summary, 'mdUploaderNotified');
+			page.watchlist = vfc.mdSettings.watchlistUserTalk;
+			vfc.mdEdit(page, upli.summary, 'mdUploaderNotified');
 
-			_this.uploadersToNotify++;
+			vfc.uploadersToNotify++;
 		});
-		if (this.uploadersToNotify === 0) this.nextTask();
+		if (vfc.uploadersToNotify === 0) vfc.nextTask();
 	},
 
 	mdUploaderNotified: function (result, query, err) {
@@ -726,100 +722,80 @@ $.extend(window.VisualFileChange,
 	/**
 	** Submit an edited page.
 	**/
-	mdSavePage: function (page, summary, callback, errCallBack) {
+	mdEdit: function (page, summary, callback, errCallBack) {
 		var edit = {
 			action: 'edit',
 			summary: summary,
 			watchlist: (page.watchlist || 'preferences'),
 			title: page.title,
-			requestid: page.title
+			requestid: page.title,
+			editType: page.editType,
+			text: page.text
 		};
-		if (!page.create) edit.nocreate = 1;
-		if (page.redirect) edit.redirect = '';
+		if (!page.create) edit.nocreate = true;
+		if (page.redirect) edit.redirect = true;
 		if (page.basetimestamp) edit.basetimestamp = page.basetimestamp;
-		edit[page.editType] = page.text;
-		// Token last will be set by doApiCall
+		// Token last - will be set by libAPI
 		
-		// emulation possible
-		if (window.VisualFileChangeDebug) {
-			console.log('VisualFileChange> savepage:');
-			console.log(summary);
-			console.log(page);
-			
-			var _this = this;
-			setTimeout(function() {
-				_this[callback]({ requestid: page.title });
-			}, 8000);
-		} else {
-			this.doAPICall(edit, callback, errCallBack);
-		}
+		// submit edit and showProgress
+		vfc.editAPI(edit, callback, errCallBack, true);
+
 	},
 	
 	/**
 	** Execute the delete-task.
 	**/
 	mdDelete: function() {
-		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('mdDelete', 'md-doing');
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('mdDelete', 'md-doing');
 		
-		$(document).triggerHandler('vFC', ['deleting files', this]);
-		this.mdUploadCt = 0;
+		$(document).triggerHandler('vFC', ['deleting files', vfc]);
+		vfc.mdUploadCt = 0;
  
-		for (var upload in this.iUploads) {
-			if (this.iUploads.hasOwnProperty(upload) && (-2 === this.iUploads[upload].iId)) {
-				this.mdSecureCall('mdDeletePage', upload, this.img_summary);
+		for (var upload in vfc.iUploads) {
+			if (vfc.iUploads.hasOwnProperty(upload) && (-2 === vfc.iUploads[upload].iId)) {
+				vfc.secureCall('mdDeletePage', upload, vfc.file_summary);
 			}
 		}
-		if (0 === this.mdUploadCt) this.nextTask();
+		if (0 === vfc.mdUploadCt) vfc.nextTask();
 	},
 	mdDeletePage: function(page, summary) {
-		var o = this;
-		o.mdUploadCt++;
-		o.totalEdits++;
+		vfc.mdUploadCt++;
+		vfc.api.total++;
 		
 		var _always = function() {
-			o.totalEditsDone++;
-			o.pb.showProgress(o.totalEdits, o.totalEditsDone, 'deletions');
+			vfc.api.done++;
+			vfc.pb.showProgress(vfc.api.total, vfc.api.done, 'deletions');
 		};
 		var _deleted = function() {
-			o.mdTemplateAdded({ requestid: page }, '');
+			vfc.mdTemplateAdded({ requestid: page }, '');
 			_always();
 		};
 		var _problem = function(text) {
-			o.mdTemplateAdded({ requestid: page }, '', text);
+			vfc.mdTemplateAdded({ requestid: page }, '', text);
 			_always();
 		};
 		var _err = function(text) {
-			o.mdTemplateAdded({ requestid: page }, '', text);
+			vfc.mdTemplateAdded({ requestid: page }, '', text);
 			_always();
 		};
-		// emulation possible
-		if (window.VisualFileChangeDebug) {
-			console.log('VisualFileChange> delete: ' + page);
-			console.log(summary);
-			
-			setTimeout(_deleted, Math.round(Math.random() * 9000));
-		} else {
-			mw.loader.using(['ext.gadget.libAPI'], function() {
-				// Delete 3 pages the same time
-				mw.libs.commons.api.config.maxSimultaneousReq = 3;
-				mw.libs.commons.api.deletePage({
-					cb: function() {
-						_deleted();
-					},
-					// r-result, query, text
-					errCb: function(t, r, q) {
-						if (r && r.error && r.error.code === 'missingtitle') {
-							_problem('File not found');
-						} else {
-							_err(t);
-						}
-					},
-					title: page,
-					reason: summary
-				});
-			});
-		}
+		// Delete as many pages the same time as specified (max. 5)
+		mw.libs.commons.api.config.maxSimultaneousReq = Math.min(vfc.mdSettings.maxSimultaneousReq, 5);
+		mw.libs.commons.api.deletePage({
+			cb: function() {
+				_deleted();
+			},
+			// r-result, query, text
+			errCb: function(t, r, q) {
+				if (r && r.error && r.error.code === 'missingtitle') {
+					_problem('File not found');
+				} else {
+					_err(t);
+				}
+			},
+			title: page,
+			reason: summary
+		});
 	}
 });
 
