@@ -167,7 +167,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					}
 				}}
 			});
-			mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('User:Rillke/VisualFileChangeTest.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + vfc.mdScriptRevision);
+			mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + vfc.mdScriptRevision);
 		}
 	},
 	
