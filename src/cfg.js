@@ -170,6 +170,8 @@ $.extend(window.VisualFileChange,
 			var val; 
 			if ('boolean' === typeof el['default']) {
 				val = $('#mdCfg'+el.v)[0].checked;
+			} else if ('number' === typeof el['default']) {
+				val = parseFloat($('#mdCfg'+el.v).val(), 10);
 			} else {
 				val = $('#mdCfg'+el.v).val();
 			}
