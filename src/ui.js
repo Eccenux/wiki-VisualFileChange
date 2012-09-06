@@ -1654,7 +1654,7 @@ mw.loader.using([
 	'jquery.byteLimit',
 	'jquery.byteLength',
 	'jquery.badge',
-	'ext.gadget.jStorage',
+	'jquery.jStorage',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
 	'ext.gadget.jquery.blockUI'
