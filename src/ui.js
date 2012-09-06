@@ -60,7 +60,7 @@ if ('vector' === mw.config.get('skin')) css += ' .ui-buttonset .ui-button { marg
 	
 mw.util.addCSS(css);
 
-		
+
 $.extend(window.VisualFileChange,
 {
 	displayComponents: true,
@@ -656,7 +656,7 @@ $.extend(window.VisualFileChange,
 			title: vfc.mdHelpNode +
 				' Action:&nbsp;' +
 				getSelect() +
-				vfc.i18n.mdDisselectAll + '<input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
+				'<label for="AjaxMdIa">' + vfc.i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
 			width: $(window).width() - 250,
 			height: $(window).height(),
 			buttons: dlgButtons,
@@ -721,6 +721,14 @@ $.extend(window.VisualFileChange,
 		});
 
 		if (!vfc.dlg) return 0;
+		
+		$('<a>', { href: '#', text: vfc.i18n.mdInvertSelection }).button().css('margin', '0px').click(function(e) {
+			e.preventDefault();
+			var $inputs = $('input[name="mdCheckDelete"]'),
+				$checkedInputs = $inputs.filter(':checked').prop('checked', false),
+				$uncheckedInputs = $inputs.not($checkedInputs).prop('checked', true);
+			updateSelectedCount();
+		}).appendTo( vfc.$ctrs.ajaxMdIa.parent() );		
 		
 		$('<a>', { href: '#', text: vfc.i18n.mdCuteSelectLabel }).button().css('margin', '0px').click(function(e) {
 			e.preventDefault();
