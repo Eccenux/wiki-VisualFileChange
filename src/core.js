@@ -66,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.29.1',
+	mdScriptRevision: '0.9.30.0',
 	
 
 	/**
@@ -1259,6 +1259,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdLoadThumbs: "Load thumbnails",
 		mdLoadWikitext: "Load wikitext",
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
+		mdInvertSelection: "Invert selection",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
 		mdInsertDeleteHeading: "Insert the heading for the mass deletion request, please",
 		mdInsertOther: "Please insert the OTRS (or other) text to add to the permission-section",
