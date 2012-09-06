@@ -546,8 +546,8 @@ mw.loader.using([
 	'jquery.ui.button', 
 	'jquery.cookie', 
 	'jquery.placeholder', 
+	'jquery.jStorage',
 	'mediawiki.user',
-	'ext.gadget.jStorage',
 	'ext.gadget.SettingsManager',
 	'ext.gadget.jquery.blockUI'
 	], function() {
