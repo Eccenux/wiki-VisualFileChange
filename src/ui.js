@@ -722,7 +722,7 @@ $.extend(window.VisualFileChange,
 
 		if (!vfc.dlg) return 0;
 		
-		$('<a>', { href: '#', text: vfc.i18n.mdCuteSelectLabel }).button().css('margin', '0px !important').click(function(e) {
+		$('<a>', { href: '#', text: vfc.i18n.mdCuteSelectLabel }).button().css('margin', '0px').click(function(e) {
 			e.preventDefault();
 			vfc.mdCuteSelectDlg.dialog("open");
 		}).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
