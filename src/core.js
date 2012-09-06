@@ -66,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.29.0',
+	mdScriptRevision: '0.9.29.1',
 	
 
 	/**
@@ -109,9 +109,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}
 		}
 		$(document).triggerHandler('vFC', ['installed', vfc]);
-		
-		// Load the UI components
-		vfc.loadModule('ui.js');
 	},
 	
 	/**
