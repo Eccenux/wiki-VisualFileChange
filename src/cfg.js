@@ -37,7 +37,7 @@ $.extend(window.VisualFileChange,
 			$dlgNode = $('<div>', { style: 'overflow:auto; max-height:' + (Math.round($(window).height()) - 150) + 'px;' });
 			
 		$dlgNode.$c = $('<div>').css('padding', '3px').appendTo($dlgNode);
-		$('<p>', { text: 'Ok and save will apply settings. If you permanently save the settings they will be visible for each user. Do not insert private data here.' }).appendTo($dlgNode);
+		$('<p>', { text: 'Ok and save will apply settings. If you permanently save the settings they will be visible for each user. Do not insert private data here.' }).prependTo($dlgNode);
 		$.each(cfg, function(i, el) {
 			var $elDiv = $('<div>', { id: 'mdCfg_' + el.v + '_wrap' }).data('cfg', el);
 			var $valEl, $valEl2, vl = (el.controls ? $(el.controls).val() : '') || vfc.mdSettings[el.v];
@@ -46,7 +46,7 @@ $.extend(window.VisualFileChange,
 			$('<br>').appendTo($elDiv);
 			switch (typeof el['default']) {
 				case 'number': 
-					$valEl = $('<input>', { type: 'text', size: (el.max+'').length, id: 'mdCfg' + el.v, 'class': 'numbersOnly' })
+					$valEl = $('<input>').attr({ type: 'text', size: (el.max+'').length, id: 'mdCfg' + el.v, 'class': 'numbersOnly' })
 						.focus(function() { $(this).select(); })
 						.keyup(function(e) {
 							var val = this.value = this.value.replace(/[^0-9]/g,'');
@@ -216,7 +216,7 @@ $.extend(window.VisualFileChange,
 	 *			objectMembers: {
 	 *				memberName: memberVal
 	 *			},
-	 *			continueAt: {
+	 *			proceedAt: {
 	 *				setVals: [],
 	 *				vals: []
 	 *			},
@@ -233,8 +233,8 @@ $.extend(window.VisualFileChange,
 	getNewConfigItem: function (objProfile) {
 		if ('object' === typeof objProfile) return objProfile;
 	
-		var newConfigItem = { editInputs: {}, action: vfc.$ctrs.ajaxMdType.val(), objectMembers:{}, continueAt: vfc.lastContinues, time: vfc.startDate || new Date() },
-			membersToSave = ['mdTarget', 'mdLedir', 'mdCmdir', 'mdCmsort'];
+		var newConfigItem = { editInputs: {}, action: vfc.$ctrs.ajaxMdType.val(), objectMembers:{}, proceedAt: vfc.lastContinues, time: vfc.startDate || new Date() },
+			membersToSave = ['queryParams', 'startInput'];
 
 		$.each(membersToSave, function(i, memberName) {
 			var memberVal = vfc[memberName];
@@ -417,7 +417,7 @@ $.extend(window.VisualFileChange,
 		};
 		
 		$dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.' });
-		$profileSelect = $('<select>', { size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
+		$profileSelect = $('<select>').attr({ size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
 			var $sel = $profileSelect,
 				$selVal = $sel.val() || '',
 				selProfile = $selVal.replace(/ \(.+\)$/, '');
@@ -431,8 +431,8 @@ $.extend(window.VisualFileChange,
 			$dlgNode.dialog('close');
 		});
 		$descSave = $('<div>', { text: 'Save current inputs into your' });
-		$addNameL = $('<label>', { 'for': 'mdProfileName', text: 'Use the same name again to override a profile.' });
-		$addName = $('<input>', { id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' }).placeholder();
+		$addNameL = $('<label>', { text: 'Use the same name again to override a profile.' }).attr({ 'for': 'mdProfileName' });
+		$addName = $('<input>').attr({ id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' }).placeholder();
 		$addButtonClient = $('<button>', { text: 'Browser (may not permanent)'})
 			.button({ icons: { primary: 'ui-icon-disk' } })
 			.click(saveToClient);
@@ -481,13 +481,13 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdSuggestContinue: function () {
-		var autoExecProfile = vfc.mdGetClientProfiles()['auto-exec'],
+		var autoExecProfile = vfc.mdGetClientProfiles()['last executed (auto-saved)'],
 			lookFor,
 			$doc = $(document);
 
-		if (!autoExecProfile) return;
-		lookFor = autoExecProfile.objectMembers.mdTarget;
-		if (!autoExecProfile.continueAt || !autoExecProfile.continueAt.vals.length) return;
+		if (!autoExecProfile || !autoExecProfile.objectMembers.queryParams) return;
+		lookFor = autoExecProfile.objectMembers.queryParams.target;
+		if (!autoExecProfile.proceedAt || !autoExecProfile.proceedAt.vals.length) return;
 		
 		var keyTimeout = 0;
 
@@ -496,22 +496,23 @@ $.extend(window.VisualFileChange,
 			keyTimeout = setTimeout(function() {
 				if (text.replace(/^User\:/, '') === lookFor) {
 					vfc.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there. ');
-					vfc.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).click(function(e) {
+					vfc.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).button().click(function(e) {
 						e.preventDefault();
 						$.each(autoExecProfile.objectMembers, function(memberName, memberValue) {
 							vfc[memberName] = memberValue;
 						});
-						$.each(autoExecProfile.continueAt.setVals, function(i, memberToSet) {
-							vfc[memberToSet] = autoExecProfile.continueAt.vals[0];
+						$.each(autoExecProfile.proceedAt.setVals, function(i, memberToSet) {
+							vfc.queryParams[memberToSet] = autoExecProfile.proceedAt.vals[0];
 						});
-						vfc.lastContinues.setVals = autoExecProfile.continueAt.setVals;
+						
+						vfc.lastContinues.setVals = autoExecProfile.proceedAt.setVals;
 						vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
 						vfc.loadModule('ui.js', 'nextTask');
 						$doc.bind('vFC.autoContinue', function(e, what) {
 							if ('initial uploads dialog' === what) {
 								$doc.unbind('vFC_Startup_target');
 								$doc.unbind('vFC.autoContinue');
-								vfc.mdApplyProfile('auto-exec', 'client');
+								vfc.mdApplyProfile('last executed (auto-saved)', 'client');
 							}
 						});
 					}) );
