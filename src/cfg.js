@@ -420,7 +420,7 @@ $.extend(window.VisualFileChange,
 		$profileSelect = $('<select>').attr({ size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
 			var $sel = $profileSelect,
 				$selVal = $sel.val() || '',
-				selProfile = $selVal.replace(/ \(.+\)$/, '');
+				selProfile = $selVal.replace(/ \([^\)\n]+\)$/, '');
 			$addName.val(selProfile);
 			$sel.data('selectedProfile', $sel.children().eq($sel[0].selectedIndex));
 			$sel.data('selectedProfileName', selProfile);
