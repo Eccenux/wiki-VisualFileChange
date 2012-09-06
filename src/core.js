@@ -53,7 +53,8 @@ var VisualFileChange,
 	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
 
 // Adding Style-definitions
-mw.util.addCSS(' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n');
+mw.util.addCSS(' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n' +
+	'.md-optioncontainer { padding:3px; margin:5px 0px; }\n');
 
 /**
  * Create a new VisualFileChange-Object-literal.
@@ -65,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.21.1',
+	mdScriptRevision: '0.9.29.0',
 	
 
 	/**
@@ -191,11 +192,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		pb.show();
 		
 		this.oldDocTitle = document.title;
-		this.context = "MD"; // The error handler should know what we are performing
+		this.internalState = 'md'; // What happened?
 		this.mdBusy = false; // indicate that any dialog can be closed
 		this.tasks = []; // reset task list in case an earlier error left it non-empty
 		this.pageName = wgPageName;
-		this.mdTarget = '';
+		this.startInput = {};
+		this.queryParams = { target: '' };
 		this.mdListUploadsPending = 0;
 		this.api.ratelimited = mw.user.anonymous();
  
@@ -206,14 +208,14 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			case 3: // User_talk
 			case 2: // User
 			case -1: // Special pages
-				this.mdTarget = mw.libs.commons.guessUser() || '';
+				vfc.queryParams.target = mw.libs.commons.guessUser() || '';
 				break;
 			case 14: // categories
-				this.mdTarget = mw.config.get('wgPageName');
+				vfc.queryParams.target = mw.config.get('wgPageName');
 				break;
 		}
 		// Prettify the title (nomalizing)
-		this.mdTarget = this.mdTarget.replace(/_/g, ' ');
+		vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
 		
 		$(document).triggerHandler('vFC', ['prepared', this]);
 		
@@ -249,7 +251,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				i =info.length - 1;
 				// Now exclude bots which only reupload a new version:
 				if (-1 === vfc.excludedBots.indexOf(info[i].user + ',')) {
-					vfc.mdTarget = info[i].user;
+					vfc.queryParams.target = info[i].user;
 				}
 			}
 		}
@@ -275,12 +277,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.allUploaders = []; // All uploaders
 		this.gbs = {};          // File --> Gallery Box
 		this.gbu = {};          // File --> Global Usage Box
-		this.mdLestart = '';    // important for continuing the query
-		this.mdLedir = 'older';      // in which direction to enumerate logevents: older/newer
-		this.mdCmdir = 'asc';        // in which direction to sort: asc/desc
-		this.mdCmsort = 'sortkey';   // property to sort by: sortkey/timestamp
-		this.mdCmstart = 0;          // extrawurst for catmembers by date - sorting
-		this.mdCmstartsortkey = '';  // extrawurst for catmembers start sortkey
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
 		this.mdFirstRun = true;      // determining whether it is the first query-cycle
 		this.mdNumberOfExecs = 0;    // Is Execute called already?
@@ -290,7 +286,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.lastContinues = { vals: [], setVals: '' };     // contains the last 2 continue-keys
 		this.infoTextToEndDlg = [];
  
-		pefilledUser = this.mdTarget || this.username;
+		pefilledUser = this.queryParams.target || this.username;
 		$(document).triggerHandler('vFC', ['asking for target', this]);
 		this.promptForTarget(pefilledUser, 1);
 	},
@@ -329,8 +325,18 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
-			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, $gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
+			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, 
+			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
+			$gLoadThumbs, $gLoadThumbsL, $gLoadWikitext, $gLoadWikitextL,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+			
+		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
+			nsUser = mw.config.get('wgFormattedNamespaces')[2],
+			rxCat = new RegExp('^' + nsCat + ':', 'i'),
+			rxUser = new RegExp('^' + nsUser + ':', 'i'),
+			lastXHR = 0,
+			pLastCB = 0,
+			delayXHR = 500;
 			
 		var getMwDate = function(dateX) {
 			if ('string' !== typeof dateX) return dateX;
@@ -346,41 +352,58 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		dlgButtons[vfc.i18n.proceedButtonLabel] = function () {
 			if (confirmed) return;
 			confirmed = true;
+			
 			// Reading input
-			vfc.mdTarget = vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val());
-			vfc.lastContinues.setVals = ['mdLestart'];
+			var si = vfc.startInput = {
+				mode: $targetSelect.val(),
+				modeCat: $targetSelect.val() === nsCat,
+				modeUser: $targetSelect.val() === nsUser,
+				target: vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val()),
+				loadThumbs: $gLoadThumbs[0].checked,
+				loadWikitext: $gLoadWikitext[0].checked,
+				startDate: $gStartAt.val(),
+				startFile: $gStartFile.val().replace(/^File:/, '')
+			};
+			if (!mwDateRx.test(si.startDate)) si.startDate = '';
+			
+			var qp = vfc.queryParams = {
+				target: si.target,
+				lestart: si.startDate,
+				ledir: 'older',
+				cmdir: 'asc',
+				cmsort: 'sortkey'
+			};
+			
+			vfc.lastContinues.setVals = ['lestart'];
 			vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
-			if (mwDateRx.test($gStartAt.val())) vfc.mdLestart = $gStartAt.val();
-			var startFile = $gStartFile.val().replace(/^File:/, '');
+			
 			switch ($gSortBy.val()) {
 				case 'of': // oldest first
-					vfc.mdLedir = 'newer';
-					vfc.mdCmdir = 'asc';
-					vfc.mdCmsort = 'timestamp';
-					vfc.mdCmstart = vfc.mdLestart;
-					vfc.lastContinues.setVals.push('mdCmstart');
+					qp.ledir = 'newer';
+					qp.cmdir = 'asc';
+					qp.cmsort = 'timestamp';
+					qp.cmstart = qp.lestart;
+					vfc.lastContinues.setVals.push('cmstart');
 					break;
 				case 'nf': // newest first
-					vfc.mdLedir = 'older';
-					vfc.mdCmdir = 'desc';
-					vfc.mdCmsort = 'timestamp';
-					vfc.mdCmstart = vfc.mdLestart;
-					vfc.lastContinues.setVals.push('mdCmstart');
+					qp.ledir = 'older';
+					qp.cmdir = 'desc';
+					qp.cmsort = 'timestamp';
+					qp.cmstart = qp.lestart;
+					vfc.lastContinues.setVals.push('cmstart');
 					break;
 				case 'ca': // cat asc
-					vfc.mdCmdir = 'asc';
-					vfc.mdCmsort = 'sortkey';
-					vfc.mdCmstartsortkey = startFile;
+					qp.cmdir = 'asc';
+					qp.cmsort = 'sortkey';
+					qp.cmstartsortkey = si.startFile;
 					break;
 				case 'cd': // cat desc
-					vfc.mdCmdir = 'desc';
-					vfc.mdCmsort = 'sortkey';
-					vfc.mdCmstartsortkey = startFile;
+					qp.cmdir = 'desc';
+					qp.cmsort = 'sortkey';
+					qp.cmstartsortkey = si.startFile;
 					break;
 				case 'default':
-					vfc.mdLedir = 'older';
-					vfc.mdCmdir = 'asc';
-					vfc.mdCmsort = 'sortkey';
+					// Default set before
 					break;
 			}
 			vfc.loadModule('ui.js', 'nextTask');
@@ -419,15 +442,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		});
 		vfc.pb.setZIndex($('.ui-widget-overlay').css('z-index')-0+1);
 		
-		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
-			nsUser = mw.config.get('wgFormattedNamespaces')[2],
-			rxCat = new RegExp('^' + nsCat + ':', 'i'),
-			rxUser = new RegExp('^' + nsUser + ':', 'i'),
-			lastXHR = 0,
-			pLastCB = 0,
-			delayXHR = 500;
-		
-		$targetSelect = $('<select>', { size: 1, id: 'mdTargetSelect' }).append(
+		$targetSelect = $('<select>').attr({ size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsCat }),
 			$('<option>', { text: nsUser, selected: 'selected' })
 		).change(function() {
@@ -493,8 +508,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				id: 'gStartAt'
 				,type: 'text'
 				,title: vfc.i18n.optStartAt
-				,value: vfc.mdLestart
-				,placeholder: 'YYYY-MM-DD'
+				,value: vfc.queryParams.lestart
 			} )
 			.datepicker( {
 				changeYear: true
@@ -518,6 +532,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: function() {
 					return vfc.i18n.optStartAtHowTo;
 				} })
+			.attr('placeholder', 'YYYY-MM-DD')
 			.placeholder();
 		$gStartAtL = $('<label>', {
 				'for': 'gStartAt'
@@ -528,7 +543,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				id: 'gStartFile'
 				,type: 'text'
 				,title: vfc.i18n.optStartAt
-				,placeholder: 'Start file (sortkey)'
 			} )
 			.keyup( function( e ) {
 				if ( e.which === 13 ) {
@@ -542,6 +556,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: function() {
 					return vfc.i18n.optStartFileHowTo;
 				} })
+			.attr('placeholder', 'Start file (sortkey)')
 			.hide();
 		$gStartFileL = $('<label>', {
 				'for': 'gStartFile'
@@ -582,15 +597,34 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: 'Sorting'
 				,text: 'Sorting'
 			} );
+			
+		$gLoadThumbs = $('<input type="checkbox" ' + (vfc.mdSettings.loadThumbs ? 'checked="checked" ' : '') + 'id="gLoadThumbs">');
+		$gLoadThumbsL = $('<label>', {
+			'for': 'gLoadThumbs',
+			text: vfc.i18n.mdLoadThumbs
+			} );
+		$gLoadWikitext = $('<input type="checkbox" ' + (vfc.mdSettings.loadWikitext ? 'checked="checked" ' : '') + 'id="gLoadWikitext">');
+		$gLoadWikitextL = $('<label>', {
+			'for': 'gLoadWikitext',
+			text: vfc.i18n.mdLoadWikitext
+			} );
 
 		$gMoreOptions = $('<div>').append(
-			$gStartAtL
-			,$gStartAt
-			,$gStartFileL
-			,$gStartFile
-			,' '
-			,$gSortByL
-			,$gSortBy
+			$('<div>').addClass('md-optioncontainer').append(
+				$gStartAtL
+				,$gStartAt
+				,$gStartFileL
+				,$gStartFile
+				,' '
+				,$gSortByL
+				,$gSortBy)
+			,$('<div>').addClass('md-optioncontainer').append(
+				$gLoadThumbs
+				,$gLoadThumbsL
+				,' '
+				,$gLoadWikitext
+				,$gLoadWikitextL
+			)
 		).hide();
 		$gMoreOptionsToggler = vfc.createToggler(vfc.i18n.optMore, $gMoreOptions);
 		$gNotifyText = vfc.$gNotifyText = $('<span>', { id: 'gNotifyText' });
@@ -661,7 +695,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			vfc.dlg.dialog('destroy');
 			vfc.dlg.remove();
 			document.body.style.cursor = 'auto';
-			vfc.context = 'MD-postDlg';
+			vfc.internalState = 'done';
 			try {
 				delete vfc.dlg;
 			}
@@ -672,7 +706,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			this.dialog('destroy');
 			this.parent.remove();
 			document.body.style.cursor = 'auto';
-			vfc.context = 'MD-postDlg';
+			vfc.internalState = 'done';
 		}
 		$.each(vfc.$dialogsToClose, function(i, $el) {
 			try {
@@ -821,14 +855,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			api.done++;
 			var i = Math.min(setting.maxSimultaneousReq - api.eRunning, queue.length);
 			
-			if (showProgress) vfc.pb.showProgress(api.total, api.done, 'edits');
+			if (showProgress) vfc.pb.showProgress(api.total + queue.length, api.done, 'edits');
 			
 			// Now check whether immediately dequeue or whether to prompt for confirmation
-			if (setting.testEdits && 0 === (vfc.api.done % setting.testEdits) && i) {
+			// i && api.eRunning < 3 --> Only prompt if there are remaining edits in the queue AND if there are less than 3 running edits
+			if (setting.testEdits && 0 === (vfc.api.done % setting.testEdits) && i && api.eRunning < 3) {
 				_batchDlg();
 				return;
 			}
-			if (0 === api.eFirst && i) {
+			if (0 === api.eFirst && i && api.eRunning < 3) {
 				_firstDlg();
 				return;
 			}
@@ -855,10 +890,14 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}
 		});
 		
+		// Update statistics and counters
 		api.eBatch++;
 		api.eRunning++;
 		api.total++;
 		api.eFirst--;
+		if (showProgress) vfc.pb.showProgress(api.total + queue.length, api.done, 'edits');
+		
+		// Send the request
 		mw.libs.commons.api.config.maxSimultaneousReq = setting.maxSimultaneousReq;
 		mw.libs.commons.api.editPage(params);
 	},
@@ -874,14 +913,14 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var msg = this.i18n.taskFailure[this.currentTask] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
  
 		var reportPage = '';
-		this.mdBusy = false; // Prevents that our mdDlgThumbDlgClose will be refused
+		this.mdBusy = false; // Prevents that mdDlgThumbDlgClose will be refused
 		
 		this.pb.setCurrentTaskState('md-failed');
  
-		if ( 'MD' === this.context || 'MD-RevertImage' === this.context || 'MD-postDlg' === this.context ) {
+		if ( ({ md:1, revert:1, done:1 })[this.internalState] ) {
 			reportPage = this.mdErrReportPath;
 
-			this.context = 'MD-Error';
+			this.internalState = 'err';
 		}
 		if (this.pb) this.pb.setError(msg + ' ##### ' + err);
 	},
@@ -1108,6 +1147,20 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'default': (isSysop ? 10 : (mw.user.anonymous() ? 1 : 5)),
 			'min': 1, 
 			'max': (isSysop ? 100 : (mw.user.anonymous() ? 2 : 50))
+		}, {
+			'v': 'summaryChacheLen',
+			'd': 'Number of reasons to remember (not fully implemented, yet)',
+			'default': 5,
+			'min': 0, 
+			'max': 20
+		}, {
+			'v': 'loadThumbs',
+			'd': 'Load thumbnails by default (per run setting is in "More options")',
+			'default': true
+		}, {
+			'v': 'loadWikitext',
+			'd': 'Load wikitext of each file by default (per run setting is in "More options")',
+			'default': true
 		}
 	],
 	
@@ -1187,24 +1240,27 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	mdNoChangeTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
-	mdThisTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png',
-	mdDoneTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
-	mdFailedTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
-	mdInfoIcon: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
-	mdQuestionIcon: '//upload.wikimedia.org/wikipedia/commons/9/98/Crystal_Clear_app_miscellaneous_2.png',
-	mdAttentionTaskIcon: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png',
 	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
 	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot, Upload Bot (Rich Smith), Reedy RotateBot, ',
-	summaryChacheLen: 5,
 	summaryChageKey: 'vFC_Suggestions',
+	icons: {
+		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
+		current: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png',
+		done: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
+		failed: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
+		info: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
+		question: '//upload.wikimedia.org/wikipedia/commons/9/98/Crystal_Clear_app_miscellaneous_2.png',
+		attention: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png'
+	},
  
 	// Translatable strings
 	i18n: {
 		mdButtonLabel: "Perform batch task",
 		mdPerformOnWhichTarget:  "What user or category is this action about?",
 		mdTargetInput: "User or category:",
+		mdLoadThumbs: "Load thumbnails",
+		mdLoadWikitext: "Load wikitext",
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
 		mdInsertDeleteHeading: "Insert the heading for the mass deletion request, please",
@@ -1386,7 +1442,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
  *      new ProgressBox( 150, this );
  *
  * @param width {Number} The initial width of the panal.
- * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like .mdThisTaskIcon
+ * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like this.icons.current
  */
 function ProgressBox(width, o) {
 	/*jshint validthis:true*/
@@ -1480,10 +1536,10 @@ function ProgressBox(width, o) {
 		
 	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
 	$('body').append(this.$cont);
-	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.mdThisTaskIcon + '\') no-repeat left; font-weight:bold; } '
-		+ '.md-done { padding-left:16px; background:url(\'' + o.mdDoneTaskIcon + '\') no-repeat left; } '
-		+ '.md-failed { padding-left:16px; background:url(\'' + o.mdFailedTaskIcon + '\') no-repeat left; } '
-		+ '.md-attention { padding-left:16px; background:url(\'' + o.mdAttentionTaskIcon + '\') no-repeat left; } '
+	mw.util.addCSS('.md-doing { padding-left:16px; background:url(\'' + o.icons.current + '\') no-repeat left; font-weight:bold; } '
+		+ '.md-done { padding-left:16px; background:url(\'' + o.icons.done + '\') no-repeat left; } '
+		+ '.md-failed { padding-left:16px; background:url(\'' + o.icons.failed + '\') no-repeat left; } '
+		+ '.md-attention { padding-left:16px; background:url(\'' + o.icons.attention + '\') no-repeat left; } '
 	);
 }
 ProgressBox.fn = ProgressBox.prototype = {
@@ -1613,7 +1669,6 @@ mediaWiki.loader.using([
 'ext.gadget.libJQuery',
 'ext.gadget.jquery.in-view'
 ], function () {
-	vfc.context = "QD";
 	$(document).unbind('vFC.debuglistener');
 	$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug) vfc.log('VisualFileChange> ' + p1 );
