@@ -97,7 +97,7 @@ $.extend(window.VisualFileChange,
 		
 		// Try to save the current input state into the automatically generated client profile
 		try {
-			vfc.mdSaveProfileToClient('auto-exec');
+			vfc.mdSaveProfileToClient('last executed (auto-saved)');
 		} catch (e) {
 			vfc.pb.setHelp2(vfc.i18n.mdProfileCantSave);
 		}
@@ -116,7 +116,8 @@ $.extend(window.VisualFileChange,
 		$(document).triggerHandler('vFC', ['generating page messages and summaries', vfc]);
  
 		// set up some page names we'll need later
-		var mdRequestPage = (vfc.mdModeCat ? 'Files in ' : 'Files uploaded by ') + vfc.mdTarget;
+		var qp = vfc.queryParams;
+		var mdRequestPage = (vfc.startInput.modeCat ? 'Files in ' : 'Files uploaded by ') + qp.target;
 		vfc.requestPage =  vfc.mdRequestPagePrefix + mdRequestPage;
 		vfc.dailyLogPage = vfc.mdRequestPagePrefix + vfc.formatDate("YYYY/MM/DD");
 
@@ -143,7 +144,7 @@ $.extend(window.VisualFileChange,
 		// Reverse-mapping: files-uploader --- > uploader-files
 		$.each(vfc.iUploads, function(upload, uItem) {
 			if ( -2 === uItem.iId )  {
-				if (vfc.mdModeCat) {
+				if (vfc.startInput.modeCat) {
 					// Remember: u is just an index of an array
 					$.each(uItem.uploader, function(u, ul) {
 						ul = mw.libs.commons.getUploadBotUser(ul, uItem.content, uItem.comments[u]);
@@ -153,10 +154,10 @@ $.extend(window.VisualFileChange,
 						vfc.uploaders[ul].uploads[upload] = true;
 					});
 				} else {
-					if (!vfc.uploaders[vfc.mdTarget]) {
-						vfc.uploaders[vfc.mdTarget] = { uploads: {} };
+					if (!vfc.uploaders[qp.target]) {
+						vfc.uploaders[qp.target] = { uploads: {} };
 					}
-					vfc.uploaders[vfc.mdTarget].uploads[upload] = true;
+					vfc.uploaders[qp.target].uploads[upload] = true;
 				}
 			}
 		});
@@ -486,7 +487,7 @@ $.extend(window.VisualFileChange,
 		vfc.pb.setTaskState('mdRefreshCache', 'md-doing');
 		
 		// Test how old the data are
-		if (new Date().getTime() - vfc.mdDateOldestDataFetched.getTime() < 60000) {
+		if ((new Date().getTime() - vfc.mdDateOldestDataFetched.getTime() < 60000) && vfc.startInput.loadWikitext) {
 			vfc.nextTask();
 			return;
 		}
@@ -680,8 +681,9 @@ $.extend(window.VisualFileChange,
 			if (0 === $gb.visible().length) {
 				if (vfc.gbScrollTimeout) clearTimeout(vfc.gbScrollTimeout);
 				vfc.gbScrollTimeout = setTimeout(function() {
-					vfc.dlg.stop().animate({scrollTop: $gb.position().top - vfc.$AjaxMdContainer.position().top}, 1000);
-				}, 200);
+					// Scroll to the recently edited 
+					vfc.dlg.clearQueue().animate({ scrollTop: $gb.position().top }, 800);
+				}, 150);
 			}
 		}
 		if (result.error) {
