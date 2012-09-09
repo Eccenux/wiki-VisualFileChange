@@ -66,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.30.0',
+	mdScriptRevision: '0.9.31.0',
 	
 
 	/**
@@ -313,10 +313,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$content.addClass('ui-widget-content').hide()
 		);
 	},
+	
 
 	/**
 	** Pseudo-Modal JS windows.
 	** Needs to be converted into a class
+	** URL-params:
+	**   vfcStartAt: <sortkey or date>, vfcSorting: <of|on|ca|cd>
 	**/
 	promptForTarget: function (prefill, minlen) {
 		var dlgButtons = {},
@@ -325,6 +328,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, 
 			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
 			$gLoadThumbs, $gLoadThumbsL, $gLoadWikitext, $gLoadWikitextL,
+			gStartAtURLVal, gSortByURLVal,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
@@ -448,6 +452,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$catSpecifics.removeAttr('disabled');
 			} else {
 				$catSpecifics.attr('disabled', 'disabled');
+				if (/^c/.test($gSortBy.val())) $gSortBy.val('default').change();
 			}
 			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
 		});
@@ -500,6 +505,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		});
 		
 		// Start date
+		gStartAtURLVal = mw.util.getParamValue('vfcStartAt');
 		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get('wgUserLanguage') ] );
 		$gStartAt = vfc.$gStartAt = $('<input>', {
 				id: 'gStartAt'
@@ -536,6 +542,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: vfc.i18n.optStartAt
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} );
+		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) setTimeout(function() { 
+			$gStartAt.val(gStartAtURLVal).keyup();
+		}, 50);
+		
 		$gStartFile = $('<input>', {
 				id: 'gStartFile'
 				,type: 'text'
@@ -561,8 +571,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} )
 			.hide();
+		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) setTimeout(function() { 
+			$gStartFile.val(gStartAtURLVal).keyup();
+		}, 50);
 			
-			
+		gSortByURLVal = mw.util.getParamValue('vfcSorting');
 		$gSortBy = $('<select>', {
 				id: 'gSortBy'
 			} )
@@ -594,6 +607,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: 'Sorting'
 				,text: 'Sorting'
 			} );
+		if (gSortByURLVal && /of|nf|ca|cd/i.test(gSortByURLVal)) {
+			setTimeout(function() {
+				$gSortBy.val(gSortByURLVal.toLowerCase());
+				$targetSelect.change();
+			}, 50);
+		}
 			
 		$gLoadThumbs = $('<input type="checkbox" ' + (vfc.mdSettings.loadThumbs ? 'checked="checked" ' : '') + 'id="gLoadThumbs">');
 		$gLoadThumbsL = $('<label>', {
