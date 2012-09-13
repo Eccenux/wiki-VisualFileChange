@@ -793,6 +793,7 @@ $.extend(window.VisualFileChange,
 					_problem('File not found');
 				} else {
 					_err(t);
+					vfc.mdWasAPIError = true;
 				}
 			},
 			title: page,
