@@ -66,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.31.0',
+	mdScriptRevision: '0.9.32.0',
 	
 
 	/**
@@ -196,7 +196,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.startInput = {};
 		this.queryParams = { target: '' };
 		this.mdListUploadsPending = 0;
-		this.api.ratelimited = mw.user.anonymous();
+		this.api.ratelimited = mw.user.isAnon();
  
 		switch (mw.config.get('wgNamespaceNumber')) {
 			case 6: // File
@@ -328,7 +328,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, 
 			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
 			$gLoadThumbs, $gLoadThumbsL, $gLoadWikitext, $gLoadWikitextL,
-			gStartAtURLVal, gSortByURLVal,
+			gStartAtURLVal, gSortByURLVal, moreOptionsVisible,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
 		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
@@ -542,9 +542,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,title: vfc.i18n.optStartAt
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} );
-		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) setTimeout(function() { 
-			$gStartAt.val(gStartAtURLVal).keyup();
-		}, 50);
+		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) {
+			moreOptionsVisible = true;
+			setTimeout(function() { 
+				$gStartAt.val(gStartAtURLVal).keyup();
+			}, 50);
+		}
 		
 		$gStartFile = $('<input>', {
 				id: 'gStartFile'
@@ -571,9 +574,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,html: " &nbsp;Start&nbsp;at&nbsp;"
 			} )
 			.hide();
-		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) setTimeout(function() { 
-			$gStartFile.val(gStartAtURLVal).keyup();
-		}, 50);
+		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) {
+			moreOptionsVisible = true;
+			setTimeout(function() { 
+				$gStartFile.val(gStartAtURLVal).keyup();
+			}, 50);
+		}
 			
 		gSortByURLVal = mw.util.getParamValue('vfcSorting');
 		$gSortBy = $('<select>', {
@@ -608,6 +614,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,text: 'Sorting'
 			} );
 		if (gSortByURLVal && /of|nf|ca|cd/i.test(gSortByURLVal)) {
+			moreOptionsVisible = true;
 			setTimeout(function() {
 				$gSortBy.val(gSortByURLVal.toLowerCase());
 				$targetSelect.change();
@@ -676,6 +683,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
 			if (e && e.which && 13 === e.which) $submitButton.click();
 		}).keyup().focus();
+		if (moreOptionsVisible) $gMoreOptionsToggler.find('a.md-collapsible:first').click();
 		
 		// Load the configuration module
 		vfc.loadModule('cfg.js', 'mdConfigInstall');
@@ -900,6 +908,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				_always();
 				if (errCallBack) {
 					vfc.secureCall(errCallBack, r, q, t);
+					vfc.mdWasAPIError = true;
 				} else {
 					vfc.fail(t);
 				}
@@ -1111,7 +1120,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			// Ratelimits may restrict this
 			'v': 'testEdits', 
 			'd': 'Ask for confirmation after each … edits (deletions not affected)', 
-			'default': (mw.user.anonymous() ? 7 : 0),
+			'default': (mw.user.isAnon() ? 7 : 0),
 			'min': 0, 
 			'max': 500
 		}, {
@@ -1160,9 +1169,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		}, {
 			'v': 'maxSimultaneousReq', 
 			'd': 'Maximum number of requests to send to the API simultaneously', 
-			'default': (isSysop ? 10 : (mw.user.anonymous() ? 1 : 5)),
+			'default': (isSysop ? 10 : (mw.user.isAnon() ? 1 : 5)),
 			'min': 1, 
-			'max': (isSysop ? 100 : (mw.user.anonymous() ? 2 : 50))
+			'max': (isSysop ? 100 : (mw.user.isAnon() ? 2 : 50))
 		}, {
 			'v': 'summaryChacheLen',
 			'd': 'Number of reasons to remember (not fully implemented, yet)',
