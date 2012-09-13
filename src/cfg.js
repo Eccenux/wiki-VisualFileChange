@@ -99,7 +99,7 @@ $.extend(window.VisualFileChange,
 		dlgButtons[vfc.i18n.mdConfig.cancelButton] = function() {
 			$(this).dialog('close');
 		};
-		if (!mw.user.anonymous()) {
+		if (!mw.user.isAnon()) {
 			dlgButtons[vfc.i18n.mdConfig.permaSaveButton] = function() {
 				vfc.mdPublishSettings(this, cfg);
 				$dlgNode.$s = $('<div>', { style: 'text-align:left; min-height:290px' });
@@ -158,8 +158,8 @@ $.extend(window.VisualFileChange,
 				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
 				$buttons.eq(0).specialButton('proceed');
 				$buttons.eq(1).specialButton('cancel');
-				if (!mw.user.anonymous()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } }).addClass('ui-button-orange');
-				$buttons.eq(mw.user.anonymous() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
+				if (!mw.user.isAnon()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } }).addClass('ui-button-orange');
+				$buttons.eq(mw.user.isAnon() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
 			}
 		});
 		vfc.$dialogsToClose.push($dlgNode);
@@ -439,7 +439,7 @@ $.extend(window.VisualFileChange,
 		$addButtonJS = $('<button>', { text: 'Commons-account (publicly visible)' })
 			.button({ icons: { primary: 'ui-icon-script' } })
 			.click(saveToJS);
-		if (mw.user.anonymous()) $addButtonJS.button('option', 'disabled', true);
+		if (mw.user.isAnon()) $addButtonJS.button('option', 'disabled', true);
 		$jsProgess = $('<div>', { style: 'display:inline-block; width:200px; height:25px;' });
 		
 		$descLoad = $('<div>', { text: 'Load a profile. Caution: Your current inputs will be lost. Double-click a profile name to load it and return.' });
