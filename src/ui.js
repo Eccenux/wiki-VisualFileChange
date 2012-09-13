@@ -1252,7 +1252,7 @@ $.extend(window.VisualFileChange,
 		});
 		$galleryBox.$thumb = $thumb;
 		if (addGU) {
-			$gbGU.badge('?');
+			$gbGU.badge(Infinity);
 			$galleryBox.$gbGU = $gbGU;
 		}
 		return $galleryBox;
