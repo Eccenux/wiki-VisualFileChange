@@ -66,7 +66,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.32.0',
+	mdScriptRevision: '0.9.33.0',
 	
 
 	/**
@@ -77,12 +77,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		if (!window.vFCSettings) window.vFCSettings = {};
 		
 		$.each(vfc.mdDefaults, function(i, el) {
-			vfc.mdSettings[el.v] = (el.old ? window[el.old] : '') || el['default'];
+			vfc.mdSettings[el.name] = el['default'];
+			if ('string' === typeof el.select) {
+				el.select = vfc[el.select];
+			}
 		});
 		// Merge the user's settings
 		$.extend(vfc.mdSettings, window.vFCSettings);
 		$.each(vfc.mdDefaults, function(i, el) {
-			if ('number' === typeof el['default']) vfc.mdSettings[el.v] = parseFloat(vfc.mdSettings[el.v], 10);
+			if ('number' === typeof el['default']) vfc.mdSettings[el.name] = Number(vfc.mdSettings[el.name]);
 		});
 		
 		// Get the username
@@ -196,7 +199,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.startInput = {};
 		this.queryParams = { target: '' };
 		this.mdListUploadsPending = 0;
-		this.api.ratelimited = mw.user.isAnon();
  
 		switch (mw.config.get('wgNamespaceNumber')) {
 			case 6: // File
@@ -277,9 +279,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
 		this.mdFirstRun = true;      // determining whether it is the first query-cycle
 		this.mdNumberOfExecs = 0;    // Is Execute called already?
-		this.apiRequestQueue = [];   // Reset. In case of restart it would contain non-executed requests otherwise
-		this.api.eFirst = this.mdSettings.firstTest-1;
-		this.api.eBatch = 0;
+		$.extend(this.api, {
+			eFirst: this.mdSettings.firstTest-1,
+			eBatch: 0,
+			wasError: false,
+			ratelimited: mw.user.isAnon()
+		});
 		this.lastContinues = { vals: [], setVals: '' };     // contains the last 2 continue-keys
 		this.infoTextToEndDlg = [];
  
@@ -441,7 +446,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$cancelButton = $buttons.eq(1).specialButton('cancel');
 			}
 		});
-		vfc.pb.setZIndex($('.ui-widget-overlay').css('z-index')-0+1);
+		vfc.pb.setZIndex(Number($('.ui-widget-overlay').css('z-index')) + 1);
 		
 		$targetSelect = $('<select>').attr({ size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsCat }),
@@ -700,7 +705,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
 	
 	/**  
-	**  Method to securely close (you may call it "nuke") the dialog, even if there were errors; called on button cancel and by several methods
+	**  Method to securely close (you may call it "nuke") the dialogs, 
+	**  even if there were errors; called on button cancel and by several methods
 	**/
 	mdDlgThumbDlgClose: function () {
 		$(document).triggerHandler('vFC', ['closing dialog', vfc, vfc.dlg]);
@@ -803,7 +809,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		eBatch: 0,
 		eFirst: 0,
 		total: 0,
-		done: 0
+		done: 0,
+		wasError: false
 	},
 	// For queries only.
 	queryAPI: function (params, callback, errCallBack) {
@@ -908,7 +915,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				_always();
 				if (errCallBack) {
 					vfc.secureCall(errCallBack, r, q, t);
-					vfc.mdWasAPIError = true;
+					vfc.api.wasError = true;
 				} else {
 					vfc.fail(t);
 				}
@@ -1095,37 +1102,34 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
 	},
 	
-	mdGetWatchlistSelect: function() {
-		var $sel = $('<select size="1"></select>')
-			.append($('<option>', { text: 'watch', value: 'watch' }))
-			.append($('<option>', { text: 'do not change watchstatus', value: 'nochange' }))
-			.append($('<option>', { text: 'as specified in your preferences', value: 'preferences' }));
-		return $sel;
+	mdGetWatchlistSelect: {
+		"watch": 'watch',
+		"do not change watchstatus": 'nochange',
+		"as specified in your preferences": 'preferences'
 	},
 	
 	mdDefaults: [
 		{
-			'v': 'userNote', 
-			'old': 'AjaxMassDeleteUserNote',
-			'd': 'Additional note to leave on the user\'s talk page', 
+			'name': 'userNote', 
+			'label': 'Additional note to leave on the user\'s talk page', 
 			'default': 'Yours sincerely',
 			'controls': '#mdTalkNote'
 		}, {
-			'v': 'firstTest', 
-			'd': 'Ask for confirmation before doing edit number … (deletions not affected)', 
+			'name': 'firstTest', 
+			'label': 'Ask for confirmation before doing edit number … (deletions not affected)', 
 			'default': 0,
 			'min': 0, 
 			'max': 50
 		}, {
 			// Ratelimits may restrict this
-			'v': 'testEdits', 
-			'd': 'Ask for confirmation after each … edits (deletions not affected)', 
+			'name': 'testEdits', 
+			'label': 'Ask for confirmation after each … edits (deletions not affected)', 
 			'default': (mw.user.isAnon() ? 7 : 0),
 			'min': 0, 
 			'max': 500
 		}, {
-			'v': 'defaultAction',
-			'd': 'Default action to perform',
+			'name': 'defaultAction',
+			'label': 'Default action to perform',
 			'default': 'del',
 			'select': function() {
 				if ($(this.controls).length) {
@@ -1140,51 +1144,50 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			},
 			'controls': '#AjaxMdType'
 		}, {
-			'v': 'watchlistUserTalk',
-			'd': 'Watch edited user talk pages',
+			'name': 'watchlistUserTalk',
+			'label': 'Watch edited user talk pages',
 			'default': 'preferences',
 			'select': 'mdGetWatchlistSelect'
 		}, {
-			'v': 'watchlistFiles',
-			'd': 'Watch edited file pages (Exceptions below override this preference)',
+			'name': 'watchlistFiles',
+			'label': 'Watch edited file pages (Exceptions below override this preference)',
 			'default': 'preferences',
 			'select': 'mdGetWatchlistSelect'
 		}, { 
-			'v': 'watchlistReplace',
-			'd': 'Watch files during custom replace',
+			'name': 'watchlistReplace',
+			'label': 'Watch files during custom replace',
 			'default': 'nochange',
 			'select': 'mdGetWatchlistSelect'
 		}, { 
-			'v': 'watchlistOTRS',
-			'd': 'Watchlist settings during using OTRS options',
+			'name': 'watchlistOTRS',
+			'label': 'Watchlist settings during using OTRS options',
 			'default': 'nochange',
 			'select': 'mdGetWatchlistSelect'
 		}, { 
-			'v': 'loadBatchSize', 
-			'old': 'AjaxMassDeleteInterval',
-			'd': 'Amount of files to be loaded when clicking on more or when scrolling down', 
+			'name': 'loadBatchSize', 
+			'label': 'Amount of files to be loaded when clicking on more or when scrolling down', 
 			'default': 30,
 			'min': 1, 
 			'max': (isSysop ? 1000 : 100)
 		}, {
-			'v': 'maxSimultaneousReq', 
-			'd': 'Maximum number of requests to send to the API simultaneously', 
+			'name': 'maxSimultaneousReq', 
+			'label': 'Maximum number of requests to send to the API simultaneously', 
 			'default': (isSysop ? 10 : (mw.user.isAnon() ? 1 : 5)),
 			'min': 1, 
 			'max': (isSysop ? 100 : (mw.user.isAnon() ? 2 : 50))
 		}, {
-			'v': 'summaryChacheLen',
-			'd': 'Number of reasons to remember (not fully implemented, yet)',
+			'name': 'summaryChacheLen',
+			'label': 'Number of reasons to remember (not fully implemented, yet)',
 			'default': 5,
 			'min': 0, 
 			'max': 20
 		}, {
-			'v': 'loadThumbs',
-			'd': 'Load thumbnails by default (per run setting is in "More options")',
+			'name': 'loadThumbs',
+			'label': 'Load thumbnails by default (per run setting is in \"More options\")',
 			'default': true
 		}, {
-			'v': 'loadWikitext',
-			'd': 'Load wikitext of each file by default (per run setting is in "More options")',
+			'name': 'loadWikitext',
+			'label': 'Load wikitext of each file by default (per run setting is in \"More options\")',
 			'default': true
 		}
 	],
