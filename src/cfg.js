@@ -34,150 +34,78 @@ $.extend(window.VisualFileChange,
 	
 	mdConfig: function () {
 		var cfg = vfc.mdDefaults,
-			$dlgNode = $('<div>', { style: 'overflow:auto; max-height:' + (Math.round($(window).height()) - 150) + 'px;' });
+			_prog,
+			_done;
 			
-		$dlgNode.$c = $('<div>').css('padding', '3px').appendTo($dlgNode);
-		$('<p>', { text: 'Ok and save will apply settings. If you permanently save the settings they will be visible for each user. Do not insert private data here.' }).prependTo($dlgNode);
-		$.each(cfg, function(i, el) {
-			var $elDiv = $('<div>', { id: 'mdCfg_' + el.v + '_wrap' }).data('cfg', el);
-			var $valEl, $valEl2, vl = (el.controls ? $(el.controls).val() : '') || vfc.mdSettings[el.v];
+		_prog = function( id, verbose, $dlg ) {
+			if ('dlgup' === id) vfc.$dialogsToClose.push($dlg);
+		};
+		_done = function(id, verbose, location, settings, $dlg) {
+		
+			vfc.mdPublishSettings( settings );
 			
-			$('<label>', { text: el.d, 'for': 'mdCfg' + el.v }).appendTo($elDiv);
-			$('<br>').appendTo($elDiv);
-			switch (typeof el['default']) {
-				case 'number': 
-					$valEl = $('<input>').attr({ type: 'text', size: (el.max+'').length, id: 'mdCfg' + el.v, 'class': 'numbersOnly' })
-						.focus(function() { $(this).select(); })
-						.keyup(function(e) {
-							var val = this.value = this.value.replace(/[^0-9]/g,'');
-							if (val) {
-								if (val > el.max) {
-									this.value = el.max;
-								} else if (val < el.min) {
-									this.value = el.min;
-								}
-								$valEl2.slider('option', 'value', this.value);
-							}
-						}).val(vl).appendTo($elDiv);
-					$valEl2 = $('<div>', { style: 'margin-top:5px; margin-bottom:5px;' }).slider({
-						min: el.min,
-						max: el.max,
-						value: vl,
-						change: function(e, ui) {
-							$valEl.val( ui.value );
-						},
-						slide: function(e, ui) {
-							$valEl.val( ui.value );
+			switch (location) {
+				case 'page':
+					$.growlUI("Temporarily stored", "Configuration will be alive as long as you're on this page");
+					$dlg.dialog('close');
+					break;
+				case 'account-publicly':
+					// Append a status node to the object
+					$dlg.$s = $('<div>', { style: 'text-align:left; min-height:290px' });
+					$dlg.$c.block({ 
+						message: $dlg.$s,
+						css: {
+							width: '95%'
 						}
-					}).appendTo($elDiv);
-					break;
-				case 'string':
-					if ('function' === typeof el.select) {
-						$elDiv.append(el.select().attr('id', 'mdCfg' + el.v).val(vl));
-					} else if ('string' === typeof el.select) {
-						$elDiv.append(vfc[el.select]().attr('id', 'mdCfg' + el.v).val(vl));
-					} else {
-						$('<input>', { type: 'text', id: 'mdCfg' + el.v, style: 'width:99%' }).val(vl).appendTo($elDiv);
-					}
-					break;
-				case 'boolean':
-					$valEl = $('<input>', { type: 'checkbox', id: 'mdCfg' + el.v }).appendTo($elDiv);
-					if (vl) $valEl[0].checked = true;
-					break;
-				case 'function':
-					$valEl = $(el.controls).clone().attr('id', 'mdCfg' + el.v);
-					$valEl.appendTo($elDiv);
-					break;
-			}
-			$elDiv.append('<hr/>', '<br/>').appendTo($dlgNode.$c);
-		});
-		var dlgButtons = {};
-		dlgButtons[vfc.i18n.mdConfig.okButton] = function() {
-			vfc.mdPublishSettings(this, cfg);
-			$(this).dialog('close');
-		};
-		dlgButtons[vfc.i18n.mdConfig.cancelButton] = function() {
-			$(this).dialog('close');
-		};
-		if (!mw.user.isAnon()) {
-			dlgButtons[vfc.i18n.mdConfig.permaSaveButton] = function() {
-				vfc.mdPublishSettings(this, cfg);
-				$dlgNode.$s = $('<div>', { style: 'text-align:left; min-height:290px' });
-				$dlgNode.$c.block({ 
-					message: $dlgNode.$s,
-					css: {
-						width: '95%'
-					}
-				});
-				$dlgNode.dialog('option', 'buttons', {});
-				
-				$(document).bind('vFC_S', function(e, text, status, obj) {
-					var icon = 'info';
-					switch (status) {
-						case -1:
-							icon = 'close';
-							break;
-						case -2:
-							icon = 'alert';
-							break;
-						case 100:
-							icon = 'check';
-							text += " You can close this dialog now.";
-							$dlgNode.$c.unblock({
-								onUnblock: function(){ 
-									$dlgNode.dialog('close');
-									$.growlUI("Saved", "Configuration saved to your JavaScript");
-								}
-							});
-							break;
-					}
-					$dlgNode.$s.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
-					$dlgNode.$s.append($('<div>', { text: ' ' + text }).prepend($.createIcon('ui-icon-' + icon)));
+					});
+					$dlg.dialog('option', 'buttons', {});
+					
+					$(document).bind('vFC_S', function(e, text, status, obj) {
+						var icon = 'info';
+						switch (status) {
+							case -1:
+								icon = 'close';
+								break;
+							case -2:
+								icon = 'alert';
+								break;
+							case 100:
+								icon = 'check';
+								text += " You can close this dialog now.";
+								$dlg.$c.unblock({
+									onUnblock: function(){ 
+										$dlg.dialog('close');
+										$.growlUI("Saved", "Configuration saved to your JavaScript");
+									}
+								});
+								break;
+						}
+						$dlg.$s.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
+						$dlg.$s.append($('<div>', { text: ' ' + text }).prepend($.createIcon('ui-icon-' + icon)));
 
-					$(document).triggerHandler('vFC', ['Settings>' + text, vfc]);
-				});
-				
-				vfc.mdSaveSettings(cfg, 'vFCvFCCfg', vfc.mdSettings, 'vFCSettings', 'is updating configuration');
-			};
-		}
-		dlgButtons[vfc.i18n.mdConfig.defaultsButton] = function() {
-			$.each(cfg, function(i, el) {
-				$('#mdCfg'+el.v).val(el['default']).keyup();
-			});
-		};
-		$dlgNode.dialog({
-			title: 'Advanced settings',
-			modal: true,
-			resizable: false,
-			width: Math.min(670, $(window).width()),
-			close: function () {
-				$(this).remove();
-			},
-			buttons: dlgButtons,
-			open: function() {
-				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
-				$buttons.eq(0).specialButton('proceed');
-				$buttons.eq(1).specialButton('cancel');
-				if (!mw.user.isAnon()) $buttons.eq(2).button({ icons: { primary: 'ui-icon-script', secondary: 'ui-icon-disk' } }).addClass('ui-button-orange');
-				$buttons.eq(mw.user.isAnon() ? 2 : 3).button({ icons: { primary: 'ui-icon-refresh' } });
+						$(document).triggerHandler('vFC', ['Settings>' + text, vfc]);
+					});
+					
+					vfc.mdSaveSettings(cfg, 'vFCvFCCfg', vfc.mdSettings, 'vFCSettings', 'is updating configuration');
+					
+					break;
 			}
+		};
+
+		$.each(cfg, function(i, el) {
+			el.value = (el.controls ? $(el.controls).val() : '') || vfc.mdSettings[el.name];
 		});
-		vfc.$dialogsToClose.push($dlgNode);
+		
+		window.mw.libs
+			.SettingsUI(cfg, "VisualFileChange")
+			.show().progress(_prog).done(_done);
 	},
 	
-	mdPublishSettings: function(dlgNode, cfg) {
+	mdPublishSettings: function(cfg) {
 		$.each(cfg, function(i, el) {
-			var val; 
-			if ('boolean' === typeof el['default']) {
-				val = $('#mdCfg'+el.v)[0].checked;
-			} else if ('number' === typeof el['default']) {
-				val = parseFloat($('#mdCfg'+el.v).val(), 10);
-			} else {
-				val = $('#mdCfg'+el.v).val();
-			}
-			vfc.mdSettings[el.v] = val;
-			window.vFCSettings[el.v] = val;
-			if (el.old) window[el.old] = val;
+			var val = el.value;
+			vfc.mdSettings[el.name] = val;
+			window.vFCSettings[el.name] = val;
 			if (el.controls) {
 				var $controlled = $(el.controls);
 				if (0 === $controlled.length) return;
@@ -548,7 +476,9 @@ mw.loader.using([
 	'jquery.placeholder', 
 	'jquery.jStorage',
 	'mediawiki.user',
+	'ext.gadget.libJQuery',
 	'ext.gadget.SettingsManager',
+	'ext.gadget.SettingsUI',
 	'ext.gadget.jquery.blockUI'
 	], function() {
 	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'configManager']);
