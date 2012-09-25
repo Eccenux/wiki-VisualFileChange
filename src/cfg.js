@@ -412,8 +412,7 @@ $.extend(window.VisualFileChange,
 	
 	mdSuggestContinue: function () {
 		var autoExecProfile = vfc.mdGetClientProfiles()['last executed (auto-saved)'],
-			lookFor,
-			$doc = $doc;
+			lookFor;
 
 		if (!autoExecProfile || !autoExecProfile.objectMembers.queryParams) return;
 		lookFor = autoExecProfile.objectMembers.queryParams.target;
