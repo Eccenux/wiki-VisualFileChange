@@ -15,7 +15,9 @@ if (!window.VisualFileChange) return;
 if (window.VisualFileChange.displayComponents) return;
 
 var css,
-	vfc = window.VisualFileChange;
+	vfc = window.VisualFileChange,
+	$doc = $(document),
+	$win = $(window);
 	
 css = ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' #AjaxMdContainer { position:relative; }\n'
@@ -33,7 +35,7 @@ css = ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
-	+ ' li.gallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
+	+ ' li.rgallerybox { width:155px; background:#f8f8f8; border:#FFF 2px solid; }\n'
 	+ ' li.md-selected { background-color:#BBE; }\n'
 	+ ' li.md-selected div.thumb { background-color:#DDE; border:#FFF 1px solid; }\n'
 	+ ' div.jImage { position:relative }\n'
@@ -43,9 +45,9 @@ css = ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' div.jImage.progress-failed div.jProgress { background:url(\'' + vfc.icons.failed + '\') no-repeat center; }\n'
 	+ ' div.jImage.progress-nochange div.jProgress { background:url(\'' + vfc.icons.nochange + '\') no-repeat center; }\n'
 	+ ' div.jGU { position:absolute; right:0px; bottom:0px; height:0px; width:0px; overflow:visible; cursor:pointer }\n'
-	+ ' li.gallerybox div.jImage.progress-done { border:2px solid #393; }\n'
-	+ ' li.gallerybox div.jImage.progress-failed { background-color:#ebb; border:2px solid #933; }\n'
-	+ ' li.gallerybox div.jImage.progress-nochange { background-color:#eeb; border:2px solid #993; }\n'
+	+ ' li.rgallerybox div.jImage.progress-done { border:2px solid #393; }\n'
+	+ ' li.rgallerybox div.jImage.progress-failed { background-color:#ebb; border:2px solid #933; }\n'
+	+ ' li.rgallerybox div.jImage.progress-nochange { background-color:#eeb; border:2px solid #993; }\n'
 	+ ' .md-re-escape-helper { position:absolute; z-index:1002; color:#FFF; cursor:pointer; padding:3px; -webkit-border-top-left-radius: 8px; -webkit-border-bottom-left-radius: 8px;-moz-border-radius-topleft: 8px;-moz-border-radius-bottomleft: 8px;border-top-left-radius: 8px;border-bottom-left-radius: 8px; ' + 
 		'background: rgb(97,196,25); background: -moz-radial-gradient(center, ellipse cover, rgb(97,196,25), rgb(180,227,145)); background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgb(97,196,25)), color-stop(100%,rgb(180,227,145))); ' + 
 		'background:-webkit-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -o-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: -ms-radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); background: radial-gradient(center, ellipse cover, rgb(97,196,25),rgb(180,227,145)); }\n'
@@ -54,7 +56,7 @@ css = ' .rgallery { background-color:#FFF !important; }\n'
 	
 // Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
 if ('vector' === mw.config.get('skin')) css += ' .ui-buttonset .ui-button { margin-left:0px!important; margin-right:-.3em!important; }\n' 
-		+ ' .ui-buttonset .ui-button > .ui-button-text { padding-left:0.5em !important; padding-right:0.5em !important; }\n'
+		+ ' .ui-buttonset .ui-button-text-only > .ui-button-text { padding-left:0.5em !important; padding-right:0.5em !important; }\n'
 		+ ' .ui-buttonset > label.ui-state-active { background:#F0F0F0 !important; }\n'
 		+ ' .md-examine-contents { font-size:1.2em; }';
 	
@@ -71,17 +73,17 @@ $.extend(window.VisualFileChange,
 	**/
 	mdCreateList: function () {
 		if (this.mdNumberOfExecs) {
-			$(document).triggerHandler('vFC', ['filelist query aborted due to exection of edit-tasks', this]);
+			$doc.triggerHandler('vFC', ['filelist query aborted due to exection of edit-tasks', this]);
 			return true;
 		}
 		if (this.mdListUploadsPending > 0) {
-			$(document).triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
+			$doc.triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
 			setTimeout(function () { 
 				vfc.mdCreateList();
 			}, 200); // See me later ...
 			return true;
 		}
-		$(document).triggerHandler('vFC', ['preparing querying the filelist', this]);
+		$doc.triggerHandler('vFC', ['preparing querying the filelist', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'list', 'md-doing' );
 		if (this.mdFirstRun) { // First time only
@@ -114,13 +116,13 @@ $.extend(window.VisualFileChange,
 			ledir: qp.ledir
 		};
 		if (qp.lestart) query.lestart = qp.lestart;
-		$(document).triggerHandler('vFC', ['useruploads', vfc, query]);
+		$doc.triggerHandler('vFC', ['useruploads', vfc, query]);
 		vfc.queryAPI(query, 'mdFindUploadsCB');
 	},
 	
 	mdFindUploadsCB: function (result) {
 		vfc.mdListUploadsPending--;
-		$(document).triggerHandler('vFC', ['got useruploads', vfc, result]);
+		$doc.triggerHandler('vFC', ['got useruploads', vfc, result]);
 		vfc.pb.setCurrentTaskDone();
 		
 		var allFileChanges = result.query.logevents,
@@ -171,20 +173,23 @@ $.extend(window.VisualFileChange,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
 			cmlimit: vfc.mdSettings.loadBatchSize,
-			cmcontinue: qp.lestart,
 			cmdir: qp.cmdir,
 			cmsort: qp.cmsort
 		};
+		// "[cmtype is] Ignored when cmsort=timestamp is set"
+		if ('timestamp' === qp.cmsort) query.cmnamespace = 6;
+		// Prevent passing empty params
+		if (qp.lestart) query.cmcontinue = qp.lestart;
 		if (qp.cmstart) query.cmstart = qp.cmstart;
 		if (qp.cmstartsortkey) query.cmstartsortkey = qp.cmstartsortkey;
-		$(document).triggerHandler('vFC', ['catmembers', vfc, query]);
+		$doc.triggerHandler('vFC', ['catmembers', vfc, query]);
 		
 		vfc.queryAPI(query, 'mdFindCatMembersCB');
 	},
 	
 	mdFindCatMembersCB: function (result) {
 		vfc.mdListUploadsPending--;
-		$(document).triggerHandler('vFC', ['got catmembers', vfc, result]);
+		$doc.triggerHandler('vFC', ['got catmembers', vfc, result]);
 		vfc.pb.setCurrentTaskDone();
 		
 		var qp = vfc.queryParams;
@@ -264,7 +269,7 @@ $.extend(window.VisualFileChange,
 			var replaceSecurityLevel = vfc.$selPreserve.val();
 
 			$.each(vfc.iUploads, function(upload, curUpld) {
-				if (!curUpld.content || (($examineInput.val()-0) !== curUpld.iId)) return;
+				if (!curUpld.content || (Number($examineInput.val()) !== curUpld.iId)) return;
 
 				var newText,
 					oldText = curUpld.content,
@@ -540,7 +545,7 @@ $.extend(window.VisualFileChange,
 	**  Mammoth method to set up and manage the UserInterface (UI)
 	**/
 	mdGenIGallery: function() {
-		$(document).triggerHandler('vFC', ['preparing initial uploads dialog', vfc]);
+		$doc.triggerHandler('vFC', ['preparing initial uploads dialog', vfc]);
 	
 		vfc.mdUploadCt = 0;              // Number of pending API queries
 		vfc.mdActualResultCount = 0;     // Doesn't include reverts and deleted media
@@ -595,7 +600,7 @@ $.extend(window.VisualFileChange,
 		};
 		var confirmDlg = function(title, text, cancel, ignore, icon, action) {
 			var dlg2Btns = {};
-			var dlgWidth = Math.min(600, $(window).width() - 250);
+			var dlgWidth = Math.min(600, $win.width() - 250);
 			dlg2Btns[cancel] = function() {
 				$(this).dialog("close");
 			};
@@ -608,7 +613,7 @@ $.extend(window.VisualFileChange,
 					title: title,
 					buttons: dlg2Btns,
 					modal: true,
-					position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
+					position: [($win.width() - dlgWidth - 250) / 2 + 250, ($win.height() - 200) / 2 ],
 					close: function() {
 						$(this).dialog("destroy");
 						$(this).remove();
@@ -651,14 +656,17 @@ $.extend(window.VisualFileChange,
 		};
 
 		var dlgResizeTimeout = 0;
+		vfc.dlg.dialog('widget').stop(true);
+		vfc.$AjaxMdContainer.$banner.fadeOut();
+		vfc.$AjaxMdContainer.fadeIn();
 		vfc.dlg.dialog({
 			modal: false,
 			title: vfc.mdHelpNode +
 				' Action:&nbsp;' +
 				getSelect() +
 				'<label for="AjaxMdIa">' + vfc.i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
-			width: $(window).width() - 250,
-			height: $(window).height(),
+			width: $win.width() - 250,
+			height: $win.height(),
 			buttons: dlgButtons,
 			resizeStop: function(event, ui) { 
 				clearTimeout(dlgResizeTimeout);
@@ -669,10 +677,10 @@ $.extend(window.VisualFileChange,
 		});
 		vfc.dlg.dialog( 'option', 'position', 'right' ).dialog( 'option', 'modal', 'false' ).css('padding', '3px 6px');
 		var windowRezizeTimeout = 0;
-		$(window).resize(function() {
+		$win.resize(function() {
 			clearTimeout(windowRezizeTimeout);
 			windowRezizeTimeout = setTimeout(function() {
-				if (vfc && vfc.dlg) vfc.dlg.dialog('option', 'width', $(window).width() - (vfc.pb.isHidden() ? 0 : 250));
+				if (vfc && vfc.dlg) vfc.dlg.dialog('option', 'width', $win.width() - (vfc.pb.isHidden() ? 0 : 250));
 			}, 1000);
 		});
 		
@@ -702,13 +710,13 @@ $.extend(window.VisualFileChange,
 		var $AjaxMdContainer = vfc.$AjaxMdContainer.text('');
 		vfc.$ctrs.container = $('<div>', { id: 'mdControlContainer', 'class': 'ui-widget-content' }).css('padding', '6px 10px');
 
-		var zIndexNavBtns = parseInt(vfc.dlg.parents('div.ui-dialog').css('z-index'), 10) + 1,
+		var zIndexNavBtns = Number(vfc.dlg.parents('div.ui-dialog').css('z-index')) + 1,
 			$toTop = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-n', href: '#goToTop', text: '↑', title: "To top" })),
 			$toBottom = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-s', href: '#goToBottom', text: '↓', title: "To bottom" })),
 			$navButtonContainer = $('<div>', { 'class': 'md-nav-button-container' }).css('z-index', zIndexNavBtns).append($toTop, ' ', $toBottom).appendTo(vfc.dlg),
 			__onHover = function() { $(this).addClass('ui-state-hover'); },
 			__onOut = function() { $(this).removeClass('ui-state-hover'); },
-			__onDown = function() { var $i = $(this); $(this).addClass('ui-state-active'); $(document).one('mouseup', function() { $i.removeClass('ui-state-active'); }); };
+			__onDown = function() { var $i = $(this); $(this).addClass('ui-state-active'); $doc.one('mouseup', function() { $i.removeClass('ui-state-active'); }); };
 		
 		$toTop.hover(__onHover, __onOut).focus(__onHover).blur(__onOut).mousedown(__onDown).click(function(e) { 
 			e.preventDefault();
@@ -1113,12 +1121,12 @@ $.extend(window.VisualFileChange,
 			);
 		
 		var pbWidth = (vfc.pb.isHidden() ? 0 : 250);
-		var dlgWidth = Math.min(600, $(window).width() - pbWidth);
+		var dlgWidth = Math.min(600, $win.width() - pbWidth);
 		vfc.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
 			resizable: false,
 			closeOnEscape: true,
-			position: [($(window).width() - dlgWidth - pbWidth) / 2 + pbWidth, ($(window).height() - 250) / 2 ],
+			position: [($win.width() - dlgWidth - pbWidth) / 2 + pbWidth, ($win.height() - 250) / 2 ],
 			title: 'Cute-Selection: Specify the options, please',
 			height: 'auto',
 			width: dlgWidth,
@@ -1162,7 +1170,7 @@ $.extend(window.VisualFileChange,
 		$AjaxMdContainer.append($queryMore).append('<div style="height:100px">&nbsp;</div>');
 		/* End of UI */
 		
-		$(document).triggerHandler('vFC', ['initial uploads dialog', vfc, vfc.dlg]);
+		$doc.triggerHandler('vFC', ['initial uploads dialog', vfc, vfc.dlg]);
 		// Temporary fix
 		$('.vFCConfigRequired').removeClass('ui-state-disabled');
  
@@ -1174,7 +1182,7 @@ $.extend(window.VisualFileChange,
 	**  Send the next batch of queries. Called by mdGenIGallery (mammoth method above) and mdQueryMore (Query on demand)
 	**/
 	mdSendNextQueries: function () {
-		$(document).triggerHandler('vFC', ['querying detail-info', this]);
+		$doc.triggerHandler('vFC', ['querying detail-info', this]);
 		this.pb.setTaskState( 'datails', 'md-doing' );
 		
 		if (0 === this.mdPendingBatchQueries)  {
@@ -1206,7 +1214,7 @@ $.extend(window.VisualFileChange,
 					query.iilimit = 500;
 				}
 				
-				$(document).triggerHandler('vFC', ['detail-info', vfc, query]);
+				$doc.triggerHandler('vFC', ['detail-info', vfc, query]);
 				
 				vfc.mdUploadCt++;
 				vfc.queryAPI(query, 'mdQueriedFile'); // Dont use task queue because this is a loop
@@ -1222,7 +1230,7 @@ $.extend(window.VisualFileChange,
 					collectedFiles = [];
 				}
 				vfc.iCurrentIId = upli.iId;
-				if (Math.round(vfc.mdSettings.loadBatchSize / 10) === vfc.mdUploadCt) {
+				if ((vfc.mdUploadCt * 10 + collectedCount) >= vfc.mdSettings.loadBatchSize) {
 					return false;
 				}
 			});
@@ -1241,7 +1249,7 @@ $.extend(window.VisualFileChange,
 			$gbProgress = $('<div>', { 'class': 'jProgress' }),
 			$gbGU = $('<div>', { 'class': 'jGU', title: "GlobalUsage" }),
 			$thumb = $('<div>', { style: 'width: 150px;', 'class': 'thumb jImage'}).css('height', height).append($ih, $gbProgress, $gbGU),
-			$galleryBox = $('<li>', { 'class': 'gallerybox' }).append($('<div>', { style: 'width: 155px' }).append($thumb).append($th));
+			$galleryBox = $('<li>', { 'class': 'gallerybox rgallerybox' }).append($('<div>', { style: 'width: 155px' }).append($thumb).append($th));
 		if ('string' === typeof style) $th.attr('style', style);
 		
 		$.each(img, function(id, imgi) {
@@ -1412,7 +1420,7 @@ $.extend(window.VisualFileChange,
 	mdQueriedFile: function (result) {
 		vfc.mdUploadCt--;
 		
-		$(document).triggerHandler('vFC', ['got detail-info', vfc, result]);
+		$doc.triggerHandler('vFC', ['got detail-info', vfc, result]);
 		
 		if (({ err:1, done:1 })[vfc.internalState]) return; // don't try to add something if there was an error.
 		var pages = result.query.pages,
@@ -1531,7 +1539,7 @@ $.extend(window.VisualFileChange,
 		vfc.$ctrs.ajaxMdNotReady.hide();
 		vfc.pb.setCurrentTaskDone();
 		
-		$(document).triggerHandler('vFC', ['detail-info processed', vfc]);
+		$doc.triggerHandler('vFC', ['detail-info processed', vfc]);
  
 		if ( (vfc.iiUploads > (vfc.iCurrentIId + 1))  || !vfc.mdNoMoreFiles) {
 			vfc.$mdQueryMoreBtn.button('option', 'disabled', false);
@@ -1620,7 +1628,7 @@ $.extend(window.VisualFileChange,
 			})).appendTo($ulNode);
 		};
 		
-		if (this.mdWasAPIError) {
+		if (this.api.wasError) {
 			$dlgNode.append(
 				$.createNotifyArea('We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
 				'Please check your contributions, whether something went wrong.',
@@ -1647,7 +1655,7 @@ $.extend(window.VisualFileChange,
 		}
 		$dlgNode.append($ulNode).dialog({
 			show: { effect: 'highlight', duration: 1800 },
-			width: Math.min(450, $(window).width())
+			width: Math.min(450, $win.width())
 		});
 		document.title = "VisualFileChange: Ready!";
 		vfc.$dialogsToClose.push($dlgNode);
@@ -1667,7 +1675,7 @@ mw.loader.using([
 	'ext.gadget.libJQuery',
 	'ext.gadget.jquery.blockUI'
 ], function() {
-	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'displayComponents']);
+	$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'displayComponents']);
 });
 
 }(jQuery, mediaWiki));
