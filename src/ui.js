@@ -25,7 +25,7 @@ css = ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .md-nav-button { display:inline-block; background-color:white; border:2px solid #f3f3f3; -webkit-border-radius:10px; -moz-border-radius:10px; border-radius:10px } '
 	+ ' .md-nav-button:hover, .md-nav-button:focus { background-color:#f0f0fd; }'
 	+ ' .md-nav-button:active { border-color:#ccc }'
-	+ ' .md-nav-button-container { position:fixed; top:4em; right:1.5em; max-width:18px }\n'
+	+ ' .md-nav-button-container { position:absolute; top:3em; right:1.5em; max-width:18px }\n'
 	+ ' .md-nav-button-wrap { display:inline-block; background:none!important; border:none!important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
 	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
@@ -655,10 +655,12 @@ $.extend(window.VisualFileChange,
 			return sel;
 		};
 
-		var dlgResizeTimeout = 0;
+		var dlgResizeTimeout = 0,
+			$AjaxMdContainer = vfc.$AjaxMdContainer.text('');
+		
 		vfc.dlg.dialog('widget').stop(true);
-		vfc.$AjaxMdContainer.$banner.fadeOut();
-		vfc.$AjaxMdContainer.fadeIn();
+		if ($AjaxMdContainer.$banner) $AjaxMdContainer.$banner.fadeOut();
+		$AjaxMdContainer.fadeIn();
 		vfc.dlg.dialog({
 			modal: false,
 			title: vfc.mdHelpNode +
@@ -707,13 +709,11 @@ $.extend(window.VisualFileChange,
 			ajaxMdActionConfirm: $('<span>').attr({ id: 'AjaxMdActionConfirm' })
 		});
 
-		var $AjaxMdContainer = vfc.$AjaxMdContainer.text('');
 		vfc.$ctrs.container = $('<div>', { id: 'mdControlContainer', 'class': 'ui-widget-content' }).css('padding', '6px 10px');
 
-		var zIndexNavBtns = Number(vfc.dlg.parents('div.ui-dialog').css('z-index')) + 1,
-			$toTop = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-n', href: '#goToTop', text: '↑', title: "To top" })),
+		var $toTop = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-n', href: '#goToTop', text: '↑', title: "To top" })),
 			$toBottom = $('<div>', { 'class': 'md-nav-button-wrap ui-helper-reset' }).append($('<a>', { 'class': 'md-nav-button ui-icon ui-icon-arrowstop-1-s', href: '#goToBottom', text: '↓', title: "To bottom" })),
-			$navButtonContainer = $('<div>', { 'class': 'md-nav-button-container' }).css('z-index', zIndexNavBtns).append($toTop, ' ', $toBottom).appendTo(vfc.dlg),
+			$navButtonContainer = $('<div>', { 'class': 'md-nav-button-container' }).append($toTop, ' ', $toBottom).appendTo(vfc.dlg.dialog('widget')),
 			__onHover = function() { $(this).addClass('ui-state-hover'); },
 			__onOut = function() { $(this).removeClass('ui-state-hover'); },
 			__onDown = function() { var $i = $(this); $(this).addClass('ui-state-active'); $doc.one('mouseup', function() { $i.removeClass('ui-state-active'); }); };
