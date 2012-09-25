@@ -26,7 +26,9 @@ var profileVar = 'vFC_Profiles';
 var scriptpath = mw.config.get('wgUserName') ? mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/' : '';
 var commonjsPath = scriptpath + 'common.js';
 var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
-var vfc = window.VisualFileChange;
+var vfc = window.VisualFileChange,
+	$doc = $(document),
+	$win = $(window);
 
 $.extend(window.VisualFileChange,
 {
@@ -60,7 +62,7 @@ $.extend(window.VisualFileChange,
 					});
 					$dlg.dialog('option', 'buttons', {});
 					
-					$(document).bind('vFC_S', function(e, text, status, obj) {
+					$doc.bind('vFC_S', function(e, text, status, obj) {
 						var icon = 'info';
 						switch (status) {
 							case -1:
@@ -83,7 +85,7 @@ $.extend(window.VisualFileChange,
 						$dlg.$s.append($('<div>', { style: 'font-size:80%', text: '>' + (new Date().toLocaleString()) }));
 						$dlg.$s.append($('<div>', { text: ' ' + text }).prepend($.createIcon('ui-icon-' + icon)));
 
-						$(document).triggerHandler('vFC', ['Settings>' + text, vfc]);
+						$doc.triggerHandler('vFC', ['Settings>' + text, vfc]);
 					});
 					
 					vfc.mdSaveSettings(cfg, 'vFCvFCCfg', vfc.mdSettings, 'vFCSettings', 'is updating configuration');
@@ -127,10 +129,10 @@ $.extend(window.VisualFileChange,
 			triggerSaveAt: /Visual ?File ?Change/i,
 			editSummary: '[[' + vfc.mdSelfPath + '|VisualFileChange.js]] ' + whatIAmDoing
 		});
-		opt.save($(document), 'vFC_S').done(function() {
+		opt.save($doc, 'vFC_S').done(function() {
 			// ...
 			
-			$(document).unbind('vFC_S');
+			$doc.unbind('vFC_S');
 		});
 	},
 	
@@ -186,9 +188,9 @@ $.extend(window.VisualFileChange,
 		if (!window[profileVar]) window[profileVar] = {};
 		window[profileVar][saveName] = vfc.getNewConfigItem(objProfile);
 		
-		$(document).unbind('vFC_S');
-		$(document).bind('vFC_S', function(e, text, status, obj) {
-			$(document).triggerHandler('vFC', ['Profile>' + text, vfc]);
+		$doc.unbind('vFC_S');
+		$doc.bind('vFC_S', function(e, text, status, obj) {
+			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, "Saved", "The selected profile was saved to your user namespace");
 		});
 		vfc.mdUpdateJSProfile();
@@ -240,9 +242,9 @@ $.extend(window.VisualFileChange,
 		});
 		window[profileVar] = newConfig;
 		
-		$(document).unbind('vFC_S');
-		$(document).bind('vFC_S', function(e, text, status, obj) {
-			$(document).triggerHandler('vFC', ['Profile>' + text, vfc]);
+		$doc.unbind('vFC_S');
+		$doc.bind('vFC_S', function(e, text, status, obj) {
+			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, "Removed", "The selected profile was removed from your user namespace");
 		});
 		vfc.mdUpdateJSProfile();
@@ -400,7 +402,7 @@ $.extend(window.VisualFileChange,
 			title: 'Profile manager',
 			modal: true,
 			resizable: false,
-			width: Math.min(610, $(window).width()),
+			width: Math.min(610, $win.width()),
 			close: function () {
 				$(this).remove();
 			}
@@ -411,7 +413,7 @@ $.extend(window.VisualFileChange,
 	mdSuggestContinue: function () {
 		var autoExecProfile = vfc.mdGetClientProfiles()['last executed (auto-saved)'],
 			lookFor,
-			$doc = $(document);
+			$doc = $doc;
 
 		if (!autoExecProfile || !autoExecProfile.objectMembers.queryParams) return;
 		lookFor = autoExecProfile.objectMembers.queryParams.target;
@@ -481,7 +483,7 @@ mw.loader.using([
 	'ext.gadget.SettingsUI',
 	'ext.gadget.jquery.blockUI'
 	], function() {
-	$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'configManager']);
+	$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'configManager']);
 });
 
 }(jQuery, mediaWiki));
