@@ -68,7 +68,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.33.4',
+	mdScriptRevision: '0.9.33.6',
 	
 
 	/**
@@ -374,46 +374,64 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			};
 			if (!mwDateRx.test(si.startDate)) si.startDate = '';
 			
-			var qp = vfc.queryParams = {
-				target: si.target,
-				lestart: si.startDate,
-				ledir: 'older',
-				cmdir: 'asc',
-				cmsort: 'sortkey'
-			};
+			var lc = vfc.lastContinues,
+				qp = vfc.queryParams = {
+					target: si.target
+				};
 			
-			vfc.lastContinues.setVals = ['lestart'];
+			if (si.modeUser) {
+				qp.lestart = si.startDate;
+				vfc.lastContinues.setVals = ['lestart'];
+			}
+			
 			vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
 			
 			switch ($gSortBy.val()) {
 				case 'of': // oldest first
-					qp.ledir = 'newer';
-					qp.cmdir = 'asc';
-					qp.cmsort = 'timestamp';
-					qp.cmstart = qp.lestart;
-					vfc.lastContinues.setVals.push('cmstart');
+					if (si.modeCat) {
+						qp.cmdir = 'asc';
+						qp.cmsort = 'timestamp';
+						qp.cmstart = si.startDate;
+						lc.setVals = ['cmstart'];
+					}
+					if (si.modeUser) {
+						qp.ledir = 'newer';
+					}
 					break;
 				case 'nf': // newest first
-					qp.ledir = 'older';
-					qp.cmdir = 'desc';
-					qp.cmsort = 'timestamp';
-					qp.cmstart = qp.lestart;
-					vfc.lastContinues.setVals.push('cmstart');
+					if (si.modeCat) {
+						qp.cmdir = 'desc';
+						qp.cmsort = 'timestamp';
+						qp.cmstart = si.startDate;
+						lc.setVals = ['cmstart'];
+					}
 					break;
 				case 'ca': // cat asc
 					qp.cmdir = 'asc';
 					qp.cmsort = 'sortkey';
 					qp.cmstartsortkey = si.startFile;
+					lc.setVals = ['cmcontinue'];
 					break;
 				case 'cd': // cat desc
 					qp.cmdir = 'desc';
 					qp.cmsort = 'sortkey';
 					qp.cmstartsortkey = si.startFile;
+					lc.setVals = ['cmcontinue'];
 					break;
 				case 'default':
-					// Default set before
+					// Default
+					if (si.modeCat) {
+						qp.cmdir = 'asc';
+						qp.cmsort = 'sortkey';
+						qp.cmstartsortkey = si.startFile;
+						lc.setVals = ['cmcontinue'];
+					}
+					if (si.modeUser) {
+						qp.ledir = 'older';
+					}
 					break;
 			}
+			
 			var $dlg = $(this);
 			$dlg.dialog('option', 'buttons', {}).dialog('widget').animate({
 				left: $win.scrollLeft() + 250,
@@ -483,8 +501,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$catSpecifics.removeAttr('disabled');
 			} else {
 				$catSpecifics.attr('disabled', 'disabled');
-				if (/^c/.test($gSortBy.val())) $gSortBy.val('default').change();
+				if (/^c/.test($gSortBy.val())) $gSortBy.val('default');
 			}
+			$gSortBy.change();
 			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
 		});
 		var didXHR = function(result, pCallback) {
@@ -626,7 +645,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					methodDate,
 					methodFile;
 					
-				if ($t.val().slice(0,1) === 'c') {
+				if ($t.val().slice(0,1) === 'c' || ('default' === $t.val() && nsCat === $targetSelect.val())) {
 					methodDate = 'none';
 					methodFile = 'inline-block';
 				} else {
