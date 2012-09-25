@@ -32,7 +32,7 @@
 	Parameter3: optional, depends on context
 
 	Example for listening to the events:
-	$(document).bind('vFC', function(e, p1, p2, p3) {
+	$doc.bind('vFC', function(e, p1, p2, p3) {
 		console.log('VisualFileChange> ' + p1);
 	});
 ***************************************************/
@@ -46,11 +46,13 @@
 'use strict';
 if (window.VisualFileChange) return;
 
-$(document).ready(function () {
+$(function () {
 
 var VisualFileChange,
 	vfc,
-	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1);
+	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1),
+	$doc = $(document),
+	$win = $(window);
 
 // Adding Style-definitions
 mw.util.addCSS(' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n' +
@@ -66,11 +68,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.33.0',
+	mdScriptRevision: '0.9.33.4',
 	
 
 	/**
-	** Set up the VisualFileChange object and add the toolbox link.  Called via $(document).ready() during page loading.
+	** Set up the VisualFileChange object and add the toolbox link.  Called via $doc.ready() during page loading.
 	**/
 	mdInstall: function () {
 		// Initialize the settings
@@ -111,7 +113,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
 			}
 		}
-		$(document).triggerHandler('vFC', ['installed', vfc]);
+		$doc.triggerHandler('vFC', ['installed', vfc]);
 	},
 	
 	/**
@@ -140,9 +142,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			case 'diff':
 				if (!mw.libs.schnark_diff) {
 					mw.loader.load('//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript');
-					if (cb) $(document).bind('loadWikiScript.vFCListener', function(e, what) {
+					if (cb) $doc.bind('loadWikiScript.vFCListener', function(e, what) {
 						if ('Benutzer:Schnark/js/diff.js/core.js' === what) {
-							$(document).unbind('loadWikiScript.vFCListener');
+							$doc.unbind('loadWikiScript.vFCListener');
 							mw.libs.schnark_diff.css.ins = 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #B0C0F0; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;';
 							mw.libs.schnark_diff.css.del = 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FFD89D; -moz-text-decoration-color:#744;';
 							mw.util.addCSS( mw.libs.schnark_diff.getCSS() );
@@ -160,10 +162,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			executeCB();
 			return;
 		} else {
-			if (cb) $(document).bind('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
+			if (cb) $doc.bind('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
 				if (script) { if ('VisualFileChange' === script && add) {
 					if (alias === add) {
-						$(document).unbind('scriptLoaded.vFCListener' + alias);
+						$doc.unbind('scriptLoaded.vFCListener' + alias);
 						executeCB();
 					}
 				}}
@@ -181,7 +183,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var wgPageName = mw.config.get('wgPageName'),
 			pb;
 		
-		$(document).triggerHandler('vFC', ['starting procedure', this]);
+		$doc.triggerHandler('vFC', ['starting procedure', this]);
 
 		pb = this.pb = new ProgressBox(undefined, this);
 		pb.addTask('start');
@@ -216,7 +218,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		// Prettify the title (nomalizing)
 		vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
 		
-		$(document).triggerHandler('vFC', ['prepared', this]);
+		$doc.triggerHandler('vFC', ['prepared', this]);
 		
 		// Load the Execute/ Edit components
 		this.loadModule('exec.js');
@@ -235,7 +237,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			titles: vfc.pageName
 		};
 		
-		$(document).triggerHandler('vFC', ['seeking uploader', vfc]);
+		$doc.triggerHandler('vFC', ['seeking uploader', vfc]);
 		
 		vfc.queryAPI(query, 'findOriginalUploaderCB');
 	},
@@ -258,7 +260,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
  
 	mdContinue: function () {
-		$(document).triggerHandler('vFC', ['peparing to ask for target', this]);
+		$doc.triggerHandler('vFC', ['peparing to ask for target', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'target', 'md-doing' );
 		this.pb.setHelp(this.i18n.mdPerformOnWhichTarget);
@@ -289,7 +291,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.infoTextToEndDlg = [];
  
 		pefilledUser = this.queryParams.target || this.username;
-		$(document).triggerHandler('vFC', ['asking for target', this]);
+		$doc.triggerHandler('vFC', ['asking for target', this]);
 		this.promptForTarget(pefilledUser, 1);
 	},
 	
@@ -412,7 +414,31 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					// Default set before
 					break;
 			}
+			var $dlg = $(this);
+			$dlg.dialog('option', 'buttons', {}).dialog('widget').animate({
+				left: $win.scrollLeft() + 250,
+				top: $win.scrollTop(),
+				width: $win.width() - 250,
+				height: $win.height()
+			}, {
+				duration: 800,
+				complete: function() {
+					vfc.$AjaxMdContainer.text('').hide();
+					vfc.$AjaxMdContainer.$banner = $('<div>').css({
+						'font': 'small-caps 3em sans-serif',
+						'text-align': 'center',
+						'margin-top': '-1.5em',
+						'top': '50%',
+						'position': 'absolute',
+						'width': '98%'
+					}).text('VisualFileChange').hide().appendTo($dlg).fadeIn();
+				}
+			});
+			
 			vfc.loadModule('ui.js', 'nextTask');
+			
+			// We removed some inputs; maybe a tipsy tooltip was left?
+			$('.tipsy').remove();
 		};
 		dlgButtons[vfc.i18n.cancelButtonLabel] = function () {
 			$(this).dialog('close');
@@ -427,14 +453,14 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		// Hide overlapping page (avoids scrolling)
 		$('body').css('overflow', 'hidden');
 
-		dlgWidth = Math.min(600, $(window).width() - 250);
+		dlgWidth = Math.min(600, $win.width() - 250);
 		
 		vfc.$AjaxMdContainer = $('<div>', { id: 'AjaxMdContainer', style: 'min-height:80px;' });
 
 		vfc.dlg = $('<div>').append(vfc.$AjaxMdContainer).dialog({
 			modal: true,
 			closeOnEscape: false,
-			position: [($(window).width() - dlgWidth - 250) / 2 + 250, ($(window).height() - 200) / 2 ],
+			position: [($win.width() - dlgWidth - 250) / 2 + 250, ($win.height() - 200) / 2 ],
 			title: vfc.i18n.mdPerformOnWhichTarget,
 			height: 'auto',
 			width: dlgWidth,
@@ -459,7 +485,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$catSpecifics.attr('disabled', 'disabled');
 				if (/^c/.test($gSortBy.val())) $gSortBy.val('default').change();
 			}
-			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
+			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
 		});
 		var didXHR = function(result, pCallback) {
 			var searchTerms = [];
@@ -489,6 +515,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			};
 			$.extend( query, (nsUser === $targetSelect.val()) ? queryU : queryC );
 			lastXHR = $.getJSON( mw.util.wikiScript('api'), query, function(r) { didXHR(r, pCallback); });
+		};
+		var onEnter = function(params) {
+			$.each(arguments, function(i, $arg) {
+				$arg.keyup(function(e) {
+					if (13 === Number(e.which)) {
+						$gStartAt.val( getMwDate($(this).val()) );
+						$submitButton.click();
+					}
+				});
+			});
 		};
 		
 		vfc.$targetInput = $targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
@@ -527,12 +563,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			.blur( function( e ) {
 				$(this).val( getMwDate($(this).val()) );
 			} )
-			.keyup( function( e ) {
-				if ( e.which === 13 ) {
-					$(this).val( getMwDate($(this).val()) );
-					$submitButton.click();
-				}
-			} )
 			.tipsy({
 				trigger: 'focus'
 				,gravity: 's'
@@ -558,11 +588,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				id: 'gStartFile'
 				,type: 'text'
 				,title: vfc.i18n.optStartAt
-			} )
-			.keyup( function( e ) {
-				if ( e.which === 13 ) {
-					$submitButton.click();
-				}
 			} )
 			.tipsy({
 				trigger: 'focus'
@@ -685,10 +710,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			} else {
 				$submitButton.button('option', 'disabled', false);
 			}
-			$(document).triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
-			if (e && e.which && 13 === e.which) $submitButton.click();
+			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
 		}).keyup().focus();
 		if (moreOptionsVisible) $gMoreOptionsToggler.find('a.md-collapsible:first').click();
+		
+		// Bind enter events to our controls
+		onEnter(vfc.$AjaxMdContainer.find('select,input'));
 		
 		// Load the configuration module
 		vfc.loadModule('cfg.js', 'mdConfigInstall');
@@ -709,7 +736,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	**  even if there were errors; called on button cancel and by several methods
 	**/
 	mdDlgThumbDlgClose: function () {
-		$(document).triggerHandler('vFC', ['closing dialog', vfc, vfc.dlg]);
+		$doc.triggerHandler('vFC', ['closing dialog', vfc, vfc.dlg]);
 		
 		if ( vfc.mdBusy ) {     // Call myself later if script is busy
 			setTimeout(vfc.mdDlgThumbDlgClose, 20);
@@ -1522,7 +1549,7 @@ function ProgressBox(width, o) {
 	})).click( function() {
 		_this.$cont.hide(400, function() {
 			if (o.dlg) {
-				o.dlg.dialog( 'option', 'width', $(window).width() );
+				o.dlg.dialog( 'option', 'width', $win.width() );
 				o.dlg.dialog( 'option', 'position', 'center' );
 			}
 		});
@@ -1548,7 +1575,7 @@ function ProgressBox(width, o) {
 	this.$progressBar = $('<div>', { css: { width: '100%', height: '100%' } }).appendTo(this.$progressWrap);
 	this.$progressText = $('<div>', { css: { width: '100%', height: '100%', position: 'absolute', top: '10px', left: '0px', 'text-align': 'center' } }).appendTo(this.$progressWrap);
 	this.$aHelpHead = $('<div>');
-	this.$aHelpCont = $('<div>', { style: ('font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min($(window).height() / 3, 500) + 'px;') });
+	this.$aHelpCont = $('<div>', { style: ('font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min($win.height() / 3, 500) + 'px;') });
 	this.$aHelpCont2 = $('<div>', { style: 'font-weight:bold; word-wrap:break-word;' });
 	this.$aHelp = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
@@ -1698,8 +1725,8 @@ mediaWiki.loader.using([
 'ext.gadget.libJQuery',
 'ext.gadget.jquery.in-view'
 ], function () {
-	$(document).unbind('vFC.debuglistener');
-	$(document).bind('vFC.debuglistener', function(e, p1, p2, p3) {
+	$doc.unbind('vFC.debuglistener');
+	$doc.bind('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug) vfc.log('VisualFileChange> ' + p1 );
 	});
 	vfc.mdInstall();
