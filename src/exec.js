@@ -14,7 +14,9 @@ if (!window.VisualFileChange) return;
 // Return if this script is already loaded
 if (window.VisualFileChange.editComponents) return;
 
-var vfc = window.VisualFileChange;
+var vfc = window.VisualFileChange,
+	$doc = $(document),
+	$win = $(window);
 
 $.extend(window.VisualFileChange,
 {
@@ -40,7 +42,7 @@ $.extend(window.VisualFileChange,
 		}
 		vfc.mdNumberOfExecs++;
 
-		$(document).triggerHandler('vFC', ['processing user\'s input', vfc]);
+		$doc.triggerHandler('vFC', ['processing user\'s input', vfc]);
 		vfc.pb.addTask('inputcheck');
 		vfc.pb.setTaskState('inputcheck', 'md-doing');
 		vfc.pb.setHelp(vfc.i18n.mdPleaseWait);
@@ -113,7 +115,7 @@ $.extend(window.VisualFileChange,
 	**  Preparing to perform our edits
 	**/
 	mdExecuteContinue: function () {
-		$(document).triggerHandler('vFC', ['generating page messages and summaries', vfc]);
+		$doc.triggerHandler('vFC', ['generating page messages and summaries', vfc]);
  
 		// set up some page names we'll need later
 		var qp = vfc.queryParams;
@@ -233,7 +235,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdAddTemplate: function (edittype) {
-		$(document).triggerHandler('vFC', ['adding templates to filepages', this]);
+		$doc.triggerHandler('vFC', ['adding templates to filepages', this]);
 		this.mdUploadCt = 0;
  
 		for (var upload in this.iUploads) {
@@ -482,7 +484,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdRefreshCache: function () {
-		$(document).triggerHandler('vFC', ['refreshing cache of file-wikitext', vfc]);
+		$doc.triggerHandler('vFC', ['refreshing cache of file-wikitext', vfc]);
 		vfc.pb.setCurrentTaskDone();
 		vfc.pb.setTaskState('mdRefreshCache', 'md-doing');
 		
@@ -517,7 +519,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdRefreshCacheCB: function (result) {
-		$(document).triggerHandler('vFC', ['got fresh page contents', vfc, result]);
+		$doc.triggerHandler('vFC', ['got fresh page contents', vfc, result]);
 		
 		vfc.refreshRequests--;
 		$.each(result.query.pages, function(id, pg) {
@@ -527,7 +529,7 @@ $.extend(window.VisualFileChange,
 	},
 
 	mdInsertPermission: function () {
-		$(document).triggerHandler('vFC', ['inserting permission OR custom replace', vfc]);
+		$doc.triggerHandler('vFC', ['inserting permission OR custom replace', vfc]);
 		vfc.pb.setCurrentTaskDone();
 		vfc.pb.setTaskState('mdInsertPermission', 'md-doing');
 		vfc.mdUploadCt = 0;
@@ -616,7 +618,7 @@ $.extend(window.VisualFileChange,
 	},
  
 	mdCreateRequestSubpage: function () {
-		$(document).triggerHandler('vFC', ['creating request subpage', this]);
+		$doc.triggerHandler('vFC', ['creating request subpage', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdCreateRequestSubpage', 'md-doing');
 		
@@ -627,7 +629,7 @@ $.extend(window.VisualFileChange,
 		page.editType = 'appendtext';
 		page.create = true;
 		
-		$(document).triggerHandler('vFC', ['request subpage', this, page]);
+		$doc.triggerHandler('vFC', ['request subpage', this, page]);
 		this.mdEdit(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
 	},
 	
@@ -646,7 +648,7 @@ $.extend(window.VisualFileChange,
 	** The log page will never be watchlisted (unless the user is already watching it).
 	**/
 	mdListRequestSubpage: function () {
-		$(document).triggerHandler('vFC', ['creating request subpage', this]);
+		$doc.triggerHandler('vFC', ['creating request subpage', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdListRequestSubpage', 'md-doing');
 		var page = {};
@@ -678,7 +680,7 @@ $.extend(window.VisualFileChange,
 		if ($gb) {
 			$gb.$thumb.removeClass('progress-doing').addClass(err ? 'progress-failed' : 'progress-done');
 			if (err) $gb.find('.gallerytext').prepend($('<span>', { 'class': 'error' }).text(err), '<br/>');
-			if (0 === $gb.visible().length) {
+			if (0 === $gb.inView().length) {
 				if (vfc.gbScrollTimeout) clearTimeout(vfc.gbScrollTimeout);
 				vfc.gbScrollTimeout = setTimeout(function() {
 					// Scroll to the recently edited 
@@ -693,7 +695,7 @@ $.extend(window.VisualFileChange,
 	},
 	
 	mdNotifyUploaders: function () {
-		$(document).triggerHandler('vFC', ['notifying uploaders', vfc, vfc.uploaders]);
+		$doc.triggerHandler('vFC', ['notifying uploaders', vfc, vfc.uploaders]);
 		vfc.pb.setCurrentTaskDone();
 		vfc.pb.setTaskState('mdNotifyUploaders', 'md-doing');
 		vfc.api.total = 0;
@@ -751,7 +753,7 @@ $.extend(window.VisualFileChange,
 		vfc.pb.setCurrentTaskDone();
 		vfc.pb.setTaskState('mdDelete', 'md-doing');
 		
-		$(document).triggerHandler('vFC', ['deleting files', vfc]);
+		$doc.triggerHandler('vFC', ['deleting files', vfc]);
 		vfc.mdUploadCt = 0;
  
 		for (var upload in vfc.iUploads) {
@@ -793,7 +795,7 @@ $.extend(window.VisualFileChange,
 					_problem('File not found');
 				} else {
 					_err(t);
-					vfc.mdWasAPIError = true;
+					vfc.api.wasError = true;
 				}
 			},
 			title: page,
@@ -802,7 +804,7 @@ $.extend(window.VisualFileChange,
 	}
 });
 
-$(document).triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
+$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
 
 }(jQuery, mediaWiki));
 // </nowiki>
