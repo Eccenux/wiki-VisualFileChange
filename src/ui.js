@@ -179,7 +179,7 @@ $.extend(window.VisualFileChange,
 		// "[cmtype is] Ignored when cmsort=timestamp is set"
 		if ('timestamp' === qp.cmsort) query.cmnamespace = 6;
 		// Prevent passing empty params
-		if (qp.lestart) query.cmcontinue = qp.lestart;
+		if (qp.cmcontinue) query.cmcontinue = qp.cmcontinue;
 		if (qp.cmstart) query.cmstart = qp.cmstart;
 		if (qp.cmstartsortkey) query.cmstartsortkey = qp.cmstartsortkey;
 		$doc.triggerHandler('vFC', ['catmembers', vfc, query]);
@@ -205,9 +205,9 @@ $.extend(window.VisualFileChange,
 			vfc.mdNoMoreFiles = true;
 		}
 		if (!vfc.mdNoMoreFiles) {
-			qp.lestart = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
+			qp.cmcontinue = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
 			if (result['query-continue'].categorymembers.cmstart) qp.cmstart = result['query-continue'].categorymembers.cmstart;
-			vfc.mdSaveContinueKey(qp.cmstart || qp.lestart);
+			vfc.mdSaveContinueKey(qp.cmcontinue || qp.cmstart);
 		}
 		if (vfc.mdFirstRun) {			// Call nextTask the first time only
 			vfc.mdFirstRun = false;
