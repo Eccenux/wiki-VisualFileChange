@@ -423,7 +423,7 @@ $.extend(window.VisualFileChange,
 		$doc.bind('vFC_Startup_target', function(e, text) {
 			clearTimeout(keyTimeout);
 			keyTimeout = setTimeout(function() {
-				if (text.replace(/^User\:/, '') === lookFor) {
+				if (text.replace(/^User|Page\:/, '') === lookFor) {
 					vfc.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there. ');
 					vfc.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).button().click(function(e) {
 						e.preventDefault();
