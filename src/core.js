@@ -68,7 +68,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.33.6',
+	mdScriptRevision: '0.9.34.0',
 	
 
 	/**
@@ -333,15 +333,21 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			confirmed = false,
 			dlgWidth = 0,
 			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, 
-			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gNotifyText, $gNotifyArea,
+			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, 
+			$gSortNf, $gSortOf, $gSortDefault, $gSortAsc, $gSortDesc, $gSortAlphabet, $gSortDate,
+			$gNotifyText, $gNotifyArea,
 			$gLoadThumbs, $gLoadThumbsL, $gLoadWikitext, $gLoadWikitextL,
 			gStartAtURLVal, gSortByURLVal, moreOptionsVisible,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 			
-		var nsCat = mw.config.get('wgFormattedNamespaces')[14],
-			nsUser = mw.config.get('wgFormattedNamespaces')[2],
+		var namespaceIds = mw.config.get('wgNamespaceIds'),
+			formattedNamespaces = mw.config.get('wgFormattedNamespaces'),
+			nsCat = formattedNamespaces[14],
+			nsUser = formattedNamespaces[2],
+			nsPage = 'Page', // Virtual helper namespace
 			rxCat = new RegExp('^' + nsCat + ':', 'i'),
 			rxUser = new RegExp('^' + nsUser + ':', 'i'),
+			rxPage = new RegExp('^' + nsPage + ':', 'i'),
 			lastXHR = 0,
 			pLastCB = 0,
 			delayXHR = 500;
@@ -366,7 +372,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				mode: $targetSelect.val(),
 				modeCat: $targetSelect.val() === nsCat,
 				modeUser: $targetSelect.val() === nsUser,
-				target: vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val()),
+				modePage: $targetSelect.val() === nsPage,
+				target: vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val().replace(/_/g, ' ')),
 				loadThumbs: $gLoadThumbs[0].checked,
 				loadWikitext: $gLoadWikitext[0].checked,
 				startDate: $gStartAt.val(),
@@ -381,7 +388,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			
 			if (si.modeUser) {
 				qp.lestart = si.startDate;
+				qp.target = qp.target.replace(rxUser, ''); // WARNING: INPUT IS UNCHECKED
 				vfc.lastContinues.setVals = ['lestart'];
+			} else if (si.modePage) {
+				qp.target = qp.target.replace(rxPage, '');
+				vfc.lastContinues.setVals = ['imcontinue'];
 			}
 			
 			vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
@@ -393,8 +404,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmsort = 'timestamp';
 						qp.cmstart = si.startDate;
 						lc.setVals = ['cmstart'];
-					}
-					if (si.modeUser) {
+					} else if (si.modeUser) {
 						qp.ledir = 'newer';
 					}
 					break;
@@ -404,19 +414,29 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmsort = 'timestamp';
 						qp.cmstart = si.startDate;
 						lc.setVals = ['cmstart'];
+					} else if (si.modeUser) {
+						qp.ledir = 'older';
 					}
 					break;
 				case 'ca': // cat asc
-					qp.cmdir = 'asc';
-					qp.cmsort = 'sortkey';
-					qp.cmstartsortkey = si.startFile;
-					lc.setVals = ['cmcontinue'];
+					if (si.modeCat) {
+						qp.cmdir = 'asc';
+						qp.cmsort = 'sortkey';
+						qp.cmstartsortkey = si.startFile;
+						lc.setVals = ['cmcontinue'];
+					} else if (si.modePage) {
+						qp.imdir = 'ascending';
+					}
 					break;
 				case 'cd': // cat desc
-					qp.cmdir = 'desc';
-					qp.cmsort = 'sortkey';
-					qp.cmstartsortkey = si.startFile;
-					lc.setVals = ['cmcontinue'];
+					if (si.modeCat) {
+						qp.cmdir = 'desc';
+						qp.cmsort = 'sortkey';
+						qp.cmstartsortkey = si.startFile;
+						lc.setVals = ['cmcontinue'];
+					} else if (si.modePage) {
+						qp.imdir = 'descending';
+					}
 					break;
 				case 'default':
 					// Default
@@ -425,9 +445,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmsort = 'sortkey';
 						qp.cmstartsortkey = si.startFile;
 						lc.setVals = ['cmcontinue'];
-					}
-					if (si.modeUser) {
+					} else if (si.modeUser) {
 						qp.ledir = 'older';
+					} else if (si.modePage) {
+						qp.imdir = 'ascending';
 					}
 					break;
 			}
@@ -494,14 +515,22 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		
 		$targetSelect = $('<select>').attr({ size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsCat }),
+			$('<option>', { text: nsPage }),
 			$('<option>', { text: nsUser, selected: 'selected' })
-		).change(function() {
-			var $catSpecifics = $gSortBy.find('option[value^="c"]');
-			if ($(this).val() === nsCat) {
-				$catSpecifics.removeAttr('disabled');
-			} else {
-				$catSpecifics.attr('disabled', 'disabled');
-				if (/^c/.test($gSortBy.val())) $gSortBy.val('default');
+		).change(function() {				
+			switch ($(this).val()) {
+				case nsPage:
+					$gSortAlphabet.removeAttr('disabled');
+					$gSortDate.attr('disabled', 'disabled');
+					if ($gSortBy.find('option:selected').is($gSortDate)) $gSortBy.val('default');
+					break;
+				case nsCat:
+					$gSortAlphabet.add($gSortDate).removeAttr('disabled');
+					break;
+				case nsUser:
+					$gSortDate.removeAttr('disabled');
+					$gSortAlphabet.attr('disabled', 'disabled');
+					if ($gSortBy.find('option:selected').is($gSortAlphabet)) $gSortBy.val('default');
 			}
 			$gSortBy.change();
 			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
@@ -512,9 +541,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				if ('function' === typeof pCallback) pCallback(searchTerms);
 				return;
 			}
-			result = result.query.allusers || result.query.allcategories;
+			result = result.query.allusers || result.query.allcategories || result.query.allpages;
 			$.each(result, function(id, it) {
-				searchTerms.push( { 'value': (it.name || it['*']) } );
+				searchTerms.push( { 'value': (it.name || it['*'] || it.title) } );
 			});
 			if ('function' === typeof pCallback) pCallback(searchTerms);
 			pLastCB = 0;
@@ -528,11 +557,38 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				list: 'allusers'
 				,auprefix: request.term.replace(rxUser, '')
 			};
+			var rxNs = request.term.match(/^(\w+)\:.+/),
+				nsId;
+			if (rxNs && rxNs[1]) {
+				nsId = rxNs[1].replace(/ /g, '_').toLowerCase();
+				nsId = namespaceIds[nsId];
+				if (nsId) {
+					rxNs = new RegExp('^' + $.escapeRE(rxNs[1]) + '\\:', 'i');
+					request.term = request.term.replace(rxNs, '');
+				} else {
+					nsId = undefined;
+				}
+			}
+			var queryP = {
+				list: 'allpages'
+				,apnamespace: nsId
+				,apprefix: request.term
+			};
 			var queryC = {
 				list: 'allcategories'
 				,acprefix: request.term.replace(rxCat, '')
 			};
-			$.extend( query, (nsUser === $targetSelect.val()) ? queryU : queryC );
+			switch ($targetSelect.val()) {
+				case nsUser:
+					$.extend( query, queryU );
+					break;
+				case nsCat:
+					$.extend( query, queryC );
+					break;
+				case nsPage:
+					$.extend( query, queryP );
+					break;
+			}
 			lastXHR = $.getJSON( mw.util.wikiScript('api'), query, function(r) { didXHR(r, pCallback); });
 		};
 		var onEnter = function(params) {
@@ -630,27 +686,40 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}, 50);
 		}
 			
+		$gSortNf = $('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)');
+		$gSortOf = $('<option>', { 'value': 'of' }).text('from old to new (category: added-date)');
+		$gSortDefault = $('<option>', { 'value': 'default' }).text('default');
+		$gSortAsc = $('<option>', { 'value': 'ca' }).text('asc, alphabetical');
+		$gSortDesc = $('<option>', { 'value': 'cd' }).text('desc, alphabetical');
+		$gSortAlphabet = $gSortAsc.add($gSortDesc);
+		$gSortDate = $gSortNf.add($gSortOf);
+		
 		gSortByURLVal = mw.util.getParamValue('vfcSorting');
 		$gSortBy = $('<select>', {
 				id: 'gSortBy'
 			} )
-			.append( $('<option>', { 'value': 'default' }).text('default')
-				,$('<option>', { 'value': 'of' }).text('from old to new (category: added-date)')
-				,$('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)')
-				,$('<option>', { 'value': 'ca' }).text('asc, alphabetical')
-				,$('<option>', { 'value': 'cd' }).text('desc, alphabetical')
+			.append( $gSortDefault
+				,$gSortOf
+				,$gSortNf
+				,$gSortAsc
+				,$gSortDesc
 			)
 			.change(function() {
-				var $t = $(this),
+				var $sel = $gSortBy.find('option:selected'),
 					methodDate,
 					methodFile;
 					
-				if ($t.val().slice(0,1) === 'c' || ('default' === $t.val() && nsCat === $targetSelect.val())) {
-					methodDate = 'none';
-					methodFile = 'inline-block';
+				if ($sel.is($gSortAlphabet) || 
+					($sel.is($gSortDefault) && nsCat === $targetSelect.val())) {
+						methodDate = 'none';
+						methodFile = 'inline-block';
 				} else {
 					methodFile = 'none';
 					methodDate = 'inline-block';
+				}
+				if (nsPage === $targetSelect.val()) {
+					methodFile = 'none';
+					methodDate = 'none';
 				}
 				$gStartAtL.css('display', methodDate);
 				$gStartAt.css('display', methodDate);
@@ -719,7 +788,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$(this).val(thisVal = thisVal.replace(rxCat, ''));
 				$targetSelect.val(nsCat);
 				$targetSelect.change();
-			} else if (rxUser.test(thisVal)) {
+			} else if (rxUser.test(thisVal) && (nsPage !== $targetSelect.val())) {
 				$(this).val(thisVal = thisVal.replace(rxUser, ''));
 				$targetSelect.val(nsUser);
 				$targetSelect.change();
