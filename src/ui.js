@@ -72,31 +72,35 @@ $.extend(window.VisualFileChange,
 	**  Calls the appropriate method (uploads of cats)
 	**/
 	mdCreateList: function () {
-		if (this.mdNumberOfExecs) {
-			$doc.triggerHandler('vFC', ['filelist query aborted due to exection of edit-tasks', this]);
+		var si = vfc.startInput,
+			qp = vfc.queryParams;
+		
+		if (vfc.mdNumberOfExecs) {
+			$doc.triggerHandler('vFC', ['filelist query aborted due to exection of edit-tasks', vfc]);
 			return true;
 		}
-		if (this.mdListUploadsPending > 0) {
-			$doc.triggerHandler('vFC', ['filelist will queried later due to a pending query', this]);
+		if (vfc.mdListUploadsPending > 0) {
+			$doc.triggerHandler('vFC', ['filelist will queried later due to a pending query', vfc]);
 			setTimeout(function () { 
 				vfc.mdCreateList();
 			}, 200); // See me later ...
 			return true;
 		}
-		$doc.triggerHandler('vFC', ['preparing querying the filelist', this]);
-		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState( 'list', 'md-doing' );
-		if (this.mdFirstRun) { // First time only
-			var qp = this.queryParams;
-			
-			this.pb.setHelp(this.i18n.mdPleaseWait);
-			qp.target = $.trim(qp.target.replace(/^User\:/, '')); // WARNING: INPUT IS UNCHECKED
+		$doc.triggerHandler('vFC', ['preparing querying the filelist', vfc]);
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState( 'list', 'md-doing' );
+		if (vfc.mdFirstRun) { // First time only
+			vfc.pb.setHelp(vfc.i18n.mdPleaseWait);
 		}
 		
-		if (this.internalState !== 'md') return;
-		this.mdListUploadsPending++;
+		if (vfc.internalState !== 'md') return;
+		vfc.mdListUploadsPending++;
 		
-		if (this.startInput.modeCat) this.secureCall('mdFindCatMembers'); else this.secureCall('mdFindUploads');
+		var method;
+		if (si.modeCat) method = 'mdFindCatMembers';
+		if (si.modeUser) method = 'mdFindUploads';
+		if (si.modePage) method = 'mdFindFiles';
+		vfc.secureCall(method);
 	},
 	
 	mdSaveContinueKey: function (key) {
@@ -208,6 +212,55 @@ $.extend(window.VisualFileChange,
 			qp.cmcontinue = result['query-continue'].categorymembers.cmcontinue || result['query-continue'].categorymembers.cmstart;
 			if (result['query-continue'].categorymembers.cmstart) qp.cmstart = result['query-continue'].categorymembers.cmstart;
 			vfc.mdSaveContinueKey(qp.cmcontinue || qp.cmstart);
+		}
+		if (vfc.mdFirstRun) {			// Call nextTask the first time only
+			vfc.mdFirstRun = false;
+			vfc.nextTask();
+		}
+	},
+	
+	mdFindFiles: function () {
+		var qp = vfc.queryParams;
+		
+		var query = {
+			action: 'query',
+			prop: 'images',
+			titles: qp.target,
+			imlimit: vfc.mdSettings.loadBatchSize,
+			imdir: qp.imdir
+		};
+		// Prevent passing empty params
+		if (qp.imcontinue) query.imcontinue = qp.imcontinue;
+		$doc.triggerHandler('vFC', ['imagesonpage', vfc, query]);
+		
+		vfc.queryAPI(query, 'mdFindFilesCB');
+	},
+	
+	mdFindFilesCB: function (result) {
+		vfc.mdListUploadsPending--;
+		$doc.triggerHandler('vFC', ['got imagesonpage', vfc, result]);
+		vfc.pb.setCurrentTaskDone();
+		
+		var qp = vfc.queryParams;
+		
+		// loop through all pages-members (there should be only one)
+		$.each(result.query.pages, function(pgId, pg) {
+			if (!pg.images && pg.missing !== undefined) throw new Error("Page does not exist. Enter full page name!");
+			if (!pg.images && pg.invalid) throw new Error("Invalid page name specified.");
+			if (!pg.images) pg.images = {};
+			
+			$.each(pg.images, function(imNr, im) {
+				vfc.iUploads[im.title] = { uploader: [], comments: [] };
+				vfc.iUploads[im.title].iId = vfc.iiUploads;
+				vfc.iiUploads++;
+			});
+		});
+		if (!result['query-continue']) { 
+			vfc.mdNoMoreFiles = true;
+		}
+		if (!vfc.mdNoMoreFiles) {
+			qp.imcontinue = result['query-continue'].images.imcontinue;
+			vfc.mdSaveContinueKey(qp.imcontinue);
 		}
 		if (vfc.mdFirstRun) {			// Call nextTask the first time only
 			vfc.mdFirstRun = false;
@@ -656,7 +709,8 @@ $.extend(window.VisualFileChange,
 		};
 
 		var dlgResizeTimeout = 0,
-			$AjaxMdContainer = vfc.$AjaxMdContainer.text('');
+			$AjaxMdContainer = vfc.$AjaxMdContainer.text(''),
+			si = vfc.startInput;
 		
 		vfc.dlg.dialog('widget').stop(true);
 		if ($AjaxMdContainer.$banner) $AjaxMdContainer.$banner.fadeOut();
@@ -686,10 +740,27 @@ $.extend(window.VisualFileChange,
 			}, 1000);
 		});
 		
-		var subHeading = vfc.startInput.modeCat ? 'Files in -' : 'Initally uploaded files by -',
-			targetHref = mw.util.wikiGetlink((vfc.startInput.modeCat ? '' : vfc.mdUserTalkPrefix) + vfc.queryParams.target),
-			defaultHeading = (vfc.startInput.modeCat ? 'Files in [[:' + vfc.queryParams.target + ']] ' : ('Files uploaded by [[' + vfc.mdUserPrefix + vfc.queryParams.target + '|' + vfc.queryParams.target + ']] '
-				+ '([[' + vfc.mdUserTalkPrefix + vfc.queryParams.target + '|talk]] · [[' + vfc.mdContribPrefix + vfc.queryParams.target + '|contribs]])'));
+		var subHeading,
+			target = vfc.queryParams.target,
+			targetHref = target,
+			defaultHeading;
+		
+		if (si.modeCat) {
+			subHeading = 'Files in -';
+			defaultHeading = 'Files in [[:' + target + ']] ';
+		}
+		if (si.modeUser) {
+			subHeading = 'Initally uploaded files by -';
+			targetHref = vfc.mdUserTalkPrefix + targetHref;
+			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] '
+				+ '([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
+		}
+		if (si.modePage) {
+			subHeading = 'Files on page -';
+			defaultHeading = 'Files on [[' + target + ']] ';
+		}
+		targetHref = mw.util.wikiGetlink(targetHref);
+		
 		
 		// Build the input-ui
 		// Save the controls into a var that's reference we need later
@@ -1066,7 +1137,7 @@ $.extend(window.VisualFileChange,
 					$('<td>').append( vfc.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
 						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', vfc.i18n.mdCuteSelect.and)),
-				vfc.startInput.modeCat ? $('<tr>').append(
+				!vfc.startInput.modeUser ? $('<tr>').append(
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectUploader', text: vfc.i18n.mdCuteSelect.uploader })),
 					$('<td>').append($uploaderSelect, vfc.i18n.mdCuteSelect.and)) : '',
 				$('<tr>').append(
@@ -1209,7 +1280,7 @@ $.extend(window.VisualFileChange,
 				if (si.loadWikitext) {
 					query.rvprop += '|content';
 				}
-				if (si.modeCat) {
+				if (!si.modeUser) {
 					query.iiprop += '|user|sha1|comment';
 					query.iilimit = 500;
 				}
@@ -1447,7 +1518,7 @@ $.extend(window.VisualFileChange,
 			/*  Adding a thumbnail to the dialog  */
 			vfc.mdActualResultCount++;
 			
-			if (vfc.startInput.modeCat) {
+			if (!vfc.startInput.modeUser) {
 				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
 					if (ii.sha1 && !seenHash[ii.sha1]) {
@@ -1467,6 +1538,7 @@ $.extend(window.VisualFileChange,
 			pg.categories = pg.categories || [];  // not all images have categories
 
 			uItem.content = pg.revisions[0]['*'] || ''; // save the content for OTRS usage, replace and find-the-real-uploader
+			uItem.time = uItem.time || pg.revisions[0].timestamp;
 			uItem.basetimestamp = pg.revisions[0].timestamp; // timestamp to detect edit conflicts
 			uItem.categories = pg.categories;     // save cats for cute-selection
 			uItem.metadata = ii.metadata;         // save Exif and other for cute-selection
@@ -1557,16 +1629,19 @@ $.extend(window.VisualFileChange,
 		}
  
 		document.body.style.cursor = 'auto';
+		
+		var si = vfc.startInput;
+		
 		if (0 === vfc.mdActualResultCount) { // If there are no thumbs on the dialog, continue
 			if ('revert' !== vfc.internalState) { // Don't shedule further tasks if called from revert part
 				if ('md' === vfc.internalState) {
-					if (!vfc.startInput.modeCat && !vfc.mdNoMoreFiles) {	// When no files in cat-mode are found, it's clear there are no more files
+					if (si.modeUser && !vfc.mdNoMoreFiles) {	// When no files in cat/page-mode are found, it's clear there are no more files
 						return;
 					} else {
 						vfc.infoTextToEndDlg.push(vfc.i18n.mdNoResult.replace("%TARGET%", vfc.queryParams.target));
 					}
 				}
-				if (!vfc.startInput.modeCat) {
+				if (si.modeUser) {
 					$.each(vfc.mdCommandsPostExec[vfc.mdSettings.defaultAction], function(id, task) {
 						vfc.addTask(task);
 						if (task in vfc.i18n.task) vfc.pb.addTask(task);
@@ -1646,7 +1721,7 @@ $.extend(window.VisualFileChange,
 				// allow navigating to the new created deletion request
 				addLink(this.requestPage, "Go to the created request page");
 			}
-			if (!this.startInput.modeCat && (-1 === $.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']))) {
+			if (this.startInput.modeUser && (-1 === $.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']))) {
 				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, "Look at the user\'s talk-page");
 				addLink(this.mdContribPrefix + vfc.queryParams.target, "...or the user\'s contribs");
 				// Revert files overwritten by this user ....
