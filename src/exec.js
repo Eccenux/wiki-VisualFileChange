@@ -118,8 +118,15 @@ $.extend(window.VisualFileChange,
 		$doc.triggerHandler('vFC', ['generating page messages and summaries', vfc]);
  
 		// set up some page names we'll need later
-		var qp = vfc.queryParams;
-		var mdRequestPage = (vfc.startInput.modeCat ? 'Files in ' : 'Files uploaded by ') + qp.target;
+		var qp = vfc.queryParams,
+			si = vfc.startInput,
+			mdRequestPage;
+			
+		if (si.modeCat) mdRequestPage = 'Files in ';
+		if (si.modeUser) mdRequestPage = 'Files uploaded by ';
+		if (si.modePage) mdRequestPage = 'Files on ';
+		
+		mdRequestPage += qp.target;
 		vfc.requestPage =  vfc.mdRequestPagePrefix + mdRequestPage;
 		vfc.dailyLogPage = vfc.mdRequestPagePrefix + vfc.formatDate("YYYY/MM/DD");
 
@@ -146,7 +153,12 @@ $.extend(window.VisualFileChange,
 		// Reverse-mapping: files-uploader --- > uploader-files
 		$.each(vfc.iUploads, function(upload, uItem) {
 			if ( -2 === uItem.iId )  {
-				if (vfc.startInput.modeCat) {
+				if (vfc.startInput.modeUser) {
+					if (!vfc.uploaders[qp.target]) {
+						vfc.uploaders[qp.target] = { uploads: {} };
+					}
+					vfc.uploaders[qp.target].uploads[upload] = true;
+				} else {
 					// Remember: u is just an index of an array
 					$.each(uItem.uploader, function(u, ul) {
 						ul = mw.libs.commons.getUploadBotUser(ul, uItem.content, uItem.comments[u]);
@@ -155,11 +167,6 @@ $.extend(window.VisualFileChange,
 						}
 						vfc.uploaders[ul].uploads[upload] = true;
 					});
-				} else {
-					if (!vfc.uploaders[qp.target]) {
-						vfc.uploaders[qp.target] = { uploads: {} };
-					}
-					vfc.uploaders[qp.target].uploads[upload] = true;
 				}
 			}
 		});
