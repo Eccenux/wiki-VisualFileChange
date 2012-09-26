@@ -414,8 +414,8 @@ $.extend(window.VisualFileChange,
 		var autoExecProfile = vfc.mdGetClientProfiles()['last executed (auto-saved)'],
 			lookFor;
 
-		if (!autoExecProfile || !autoExecProfile.objectMembers.queryParams) return;
-		lookFor = autoExecProfile.objectMembers.queryParams.target;
+		if (!autoExecProfile || !autoExecProfile.objectMembers.startInput) return;
+		lookFor = autoExecProfile.objectMembers.startInput.target;
 		if (!autoExecProfile.proceedAt || !autoExecProfile.proceedAt.vals.length) return;
 		
 		var keyTimeout = 0;
@@ -423,7 +423,7 @@ $.extend(window.VisualFileChange,
 		$doc.bind('vFC_Startup_target', function(e, text) {
 			clearTimeout(keyTimeout);
 			keyTimeout = setTimeout(function() {
-				if (text.replace(/^User|Page\:/, '') === lookFor) {
+				if ($.trim(text.replace(/_/, 'g')) === lookFor) {
 					vfc.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there. ');
 					vfc.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).button().click(function(e) {
 						e.preventDefault();
