@@ -68,7 +68,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.34.0',
+	mdScriptRevision: '0.9.35.0',
 	
 
 	/**
@@ -250,10 +250,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				info = pages[id].imageinfo;
 				content = pages[id].revisions[0]['*'];
 				i =info.length - 1;
-				// Now exclude bots which only reupload a new version:
-				if (-1 === vfc.excludedBots.indexOf(info[i].user + ',')) {
-					vfc.queryParams.target = info[i].user;
-				}
+				vfc.queryParams.target = info[i].user;
 			}
 		}
 		vfc.nextTask();
@@ -1385,7 +1382,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
 	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
 	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
-	excludedBots: 'FlickreviewR, Rotatebot, Cropbot, Picasa Review Bot, File Upload Bot (Magnus Manske), Flickr upload bot, Upload Bot (Rich Smith), Reedy RotateBot, ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
 		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
