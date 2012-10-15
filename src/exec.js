@@ -710,7 +710,7 @@ $.extend(window.VisualFileChange,
 		
 		vfc.uploadersToNotify = 0;
 		$.each(vfc.uploaders, function(user, upli) {
-			if (-1 !== vfc.excludedBots.indexOf(user + ',')) return;
+			if (mw.libs.commons.isSmallChangesBot(user)) return;
 			var page = {};
 			page.title = vfc.mdUserTalkPrefix + user;
 			page.text = "\n" + upli.tag + " ~~" + "~~\n";
