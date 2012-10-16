@@ -68,7 +68,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.35.0',
+	mdScriptRevision: '0.9.36.0',
 	
 
 	/**
@@ -157,6 +157,23 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					executeCB();
 				}
 				return;
+			case 'i18n':
+				$.ajax({
+					url: mw.util.wikiScript(),
+					dataType: 'script',
+					data: {
+						title: 'MediaWiki:VisualFileChange.js/i18n/' + mw.config.get('wgUserLanguage').split('-')[0] + '.js',
+						action: 'raw',
+						ctype: 'text/javascript',
+						// Allow caching for 28 days
+						maxage: 2419200,
+						smaxage: 2419200
+					},
+					cache: true,
+					success: executeCB,
+					error: executeCB
+				});
+				return;
 		}
 		if (this[alias]) {
 			executeCB();
@@ -224,7 +241,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.loadModule('exec.js');
 		
 		this.addTask('mdContinue');
-		this.nextTask();
+		this.loadModule('i18n', 'nextTask');
 	},
 	
 	findOriginalUploader: function () {
