@@ -68,7 +68,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.37.0',
+	scriptRevision: '0.9.38.0',
 	
 
 	/**
@@ -168,7 +168,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						ctype: 'text/javascript',
 						// Allow caching for 28 days
 						maxage: 2419200,
-						smaxage: 2419200
+						smaxage: 2419200,
+						dummy: vfc.scriptRevision
 					},
 					cache: true,
 					success: executeCB,
@@ -188,7 +189,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					}
 				}}
 			});
-			mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + vfc.mdScriptRevision);
+			mw.loader.load(mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + vfc.scriptRevision);
 		}
 	},
 	
@@ -1458,6 +1459,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		abortButtonLabel: "Abort",
 		mdPleaseWait: "Please wait.",
 		
+		filesIn: "Files in",
+		filesBy: "Initally uploaded files by",
+		filesOn: "Files on page",
+		
 		browsertitle: "VisualFileChange: Welcome, %USER%!",
 		
 		startAt: "Start at",
@@ -1502,6 +1507,21 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'button': "Apply"
 		},
 		
+		endDlg: {
+			heading: "What would you like to do next?",
+			intro: "Note: You cannot execute new requests without reloading this page. ",
+			saveInProfile: "But you can save your inputs into a profile.",
+			aboutLastExec: "The inputs of the last executed requests are automatically saved.",
+			errorDuringTask: "We regret the the inconvenience: The Server-API returned an error during executing your requested task. " +
+				"Please check your contributions, whether something went wrong.",
+			checkContribs: "Check your contributions",
+			goToRequestPage: "Go to the created request page",
+			goUserTalk: "Look at the user\'s talk-page",
+			goUserContribs: "...or the user\'s contribs",
+			reload: "Reload this page",
+			title: "VisualFileChange: Ready!"
+		},
+		
 		mdPotentialProblems: {
 			'titleNf': 'No files selected',
 			'textNf': 'It seems to me that you did not select any file to tag. Proceed?',
@@ -1537,6 +1557,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		},
 		
 		cfg: {
+			startProfileManager: "profiles",
+			startConfigManager: "advanced configuration",
 			tmpStored: "Temporarily stored",
 			tmpStoredText: "Configuration will be alive as long as you're on this page",
 			youCanCloseDialog: "You can close this dialog now.",
@@ -1697,13 +1719,13 @@ function ProgressBox(width, o) {
 		style: 'font:small-caps 1.5em sans-serif; text-align:center; padding:10px; margin-top:10px;',
 		text: 'VisualFileChange.js'
 	});
-	this.$cfg = $('<a>', { href: '#', text: ' advanced configuration', style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
+	this.$cfg = $('<a>', { href: '#advanced_config', text: ' ' + vfc.i18n.cfg.startConfigManager, style: 'visibility:hidden;', 'class': 'vFCConfigRequired' })
 		.prepend($.createIcon('ui-icon-gear'));
-	this.$profile = $('<a>', { href: '#', text: ' profiles', style: 'visibility:hidden;', 'class': 'vFCConfigRequired ui-state-disabled' })
+	this.$profile = $('<a>', { href: '#profiles', text: ' ' + vfc.i18n.cfg.startProfileManager, style: 'visibility:hidden;', 'class': 'vFCConfigRequired ui-state-disabled' })
 		.prepend($.createIcon('ui-icon-person'));
 	this.$subheading = $('<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
-		text: 'Batch Surgery Script v.' + o.mdScriptRevision
+		text: 'Batch Surgery Script v.' + o.scriptRevision
 	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
