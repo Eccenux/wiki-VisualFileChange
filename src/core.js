@@ -68,13 +68,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	mdScriptRevision: '0.9.36.0',
+	mdScriptRevision: '0.9.37.0',
 	
 
 	/**
 	** Set up the VisualFileChange object and add the toolbox link.  Called via $doc.ready() during page loading.
 	**/
-	mdInstall: function () {
+	install: function () {
 		// Initialize the settings
 		if (!window.vFCSettings) window.vFCSettings = {};
 		
@@ -99,18 +99,18 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			// User is using the load on demand feature. 
 			// Replace the link
 			$tAjaxQuickDeleteOnDemand.remove();
-			mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
+			mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.start();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
 			
 			// Immedately start Md
-			vfc.mdStartMd();
+			vfc.start();
 		} else {
 			if ( "MediaWiki:VisualFileChange.js" === mw.util.getParamValue('withJS') ) {
 				// Load immediately and add no link
-				vfc.mdStartMd();
+				vfc.start();
  
 			} else if (mw.config.get('wgNamespaceNumber') !== 14) {
 				// Set up toolbox link
-				mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.mdStartMd();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
+				mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.start();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
 			}
 		}
 		$doc.triggerHandler('vFC', ['installed', vfc]);
@@ -158,6 +158,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				}
 				return;
 			case 'i18n':
+				if (vfc.i18n.mdTranslator) return executeCB();
 				$.ajax({
 					url: mw.util.wikiScript(),
 					dataType: 'script',
@@ -191,13 +192,23 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		}
 	},
 	
-	mdCancel: function () {
+	cancel: function () {
 		vfc.pb.remove();
-		vfc.mdDlgThumbDlgClose();
+		vfc.thumbDlgClose();
 	},
  
-	mdStartMd: function () {
-		var wgPageName = mw.config.get('wgPageName'),
+	start: function () {
+		vfc.internalState = 'md'; // What happened?
+		vfc.mdBusy = false; // indicate that any dialog can be closed
+		vfc.tasks = []; // reset task list in case an earlier error left it non-empty
+		
+		vfc.addTask('_start');
+		vfc.addTask('reinit');
+		vfc.loadModule('i18n', 'nextTask');
+	},
+	
+	_start: function() {
+		var pageName = mw.config.get('wgPageName'),
 			pb;
 		
 		$doc.triggerHandler('vFC', ['starting procedure', this]);
@@ -211,10 +222,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		pb.show();
 		
 		this.oldDocTitle = document.title;
-		this.internalState = 'md'; // What happened?
-		this.mdBusy = false; // indicate that any dialog can be closed
-		this.tasks = []; // reset task list in case an earlier error left it non-empty
-		this.pageName = wgPageName;
+		this.pageName = pageName;
 		this.startInput = {};
 		this.queryParams = { target: '' };
 		this.mdListUploadsPending = 0;
@@ -229,7 +237,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				vfc.queryParams.target = mw.libs.commons.guessUser() || '';
 				break;
 			case 14: // categories
-				vfc.queryParams.target = mw.config.get('wgPageName');
+				vfc.queryParams.target = pageName;
 				break;
 		}
 		// Prettify the title (nomalizing)
@@ -240,8 +248,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		// Load the Execute/ Edit components
 		this.loadModule('exec.js');
 		
-		this.addTask('mdContinue');
-		this.loadModule('i18n', 'nextTask');
+		this.nextTask();
 	},
 	
 	findOriginalUploader: function () {
@@ -273,7 +280,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.nextTask();
 	},
  
-	mdContinue: function () {
+	reinit: function () {
 		$doc.triggerHandler('vFC', ['peparing to ask for target', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'target', 'md-doing' );
@@ -309,7 +316,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.promptForTarget(pefilledUser, 1);
 	},
 	
-	createToggler: function (text, $content) {
+	$createToggler: function (text, $content) {
 		return $('<div>').append(
 			$('<a>', { text: text, href: '#', 'class':'md-collapsible ui-state-default' }).prepend(
 				$.createIcon('ui-icon-carat-1-e')
@@ -498,10 +505,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		};
 
 		// Are there Contaminated Sites? Remove them now.
-		vfc.mdDlgThumbDlgClose();
+		vfc.thumbDlgClose();
 		
 		// Change the title of the browser tab/window
-		document.title = "VisualFileChange: Welcome, " + vfc.username + "!";
+		document.title = vfc.i18n.browsertitle.replace('%USER%', vfc.username);
 
 		// Hide overlapping page (avoids scrolling)
 		$('body').css('overflow', 'hidden');
@@ -518,7 +525,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgButtons,
-			close: vfc.mdCancel,
+			close: vfc.cancel,
 			open: function() {
 				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
 				$submitButton = $buttons.eq(0).specialButton('proceed');
@@ -664,7 +671,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		$gStartAtL = $('<label>', {
 				'for': 'gStartAt'
 				,title: vfc.i18n.optStartAt
-				,html: " &nbsp;Start&nbsp;at&nbsp;"
+				,html: vfc.i18n.startAt
 			} );
 		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) {
 			moreOptionsVisible = true;
@@ -676,7 +683,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		$gStartFile = $('<input>', {
 				id: 'gStartFile'
 				,type: 'text'
-				,title: vfc.i18n.optStartAt
+				,title: vfc.i18n.optStartAtFile
 			} )
 			.tipsy({
 				trigger: 'focus'
@@ -689,8 +696,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			.hide();
 		$gStartFileL = $('<label>', {
 				'for': 'gStartFile'
-				,title: vfc.i18n.optStartAt
-				,html: " &nbsp;Start&nbsp;at&nbsp;"
+				,title: vfc.i18n.optStartAtFile
+				,html: vfc.i18n.startAt
 			} )
 			.hide();
 		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) {
@@ -700,11 +707,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}, 50);
 		}
 			
-		$gSortNf = $('<option>', { 'value': 'nf' }).text('from new to old (category: added-date)');
-		$gSortOf = $('<option>', { 'value': 'of' }).text('from old to new (category: added-date)');
-		$gSortDefault = $('<option>', { 'value': 'default' }).text('default');
-		$gSortAsc = $('<option>', { 'value': 'ca' }).text('asc, alphabetical');
-		$gSortDesc = $('<option>', { 'value': 'cd' }).text('desc, alphabetical');
+		$gSortNf = $('<option>', { 'value': 'nf' }).text(vfc.i18n.optNewToOld);
+		$gSortOf = $('<option>', { 'value': 'of' }).text(vfc.i18n.optOldToNew);
+		$gSortDefault = $('<option>', { 'value': 'default' }).text(vfc.i18n.optDefault);
+		$gSortAsc = $('<option>', { 'value': 'ca' }).text(vfc.i18n.optAsc);
+		$gSortDesc = $('<option>', { 'value': 'cd' }).text(vfc.i18n.optDesc);
 		$gSortAlphabet = $gSortAsc.add($gSortDesc);
 		$gSortDate = $gSortNf.add($gSortOf);
 		
@@ -742,8 +749,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			});
 		$gSortByL = $('<label>', {
 				'for': 'gSortBy'
-				,title: 'Sorting'
-				,text: 'Sorting'
+				,title: vfc.i18n.sorting
+				,text: vfc.i18n.sorting
 			} );
 		if (gSortByURLVal && /of|nf|ca|cd/i.test(gSortByURLVal)) {
 			moreOptionsVisible = true;
@@ -781,7 +788,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,$gLoadWikitextL
 			)
 		).hide();
-		$gMoreOptionsToggler = vfc.createToggler(vfc.i18n.optMore, $gMoreOptions);
+		$gMoreOptionsToggler = vfc.$createToggler(vfc.i18n.optMore, $gMoreOptions);
 		$gNotifyText = vfc.$gNotifyText = $('<span>', { id: 'gNotifyText' });
 		$gNotifyArea = vfc.$gNotifyArea = $.createNotifyArea($gNotifyText, 'ui-icon-info', 'ui-state-highlight');
 		
@@ -837,11 +844,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	**  Method to securely close (you may call it "nuke") the dialogs, 
 	**  even if there were errors; called on button cancel and by several methods
 	**/
-	mdDlgThumbDlgClose: function () {
+	thumbDlgClose: function () {
 		$doc.triggerHandler('vFC', ['closing dialog', vfc, vfc.dlg]);
 		
 		if ( vfc.mdBusy ) {     // Call myself later if script is busy
-			setTimeout(vfc.mdDlgThumbDlgClose, 20);
+			setTimeout(vfc.thumbDlgClose, 20);
 			return true;
 		}
 		
@@ -876,12 +883,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		});
 	},
 	
-	mdCloseAndContinue: function() {
-		vfc.mdDlgThumbDlgClose();
+	closeAndContinue: function() {
+		vfc.thumbDlgClose();
 		vfc.nextTask();
 	},
 	
-	mdEditCountDialog: function(reason) {
+	editCountDialog: function(reason) {
 		var dlgButtons = {};
 		
 		dlgButtons[vfc.i18n.proceedButtonLabel] = function() {
@@ -986,12 +993,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		
 		var _firstDlg = function() {
 			if (!api.$countDlg) {
-				vfc.mdEditCountDialog(vfc.i18n.mdEditCountOneTime.replace('%N%', setting.firstTest));
+				vfc.editCountDialog(vfc.i18n.mdEditCountOneTime.replace('%N%', setting.firstTest));
 			}
 		};
 		var _batchDlg = function() {
 			if (!api.$countDlg) {
-				vfc.mdEditCountDialog(api.ratelimited ? vfc.i18n.mdEditCountThrottle : vfc.i18n.mdEditCountBatch);
+				vfc.editCountDialog(api.ratelimited ? vfc.i18n.mdEditCountThrottle : vfc.i18n.mdEditCountBatch);
 			}
 		};
 		
@@ -1074,7 +1081,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var msg = this.i18n.taskFailure[this.currentTask] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
  
 		var reportPage = '';
-		this.mdBusy = false; // Prevents that mdDlgThumbDlgClose will be refused
+		this.mdBusy = false; // Prevents that thumbDlgClose will be refused
 		
 		this.pb.setCurrentTaskState('md-failed');
  
@@ -1451,24 +1458,28 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		abortButtonLabel: "Abort",
 		mdPleaseWait: "Please wait.",
 		
+		browsertitle: "VisualFileChange: Welcome, %USER%!",
+		
+		startAt: "Start at",
 		optStartAt: "Start listing from a specific date",
-		optStartAtHowTo: 'Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker',
+		optStartAtFile: "Start listing from a given file name (more precise: sortkey)",
+		optStartAtHowTo: "Format:  YYYY-MM-DD<br/> or, optionally<br/>YYYY-MM-DD&nbsp;hh:mm:ss<br/>or use the picker",
 		optStartFileHowTo: "Start sortkey (finding a sortkey: [[Category:Name|>>>sortkey<<<]], equals file name if no sortkey specified). Case sensitive. Usually you want the first letter upper case!",
 		optMore: "More options",
+		offerContinue: "You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there.",
+		continueNow: "Continue now!",
+		sorting: "Sorting",
+		optNewToOld: "from new to old (category: added-date)",
+		optOldToNew: "from old to new (category: added-date)",
+		optDefault: "default",
+		optAsc: "asc, alphabetical",
+		optDesc: "desc, alphabetical",
 		
 		mdConfirm: {
-			deleteConfirmTitle: 'Confirming deletion',
-			deleteConfirm: 'Do you really want to DELETE these files using your administrator privileges?',
-			deleteConfirmIgnore: 'Yes, delete!',
-			deleteConfirmCancel: 'No, back, please, back!'
-		},
-		
-		mdConfig: {
-			getScriptErr: "Error getting your userscripts!",
-			okButton: 'Ok (Remember until next reload)',
-			cancelButton: 'Cancel',
-			permaSaveButton: 'Save permanently',
-			defaultsButton: 'Fill-in defaults'
+			deleteConfirmTitle: "Confirming deletion",
+			deleteConfirm: "Do you really want to DELETE these files using your administrator privileges?",
+			deleteConfirmIgnore: "Yes, delete!",
+			deleteConfirmCancel: "No, back, please, back!"
 		},
 		
 		mdCuteSelect: {
@@ -1525,6 +1536,32 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'aDelete': 'MediaWiki:Deletereason-dropdown'
 		},
 		
+		cfg: {
+			tmpStored: "Temporarily stored",
+			tmpStoredText: "Configuration will be alive as long as you're on this page",
+			youCanCloseDialog: "You can close this dialog now.",
+			jsSaved: "Saved",
+			jsSavedText: "Configuration saved to your JavaScript",
+			profileManager: "Profile manager",
+			aboutProfiles: "Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.",
+			jsProfileSaved: "Saved",
+			jsProfileSavedText: "The selected profile was saved to your user namespace",
+			jsProfileRm: "Removed",
+			jsProfileRmText: "The selected profile was removed from your user namespace",
+			jsProfileErrText: "Error. Profile not saved: ",
+			jsProfileWarn: "Problem",
+			jsProfileWarnText: "Updating profiles threw an issue: ",
+			profileSelectLocation: "Save current inputs into your",
+			profileName: "Use the same name again to override a profile.",
+			locationBrowser: "Browser (may not permanent)",
+			locationAccount: "Commons-account (publicly visible)",
+			loadProfile: "Load",
+			loadProfileText: "Load a profile. Caution: Your current inputs will be lost. Double-click a profile name to load it and return.",
+			removeProfile: "Remove",
+			removeProfileText: "Remove a profile."
+		},
+		
+		tasks: "Tasks:",
 		task: {
 			start: 'Starting and gathering information.',
 			target: 'Determining target.',
@@ -1545,10 +1582,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		},
  
 		taskFailure: {
-			mdStartMd: "An error occurred while starting the request an determining the contributor. Nothing has been modified.",
+			start: "An error occurred while starting the request an determining the contributor. Nothing has been modified.",
 			findOriginalUploader: "An error occurred while trying to get the initial uploader of this image.",
 			findOriginalUploaderCB: "An error occurred after trying to obtain the initial uploader of this image.",
-			mdContinue: "An error occurred while starting the request and prefilling the contributor.",
+			reinit: "An error occurred while starting the request and prefilling the contributor.",
 			mdCreateList: "While trying to prepare to invoke the list-query, an error occurred.",
 			mdFindUploads: "An error occurred while querying the upload-list.",
 			mdFindUploadsCB: "An error occurred after querying the upload-list.",
@@ -1670,7 +1707,7 @@ function ProgressBox(width, o) {
 	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
-		text: 'Tasks:'
+		text: o.i18n.tasks
 	});
 	this.$progressWrap = $('<div>', { css: { position: 'relative', padding: '10px', height: '25px', display: 'none' } });
 	this.$progressBar = $('<div>', { css: { width: '100%', height: '100%' } }).appendTo(this.$progressWrap);
@@ -1689,7 +1726,10 @@ function ProgressBox(width, o) {
 		text: 'Error:'
 	}).append(this.$error);
 	this.$credits = $('<div>', { id: 'mdCredits', style: 'position: absolute; bottom: 0px; font: small-caps 0.7em sans-serif; margin: 4px; color: #BBB;' })
-		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>Thanks to all supporters, especially Saibo and LX for testing.');
+		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>' + o.i18n.mdTranslator ?
+			('Translation provided by ' + o.i18n.mdTranslator) :
+			('Thanks to all supporters, especially Saibo and LX for testing.')
+		);
 		
 	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
 	$('body').append(this.$cont);
@@ -1811,7 +1851,6 @@ ProgressBox.fn = ProgressBox.prototype = {
 };
 
 
-/*if (wgUserLanguage !== 'en') importScript('MediaWiki:VisualFileChange.js/' + wgUserLanguage);*/
 mediaWiki.loader.using([
 'jquery.ui.dialog',
 'jquery.ui.datepicker',
@@ -1830,7 +1869,7 @@ mediaWiki.loader.using([
 	$doc.bind('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug) vfc.log('VisualFileChange> ' + p1 );
 	});
-	vfc.mdInstall();
+	vfc.install();
 });
 
 }); }(jQuery, mediaWiki));
