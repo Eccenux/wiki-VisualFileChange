@@ -386,7 +386,7 @@ $.extend(window.VisualFileChange,
 			this.value = this.value.replace(/[^0-9]/g,'');
 		});
 
-		return vfc.createToggler('Examine scheduled changes', $examineOuterDiv.hide());
+		return vfc.$createToggler('Examine scheduled changes', $examineOuterDiv.hide());
 	},
 	
 	mdEscapeSpecial: function(string) {
@@ -843,7 +843,7 @@ $.extend(window.VisualFileChange,
 			.appendTo($AjaxMdContainer);
 
 			$AjaxMdContainer
-				.append(vfc.createToggler(vfc.i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads))
+				.append(vfc.$createToggler(vfc.i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads))
 				.append(vfc.$ctrs.ajaxMdNotReady, vfc.$ctrs.ajaxMdUlContainer);
  
 		// Add label to the button
