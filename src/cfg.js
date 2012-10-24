@@ -27,6 +27,7 @@ var scriptpath = mw.config.get('wgUserName') ? mw.config.get('wgFormattedNamespa
 var commonjsPath = scriptpath + 'common.js';
 var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
 var vfc = window.VisualFileChange,
+	i18n = vfc.i18n.cfg,
 	$doc = $(document),
 	$win = $(window);
 
@@ -48,7 +49,7 @@ $.extend(window.VisualFileChange,
 			
 			switch (location) {
 				case 'page':
-					$.growlUI("Temporarily stored", "Configuration will be alive as long as you're on this page");
+					$.growlUI(i18n.tmpStored, i18n.tmpStoredText);
 					$dlg.dialog('close');
 					break;
 				case 'account-publicly':
@@ -73,11 +74,11 @@ $.extend(window.VisualFileChange,
 								break;
 							case 100:
 								icon = 'check';
-								text += " You can close this dialog now.";
+								text += " " + i18n.youCanCloseDialog;
 								$dlg.$c.unblock({
 									onUnblock: function(){ 
 										$dlg.dialog('close');
-										$.growlUI("Saved", "Configuration saved to your JavaScript");
+										$.growlUI(i18n.jsSaved, i18n.jsSavedText);
 									}
 								});
 								break;
@@ -191,7 +192,7 @@ $.extend(window.VisualFileChange,
 		$doc.unbind('vFC_S');
 		$doc.bind('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
-			progressCB(status, text, "Saved", "The selected profile was saved to your user namespace");
+			progressCB(status, text, i18n.jsProfileSaved, i18n.jsProfileSavedText);
 		});
 		vfc.mdUpdateJSProfile();
 	},
@@ -245,7 +246,7 @@ $.extend(window.VisualFileChange,
 		$doc.unbind('vFC_S');
 		$doc.bind('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
-			progressCB(status, text, "Removed", "The selected profile was removed from your user namespace");
+			progressCB(status, text, i18n.jsProfileRm, i18n.jsProfileRmText);
 		});
 		vfc.mdUpdateJSProfile();
 	},
@@ -326,11 +327,11 @@ $.extend(window.VisualFileChange,
 			switch (status) {
 				case -1:
 					$jsProgess.addClass('ui-state-error');
-					alert('Error. Profile not saved: ' + statusText);
+					alert(i18n.jsProfileErr + statusText);
 					break;
 				case -2:
 					$jsProgess.addClass('ui-state-highlight');
-					$.growlUI("Problem", "Updating profiles threw an issue " + statusText);
+					$.growlUI(i18n.jsProfileWarn, i18n.jsProfileWarnText + statusText);
 					break;
 				case 100:
 					updateSelect();
@@ -346,7 +347,7 @@ $.extend(window.VisualFileChange,
 			});
 		};
 		
-		$dlgNode = $('<div>', { text: 'Save the current input state into a profile or load a profile. VisualFileChange automatically updates a profile (auto) when you execute a task.' });
+		$dlgNode = $('<div>', { text: i18n.aboutProfiles });
 		$profileSelect = $('<select>').attr({ size: 15, style: 'min-width:150px; max-width:200px;' }).change(function() {
 			var $sel = $profileSelect,
 				$selVal = $sel.val() || '',
@@ -360,25 +361,25 @@ $.extend(window.VisualFileChange,
 			$loadButton.click();
 			$dlgNode.dialog('close');
 		});
-		$descSave = $('<div>', { text: 'Save current inputs into your' });
-		$addNameL = $('<label>', { text: 'Use the same name again to override a profile.' }).attr({ 'for': 'mdProfileName' });
+		$descSave = $('<div>', { text: i18n.profileSelectLocation });
+		$addNameL = $('<label>', { text: i18n.profileName }).attr({ 'for': 'mdProfileName' });
 		$addName = $('<input>').attr({ id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' }).placeholder();
-		$addButtonClient = $('<button>', { text: 'Browser (may not permanent)'})
+		$addButtonClient = $('<button>', { text: i18n.locationBrowser })
 			.button({ icons: { primary: 'ui-icon-disk' } })
 			.click(saveToClient);
-		$addButtonJS = $('<button>', { text: 'Commons-account (publicly visible)' })
+		$addButtonJS = $('<button>', { text: i18n.locationAccount })
 			.button({ icons: { primary: 'ui-icon-script' } })
 			.click(saveToJS);
 		if (mw.user.isAnon()) $addButtonJS.button('option', 'disabled', true);
 		$jsProgess = $('<div>', { style: 'display:inline-block; width:200px; height:25px;' });
 		
-		$descLoad = $('<div>', { text: 'Load a profile. Caution: Your current inputs will be lost. Double-click a profile name to load it and return.' });
-		$loadButton = $('<button>', { text: 'Load', disabled: 'disabled', style: 'display:block;' })
+		$descLoad = $('<div>', { text: i18n.loadProfileText });
+		$loadButton = $('<button>', { text: i18n.loadProfile, disabled: 'disabled', style: 'display:block;' })
 			.button({ icons: { primary: 'ui-icon-folder-open' } })
 			.click(loadProfile);
 		
-		$descRemove = $('<div>', { text: 'Remove a profile.' });
-		$removeButton = $('<button>', { text: 'Remove', disabled: 'disabled', style: 'display:block;' })
+		$descRemove = $('<div>', { text: i18n.removeProfileText });
+		$removeButton = $('<button>', { text: i18n.removeProfile, disabled: 'disabled', style: 'display:block;' })
 			.button({ icons: { primary: 'ui-icon-trash' } })
 			.click(function() {
 				switch ($profileSelect.data('selectedProfile').data('profileSource')) {
@@ -399,7 +400,7 @@ $.extend(window.VisualFileChange,
 		mw.loader.load('jquery.ui.progressbar');
 		
 		$dlgNode.dialog({
-			title: 'Profile manager',
+			title: i18n.profileManager,
 			modal: true,
 			resizable: false,
 			width: Math.min(610, $win.width()),
@@ -424,8 +425,8 @@ $.extend(window.VisualFileChange,
 			clearTimeout(keyTimeout);
 			keyTimeout = setTimeout(function() {
 				if ($.trim(text.replace(/_/, 'g')) === lookFor) {
-					vfc.$gNotifyText.text('You entered the same target as performed edits on last time and the good news are that VisualFileChange has automatically saved the files that were loaded last so you can continue there. ');
-					vfc.$gNotifyText.append( $('<a>', { href: '#', text: 'Continue now!' }).button().click(function(e) {
+					vfc.$gNotifyText.text(vfc.i18n.offerContinue + ' ');
+					vfc.$gNotifyText.append( $('<a>', { href: '#', text: vfc.i18n.continueNow }).button().click(function(e) {
 						e.preventDefault();
 						$.each(autoExecProfile.objectMembers, function(memberName, memberValue) {
 							vfc[memberName] = memberValue;
