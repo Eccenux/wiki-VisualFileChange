@@ -746,17 +746,17 @@ $.extend(window.VisualFileChange,
 			defaultHeading;
 		
 		if (si.modeCat) {
-			subHeading = 'Files in -';
+			subHeading = vfc.i18n.filesIn + ' -';
 			defaultHeading = 'Files in [[:' + target + ']] ';
 		}
 		if (si.modeUser) {
-			subHeading = 'Initally uploaded files by -';
+			subHeading = vfc.i18n.filesBy + ' -';
 			targetHref = vfc.mdUserTalkPrefix + targetHref;
 			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] '
 				+ '([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
 		}
 		if (si.modePage) {
-			subHeading = 'Files on page -';
+			subHeading = vfc.i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + target + ']] ';
 		}
 		targetHref = mw.util.wikiGetlink(targetHref);
@@ -1117,42 +1117,43 @@ $.extend(window.VisualFileChange,
 			updateSelectedCount();
 		};
 		
-		var $AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
+		var cuteI18n = vfc.i18n.mdCuteSelect,
+			$AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
-			.append(vfc.i18n.mdCuteSelect.intro)
+			.append(cuteI18n.intro)
 			.append($('<table>').append(
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'chkAjaxMdSelect', text: vfc.i18n.mdCuteSelect.select })),
+					$('<td>').append($('<label>', { 'for': 'chkAjaxMdSelect', text: cuteI18n.select })),
 					$('<td>').append($('<input>', { type: 'checkbox', id: 'chkAjaxMdSelect', 'value': 1, 'checked': '' }))),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectCat', text: vfc.i18n.mdCuteSelect.inCat })),
-					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), vfc.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectCat', text: cuteI18n.inCat })),
+					$('<td>').append($('<input>', { type: 'text', id: 'txtAjaxMdSelectCat', 'size': 50 }), cuteI18n.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: vfc.i18n.mdCuteSelect.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
-					$('<td>').append($('<input>').attr({ type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: vfc.i18n.mdCuteSelect.titleplaceholder }), vfc.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectTitle', html: cuteI18n.title + ' <abbr title="Regular Expression. Example: Tower.+ will select Towers or TowersInSpain but not Tower">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>').attr({ type: 'text', id: 'txtAjaxMdSelectTitle', 'size': 50, placeholder: cuteI18n.titleplaceholder }), cuteI18n.and)),
 				$('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: vfc.i18n.mdCuteSelect.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{[Tt]emplate\\}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
-					$('<td>').append($('<input>').attr({ type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: vfc.i18n.mdCuteSelect.wikitextplaceholder }), vfc.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectWikitext', html: cuteI18n.wikitext + ' <abbr title="Regular Expression. Example: \\{\\{[Tt]emplate\\}\\} would match {{template}} and {{Template}}">(RegExpr)</abbr>' })),
+					$('<td>').append($('<input>').attr({ type: 'text', id: 'txtAjaxMdSelectWikitext', 'size': 50, placeholder: cuteI18n.wikitextplaceholder }), cuteI18n.and)),
 				$('<tr>').append(
-					$('<td>').append( vfc.i18n.mdCuteSelect.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
+					$('<td>').append( cuteI18n.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
-						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', vfc.i18n.mdCuteSelect.and)),
+						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', cuteI18n.and)),
 				!vfc.startInput.modeUser ? $('<tr>').append(
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectUploader', text: vfc.i18n.mdCuteSelect.uploader })),
-					$('<td>').append($uploaderSelect, vfc.i18n.mdCuteSelect.and)) : '',
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectUploader', text: cuteI18n.uploader })),
+					$('<td>').append($uploaderSelect, cuteI18n.and)) : '',
 				$('<tr>').append(
 					$('<td>').append($metaSelect),						
-					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectMeta', text: vfc.i18n.mdCuteSelect.matches }), 
-						$('<input>').attr({ type: 'text', placeholder: vfc.i18n.mdCuteSelect.titleplaceholder, id: 'txtAjaxMdSelectMeta', 'size': 41 }), vfc.i18n.mdCuteSelect.and)),
+					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectMeta', text: cuteI18n.matches }), 
+						$('<input>').attr({ type: 'text', placeholder: cuteI18n.titleplaceholder, id: 'txtAjaxMdSelectMeta', 'size': 41 }), cuteI18n.and)),
 				$('<tr>').append(
-					$('<td>').append(vfc.i18n.mdCuteSelect.date),
+					$('<td>').append(cuteI18n.date),
 					$('<td>').append(
 						$('<label>', { 'for': 'txtAjaxMdSelectDate0' }).append($('<abbr>', { 
-							text: vfc.i18n.mdCuteSelect.between,
-							title: vfc.i18n.mdCuteSelect.after
+							text: cuteI18n.between,
+							title: cuteI18n.after
 						})),
 						$('<input>')
-							.attr({ type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: vfc.i18n.mdCuteSelect.dateplaceholder })
+							.attr({ type: 'text', id: 'txtAjaxMdSelectDate0', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: cuteI18n.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -1168,11 +1169,11 @@ $.extend(window.VisualFileChange,
 									return vfc.i18n.optStartAtHowTo;
 							} }),
 						$('<label>', { 'for': 'txtAjaxMdSelectDate1' }).append($('<abbr>', { 
-							text: vfc.i18n.mdCuteSelect.and,
-							title: vfc.i18n.mdCuteSelect.before
+							text: cuteI18n.and,
+							title: cuteI18n.before
 						})),
 						$('<input>')
-							.attr({ type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: vfc.i18n.mdCuteSelect.dateplaceholder })
+							.attr({ type: 'text', id: 'txtAjaxMdSelectDate1', 'size': 20, 'class': 'dateOnly', maxlength: 19, placeholder: cuteI18n.dateplaceholder })
 							.datepicker( {
 								changeYear: true,
 								changeMonth: true,
@@ -1505,6 +1506,7 @@ $.extend(window.VisualFileChange,
 				i, ii,
 				seenHash = {};
 			
+			// TODO: i18n
 			vfc.$ctrs.ajaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (vfc.mdUploadCt) + 
 			' batch-queries pending. Total files: ' + (vfc.iiUploads) + '. Current image: ' + dirtyTitle); 
 
@@ -1572,6 +1574,7 @@ $.extend(window.VisualFileChange,
 					.text(dirtyTitle),
 				$('<div>', { 'class': 'jFileTime' }).text(uItem.time.replace(/[T|Z]/g, " ")),
 				$('<div>', { 'class': 'jFileSize' }).html(
+					// TODO: i18n
 					vfc.secureCall('mdFormattNumber', uItem.size) 
 					+ '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>&nbsp; '
 					+ (vfc.secureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + vfc.secureCall('mdFormattNumber', ii.height)) 
@@ -1686,12 +1689,13 @@ $.extend(window.VisualFileChange,
 		this.internalState = 'ready';
 		this.pb.setCurrentTaskDone();
 
-		var $dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: 'What would you like to do next?', text: 'Note: You cannot execute new requests without reloading this page. ' })
-			.append($('<br/>'), $('<a>', { href: '#', text: 'But you can save your inputs into a profile.' }).button().click(function(e) {
+		var i18n = vfc.i18n.endDlg,
+			$dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: i18n.heading, text: i18n.intro })
+			.append($('<br/>'), $('<a>', { href: '#', text: i18n.saveInProfile }).button().click(function(e) {
 				e.preventDefault();
 				vfc.mdProfile();
 			}))
-			.append($('<br/>'), mw.html.escape('The inputs of the last executed requests are automatically saved.'));
+			.append($('<br/>'), mw.html.escape(i18n.aboutLastExec));
 		var $ulNode = $('<ul>');
 		
 		var addLink = function(href, text, target) {
@@ -1705,34 +1709,32 @@ $.extend(window.VisualFileChange,
 		
 		if (this.api.wasError) {
 			$dlgNode.append(
-				$.createNotifyArea('We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
-				'Please check your contributions, whether something went wrong.',
-				'ui-icon-alert', 'ui-state-error')
+				$.createNotifyArea(i18n.errorDuringTask, 'ui-icon-alert', 'ui-state-error')
 			);
 		}
 		$.each(this.infoTextToEndDlg, function(i, text) {
 			$dlgNode.append($.createNotifyArea(text, 'ui-icon-info', 'ui-state-highlight'));			
 		});
-		addLink('Special:MyContributions', "Check your contributions", 'contribswindow');
+		addLink('Special:MyContributions', i18n.checkContribs, 'contribswindow');
 		
 		if ( this.mdInsertedTag ) {
 			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
 				// allow navigating to the new created deletion request
-				addLink(this.requestPage, "Go to the created request page");
+				addLink(this.requestPage, i18n.goToRequestPage);
 			}
 			if (this.startInput.modeUser && (-1 === $.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']))) {
-				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, "Look at the user\'s talk-page");
-				addLink(this.mdContribPrefix + vfc.queryParams.target, "...or the user\'s contribs");
+				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, i18n.goUserTalk);
+				addLink(this.mdContribPrefix + vfc.queryParams.target, i18n.goUserContribs);
 				// Revert files overwritten by this user ....
 			}
-			addLink(mw.config.get('wgPageName'), "Reload this page", '_self');
+			addLink(mw.config.get('wgPageName'), i18n.reload, '_self');
 		}
 		$dlgNode.append($ulNode).dialog({
 			show: { effect: 'highlight', duration: 1800 },
 			width: Math.min(450, $win.width())
 		});
-		document.title = "VisualFileChange: Ready!";
+		document.title = i18n.title;
 		vfc.$dialogsToClose.push($dlgNode);
 	}
 });
