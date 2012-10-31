@@ -56,7 +56,9 @@ var VisualFileChange,
 
 // Adding Style-definitions
 mw.util.addCSS(' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n' +
-	'.md-optioncontainer { padding:3px; margin:5px 0px; }\n');
+	'.md-optioncontainer { padding:3px; margin:5px 0px; }\n' +
+	'.md-option-space-v { padding:5px 0 }' +
+	'.md-option-space-v>input,select { margin:0 3px }');
 
 /**
  * Create a new VisualFileChange-Object-literal.
@@ -68,7 +70,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.38.0',
+	scriptRevision: '0.9.39.0',
 	
 
 	/**
@@ -204,7 +206,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.tasks = []; // reset task list in case an earlier error left it non-empty
 		
 		vfc.addTask('_start');
-		vfc.addTask('reinit');
 		vfc.loadModule('i18n', 'nextTask');
 	},
 	
@@ -212,9 +213,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var pageName = mw.config.get('wgPageName'),
 			pb;
 		
-		$doc.triggerHandler('vFC', ['starting procedure', this]);
+		$doc.triggerHandler('vFC', ['starting procedure', vfc]);
 
-		pb = this.pb = new ProgressBox(undefined, this);
+		pb = vfc.pb = new ProgressBox(undefined, vfc);
 		pb.addTask('start');
 		pb.addTask('target');
 		pb.addTask('list');
@@ -222,15 +223,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		pb.setTaskState( 'start', 'md-doing' );
 		pb.show();
 		
-		this.oldDocTitle = document.title;
-		this.pageName = pageName;
-		this.startInput = {};
-		this.queryParams = { target: '' };
-		this.mdListUploadsPending = 0;
+		vfc.oldDocTitle = document.title;
+		vfc.pageName = pageName;
+		vfc.startInput = {};
+		vfc.queryParams = { target: '' };
+		vfc.mdListUploadsPending = 0;
  
 		switch (mw.config.get('wgNamespaceNumber')) {
 			case 6: // File
-				this.addTask('findOriginalUploader');
+				vfc.addTask('findOriginalUploader');
 				break;
 			case 3: // User_talk
 			case 2: // User
@@ -244,12 +245,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		// Prettify the title (nomalizing)
 		vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
 		
-		$doc.triggerHandler('vFC', ['prepared', this]);
+		$doc.triggerHandler('vFC', ['prepared', vfc]);
 		
 		// Load the Execute/ Edit components
-		this.loadModule('exec.js');
+		vfc.loadModule('exec.js');
 		
-		this.nextTask();
+		vfc.addTask('reinit');
+		vfc.nextTask();
 	},
 	
 	findOriginalUploader: function () {
@@ -319,7 +321,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	
 	$createToggler: function (text, $content) {
 		return $('<div>').append(
-			$('<a>', { text: text, href: '#', 'class':'md-collapsible ui-state-default' }).prepend(
+			$('<a>', { text: text, href: '#show_or_hide', 'class':'md-collapsible ui-state-default' }).prepend(
 				$.createIcon('ui-icon-carat-1-e')
 			).toggle(
 			function(e){
@@ -355,7 +357,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			confirmed = false,
 			dlgWidth = 0,
 			$submitButton, $cancelButton, $targetInput, $targetSelect, $gMoreOptionsToggler, $gMoreOptions, 
-			$gStartAt, $gStartAtL, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, 
+			$gStartAt, $gStartAtL, $gStartWrap, $gStartFile, $gStartFileL, $gSortBy, $gSortByL, $gSortByWrap,
 			$gSortNf, $gSortOf, $gSortDefault, $gSortAsc, $gSortDesc, $gSortAlphabet, $gSortDate,
 			$gNotifyText, $gNotifyArea,
 			$gLoadThumbs, $gLoadThumbsL, $gLoadWikitext, $gLoadWikitextL,
@@ -364,9 +366,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			
 		var namespaceIds = mw.config.get('wgNamespaceIds'),
 			formattedNamespaces = mw.config.get('wgFormattedNamespaces'),
-			nsCat = formattedNamespaces[14],
+			nsCat  = formattedNamespaces[14],
 			nsUser = formattedNamespaces[2],
 			nsPage = 'Page', // Virtual helper namespace
+			nsLocalCat  = vfc.i18n.namespace['14'] || nsCat,
+			nsLocalUser = vfc.i18n.namespace['2'] || nsUser,
+			nsLocalPage = vfc.i18n.namespace.page || nsPage, // Virtual helper namespace
 			rxCat = new RegExp('^' + nsCat + ':', 'i'),
 			rxUser = new RegExp('^' + nsUser + ':', 'i'),
 			rxPage = new RegExp('^' + nsPage + ':', 'i'),
@@ -536,9 +541,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.pb.setZIndex(Number($('.ui-widget-overlay').css('z-index')) + 1);
 		
 		$targetSelect = $('<select>').attr({ size: 1, id: 'mdTargetSelect' }).append(
-			$('<option>', { text: nsCat }),
-			$('<option>', { text: nsPage }),
-			$('<option>', { text: nsUser, selected: 'selected' })
+			$('<option>', { text: nsLocalCat, value: nsCat }),
+			$('<option>', { text: nsLocalPage, value: nsPage }),
+			$('<option>', { text: nsLocalUser, selected: 'selected', value: nsUser })
 		).change(function() {				
 			switch ($(this).val()) {
 				case nsPage:
@@ -624,7 +629,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			});
 		};
 		
-		vfc.$targetInput = $targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 80%;', 'value': prefill }).autocomplete({
+		vfc.$targetInput = $targetInput = $('<input>', { type: 'text', id: 'mdTargetInput', style: 'width: 70%;', 'value': prefill }).autocomplete({
 			minLength: 1,
 			delay: delayXHR,
 			select: function(event, ui) {
@@ -645,6 +650,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		// Start date
 		gStartAtURLVal = mw.util.getParamValue('vfcStartAt');
 		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get('wgUserLanguage') ] );
+		$gStartWrap = $('<div>').attr('class', 'md-option-space-v');
+		
+		$gStartAtL = $('<label>', {
+				'for': 'gStartAt'
+				,title: vfc.i18n.optStartAt
+				,text: vfc.i18n.startAt
+			} )
+			.appendTo($gStartWrap);
+			
 		$gStartAt = vfc.$gStartAt = $('<input>', {
 				id: 'gStartAt'
 				,type: 'text'
@@ -668,12 +682,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					return vfc.i18n.optStartAtHowTo;
 				} })
 			.attr('placeholder', 'YYYY-MM-DD')
+			.appendTo($gStartWrap)
 			.placeholder();
-		$gStartAtL = $('<label>', {
-				'for': 'gStartAt'
-				,title: vfc.i18n.optStartAt
-				,html: vfc.i18n.startAt
-			} );
 		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) {
 			moreOptionsVisible = true;
 			setTimeout(function() { 
@@ -681,6 +691,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}, 50);
 		}
 		
+		// Start file
+		$gStartFileL = $('<label>', {
+				'for': 'gStartFile'
+				,title: vfc.i18n.optStartAtFile
+				,text: vfc.i18n.startAt
+			} )
+			.appendTo($gStartWrap)
+			.hide();
+			
 		$gStartFile = $('<input>', {
 				id: 'gStartFile'
 				,type: 'text'
@@ -694,12 +713,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					return vfc.i18n.optStartFileHowTo;
 				} })
 			.attr('placeholder', 'Start file (sortkey)')
-			.hide();
-		$gStartFileL = $('<label>', {
-				'for': 'gStartFile'
-				,title: vfc.i18n.optStartAtFile
-				,html: vfc.i18n.startAt
-			} )
+			.appendTo($gStartWrap)
 			.hide();
 		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) {
 			moreOptionsVisible = true;
@@ -707,7 +721,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$gStartFile.val(gStartAtURLVal).keyup();
 			}, 50);
 		}
-			
+		
+		// TODO: Convert to array or object?
 		$gSortNf = $('<option>', { 'value': 'nf' }).text(vfc.i18n.optNewToOld);
 		$gSortOf = $('<option>', { 'value': 'of' }).text(vfc.i18n.optOldToNew);
 		$gSortDefault = $('<option>', { 'value': 'default' }).text(vfc.i18n.optDefault);
@@ -716,7 +731,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		$gSortAlphabet = $gSortAsc.add($gSortDesc);
 		$gSortDate = $gSortNf.add($gSortOf);
 		
+		$gSortByWrap = $('<div>').attr('class', 'md-option-space-v');
+		
 		gSortByURLVal = mw.util.getParamValue('vfcSorting');
+		$gSortByL = $('<label>', {
+				'for': 'gSortBy'
+				,title: vfc.i18n.sorting
+				,text: vfc.i18n.sorting
+			} )
+			.appendTo($gSortByWrap);
+			
 		$gSortBy = $('<select>', {
 				id: 'gSortBy'
 			} )
@@ -726,6 +750,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				,$gSortAsc
 				,$gSortDesc
 			)
+			.appendTo($gSortByWrap)
 			.change(function() {
 				var $sel = $gSortBy.find('option:selected'),
 					methodDate,
@@ -748,11 +773,6 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				$gStartFileL.css('display', methodFile);
 				$gStartFile.css('display', methodFile);
 			});
-		$gSortByL = $('<label>', {
-				'for': 'gSortBy'
-				,title: vfc.i18n.sorting
-				,text: vfc.i18n.sorting
-			} );
 		if (gSortByURLVal && /of|nf|ca|cd/i.test(gSortByURLVal)) {
 			moreOptionsVisible = true;
 			setTimeout(function() {
@@ -774,13 +794,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 		$gMoreOptions = $('<div>').append(
 			$('<div>').addClass('md-optioncontainer').append(
-				$gStartAtL
-				,$gStartAt
-				,$gStartFileL
-				,$gStartFile
-				,' '
-				,$gSortByL
-				,$gSortBy)
+				$gStartWrap
+				,$gSortByWrap)
 			,$('<div>').addClass('md-optioncontainer').append(
 				$gLoadThumbs
 				,$gLoadThumbsL
@@ -1487,7 +1502,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			deleteConfirmCancel: "No, back, please, back!"
 		},
 		
-		mdCuteSelect: {
+		cuteSelect: {
+			'heading': "Cute-Selection: Specify the options, please",
 			'and': "AND",
 			'intro': "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (de-)select, empty fields are considered fulfilling the condition:",
 			'select': "Select (/Deselect)",
@@ -1517,7 +1533,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			checkContribs: "Check your contributions",
 			goToRequestPage: "Go to the created request page",
 			goUserTalk: "Look at the user\'s talk-page",
-			goUserContribs: "...or the user\'s contribs",
+			goUserContribs: "…or the user\'s contribs",
 			reload: "Reload this page",
 			title: "VisualFileChange: Ready!"
 		},
@@ -1581,6 +1597,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			loadProfileText: "Load a profile. Caution: Your current inputs will be lost. Double-click a profile name to load it and return.",
 			removeProfile: "Remove",
 			removeProfileText: "Remove a profile."
+		},
+		
+		namespace: {
+			'page': "Full page name",
+			'2':    "User name",
+			'14':   "Category name"
 		},
 		
 		tasks: "Tasks:",
