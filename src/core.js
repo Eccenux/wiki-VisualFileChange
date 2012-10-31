@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.41.0',
+	scriptRevision: '0.9.42.0',
 	
 
 	/**
@@ -1028,7 +1028,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		
 		var _firstDlg = function() {
 			if (!api.$countDlg) {
-				vfc.editCountDialog(vfc.i18n.mdEditCountOneTime.replace('%N%', setting.firstTest));
+				vfc.editCountDialog(vfc._msg('edit-count-one-time', setting.firstTest));
 			}
 		};
 		var _batchDlg = function() {
@@ -1475,9 +1475,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdInsertReplaceMatch: "What text should become replaced on the selected files?",
 		mdDelteConfirmation: "Your provided reason to delete is",
 		mdInsertConfirmation: "Your provided tag to insert in the permission-section is",
-		mdSpecifyReason: "Please specify a reason with at least %mdMinReasonLen% letters.",
 		mdProfileCantSave: "Could not save your current inputs into your browser",
-		mdEditCountOneTime: "Would you like to do edit number %N%?",
 		mdEditCountThrottle: "Due to rate-limits on Commons, no further edits are possible within 1 minute. Please wait and then, click on continue. Use the time to do something useful like checking your last contributions.",
 		mdEditCountBatch: "One batch of edits is done as specified in the advanced settings. Would you like to proceed?",
 		kibibyte: '<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>',
@@ -1926,7 +1924,9 @@ ProgressBox.fn = ProgressBox.prototype = {
 // Translation II (more sophisticated stuff)
 mw.messages.set({
 	'vfc-query-progress': "Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current file: $3",
-	'vfc-selected-count': "$1 {{PLURAL:$1|file|files}} selected to perform the action on."
+	'vfc-selected-count': "$1 {{PLURAL:$1|file|files}} selected to perform the action on.",
+	'vfc-enter-reason': "Please specify a reason with at least $1 {{PLURAL:$1|letter|letters}}.",
+	'vfc-edit-count-one-time': "Would you like to do edit number $1?"
 });
 
 
