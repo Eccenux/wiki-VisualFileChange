@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.40.0',
+	scriptRevision: '0.9.41.0',
 	
 
 	/**
@@ -1476,11 +1476,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdDelteConfirmation: "Your provided reason to delete is",
 		mdInsertConfirmation: "Your provided tag to insert in the permission-section is",
 		mdSpecifyReason: "Please specify a reason with at least %mdMinReasonLen% letters.",
-		mdSelectedCount: "You selected %C% files to tag.",
 		mdProfileCantSave: "Could not save your current inputs into your browser",
 		mdEditCountOneTime: "Would you like to do edit number %N%?",
 		mdEditCountThrottle: "Due to rate-limits on Commons, no further edits are possible within 1 minute. Please wait and then, click on continue. Use the time to do something useful like checking your last contributions.",
 		mdEditCountBatch: "One batch of edits is done as specified in the advanced settings. Would you like to proceed?",
+		kibibyte: '<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>',
+		hasTalk: "This file has a talk page",
 		mdMore: "more",
 		mdNoResult: "Script cannot find any file / initial upload in / by %TARGET%.",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
@@ -1532,6 +1533,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'wikitext': "Wikitext matches",
 			'matches': "matches",
 			'size': "Size",
+			'kibibyte': "KibiBytes (1024 Bytes)",
 			'uploader': "Uploader is",
 			'date': "<abbr title=\"Only one date is required. But the first date (start date) must be before the second date (end date).\">Date</abbr> (time is optional)",
 			'between': "between",
@@ -1684,6 +1686,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdReverted: "An error occurred after posting the revert-request.",
 			mdExecuteReady: "And error occurred after all sheduled tasks are done."
 		}
+	},
+	_msg: function(params) {
+		var args = Array.prototype.slice.call(arguments, 0);
+		args[0] = 'vfc-' + args[0];
+		args[args.length] = "VisualFileChange";
+		args[args.length+1] = vfc.version;
+		return mw.msg.apply(this, args);
 	}
 };
 
@@ -1914,6 +1923,12 @@ ProgressBox.fn = ProgressBox.prototype = {
 	}
 };
 
+// Translation II (more sophisticated stuff)
+mw.messages.set({
+	'vfc-query-progress': "Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current file: $3",
+	'vfc-selected-count': "$1 {{PLURAL:$1|file|files}} selected to perform the action on."
+});
+
 
 mediaWiki.loader.using([
 'jquery.ui.dialog',
@@ -1923,6 +1938,7 @@ mediaWiki.loader.using([
 'jquery.placeholder',
 'mediawiki.user',
 'mediawiki.util',
+'mediawiki.jqueryMsg',
 'ext.gadget.libCommons',
 'ext.gadget.libUtil',
 'ext.gadget.libAPI',
