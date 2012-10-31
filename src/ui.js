@@ -867,7 +867,7 @@ $.extend(window.VisualFileChange,
 			if ( (reason.length < vfc.minLenReq ) || (summary.length < vfc.summaryMinLen) ) {
 				$submitButton.button('option', 'disabled', true);
 				if (vfc.minLenReq) {
-					vfc.pb.setHelp2(i18n.mdSpecifyReason.replace('%mdMinReasonLen%', vfc.minLenReq), true);
+					vfc.pb.setHelp2(vfc._msg('enter-reason', vfc.minLenReq), true);
 				}
 			} else {
 				$submitButton.button('option', 'disabled', false);
