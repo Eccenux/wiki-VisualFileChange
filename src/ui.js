@@ -31,8 +31,9 @@ css = ' .rgallery { background-color:#FFF !important; }\n'
 	+ ' .numbersOnly { text-align:right; }\n'
 	+ ' .md-deleted-uploads { width:99%; display:none; background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center; }\n'
 	+ ' a:link.md-loglink { color:#BB6!important; display:inline-block; }\n'
+	+ ' a.md-talklink { color:#888!important; border-bottom: 1px Dotted #555; white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; text-decoration:none!important; }\n'
 	+ ' .tipsycategory { border-bottom: 1px Dotted #888; font-style:italic; margin-right:4px; display:inline-block; cursor:help }\n'
-	+ ' .tipsymetadata { color:#6389C2;border-bottom: 1px Dotted #57B;white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; cursor:help }\n'
+	+ ' .tipsymetadata { color:#6389C2; border-bottom: 1px Dotted #57B; white-space:nowrap; font-style:italic; font-weight:bold; margin-right:4px; display:inline-block; cursor:help }\n'
 	+ ' .jFileTitle { display:block; text-align:center; padding-right:0px !important; background: #eee !important; margin-top:3px; border-radius:5px; }\n'
 	+ ' .jFileTime { color:gray;font-size:0.9em; line-height:1.1em; }\n'
 	+ ' .jFileSize { color:green;font-size:0.9em; }\n'
@@ -893,7 +894,7 @@ $.extend(window.VisualFileChange,
 		var updateSelectedCount = function () {
 			var $inputs = $('input[name="mdCheckDelete"]');
 			var $checkedInputs = $inputs.filter(':checked');
-			vfc.pb.setHelp3(i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
+			vfc.pb.setHelp3(vfc._msg('selected-count', $checkedInputs.length));
 			$inputs.closest('li.gallerybox').removeClass('md-selected');
 			$checkedInputs.closest('li.gallerybox').addClass('md-selected');
 		};
@@ -1138,7 +1139,7 @@ $.extend(window.VisualFileChange,
 				$('<tr>').append(
 					$('<td>').append( cuteI18n.size + ' <select size="1" id="selAjaxMdSelectSize"><option value="l">&lt</option><option value="g">&gt</option></select>' ),						
 					$('<td>').append($('<input>', { type: 'text', 'class': 'numbersOnly', id: 'txtAjaxMdSelectSize', 'size': 15 }),
-						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: 'KibiBytes (1024 Bytes)' }), ' ', cuteI18n.and)),
+						$('<label>', { 'for': 'txtAjaxMdSelectSize', text: cuteI18n.kibibyte }), ' ', cuteI18n.and)),
 				!vfc.startInput.modeUser ? $('<tr>').append(
 					$('<td>').append($('<label>', { 'for': 'txtAjaxMdSelectUploader', text: cuteI18n.uploader })),
 					$('<td>').append($uploaderSelect, cuteI18n.and)) : '',
@@ -1272,6 +1273,7 @@ $.extend(window.VisualFileChange,
 					action: 'query',
 					prop: 'imageinfo|info|revisions|categories',
 					rvprop: 'timestamp',
+					inprop: 'talkid',
 					iiprop: 'url|size|metadata',
 					iiurlwidth: 120,
 					iiurlheight: 120,
@@ -1507,9 +1509,7 @@ $.extend(window.VisualFileChange,
 				i, ii,
 				seenHash = {};
 			
-			// TODO: i18n
-			vfc.$ctrs.ajaxMdNotReady.contents().eq(0).replaceWith('Querying detailed information: ' + (vfc.mdUploadCt) + 
-			' batch-queries pending. Total files: ' + (vfc.iiUploads) + '. Current image: ' + dirtyTitle); 
+			vfc.$ctrs.ajaxMdNotReady.text(vfc._msg('query-progress', vfc.mdUploadCt, vfc.iiUploads, dirtyTitle)); 
 
 			if (undefined === pg.imageinfo) { 
 				try { 
@@ -1546,6 +1546,8 @@ $.extend(window.VisualFileChange,
 			uItem.categories = pg.categories;     // save cats for cute-selection
 			uItem.metadata = ii.metadata;         // save Exif and other for cute-selection
 			uItem.size = (ii.size >> 10);         // for cute-selection
+			uItem.pageId = id;
+			uItem.talkId = pg.talkid;
 			
 			// List all Meta-Keys
 			if (ii.metadata.length) {
@@ -1569,15 +1571,22 @@ $.extend(window.VisualFileChange,
 				(($.isArray(ii.metadata) && !!ii.metadata.length) ? 
 					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm') : 
 					''), 
+				(uItem.talkId ? 
+					$('<a>', { 
+						'class': 'md-talklink', 
+						href: mw.util.wikiGetlink(dirtyTitle.replace(/^File/, 'File_talk')), 
+						target: '_blank', title: i18n.hasTalk 
+					}).text('t') : 
+					''
+				),
 				$('<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' }), '<br/>',
 				(vfc.secureCall('mdExtractTags', pg.categories)), ' ',
 				$('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image jFileTitle' })
 					.text(dirtyTitle),
 				$('<div>', { 'class': 'jFileTime' }).text(uItem.time.replace(/[T|Z]/g, " ")),
 				$('<div>', { 'class': 'jFileSize' }).html(
-					// TODO: i18n
 					vfc.secureCall('mdFormattNumber', uItem.size) 
-					+ '&nbsp;<abbr title="1 KibiByte= 1024 Bytes">KiB</abbr>&nbsp; '
+					+ '&nbsp;' + i18n.kibibyte + '&nbsp; '
 					+ (vfc.secureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + vfc.secureCall('mdFormattNumber', ii.height)) 
 					+ 'px')
 				],
