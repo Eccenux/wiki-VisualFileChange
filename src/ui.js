@@ -1024,10 +1024,10 @@ $.extend(window.VisualFileChange,
  
 		// cute-selection dialog
 		var $metaSelect = $('<select>').attr({ style: 'width:10em;', size: 1 }),
-			$uploaderSelect = $('<select>').attr({ type: 'text', id: 'txtAjaxMdSelectUploader', 'size': 1, placeholder: vfc.i18n.mdCuteSelect.uploader });
+			$uploaderSelect = $('<select>').attr({ type: 'text', id: 'txtAjaxMdSelectUploader', 'size': 1, placeholder: vfc.i18n.cuteSelect.uploader });
 			
 		var dlgSelectButtons = {};
-		dlgSelectButtons[vfc.i18n.mdCuteSelect.button] = function () { 
+		dlgSelectButtons[vfc.i18n.cuteSelect.button] = function () { 
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, "").replace(/_/g, ''));
@@ -1117,7 +1117,7 @@ $.extend(window.VisualFileChange,
 			updateSelectedCount();
 		};
 		
-		var cuteI18n = vfc.i18n.mdCuteSelect,
+		var cuteI18n = vfc.i18n.cuteSelect,
 			$AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
 			.append(cuteI18n.intro)
@@ -1199,7 +1199,7 @@ $.extend(window.VisualFileChange,
 			resizable: false,
 			closeOnEscape: true,
 			position: [($win.width() - dlgWidth - pbWidth) / 2 + pbWidth, ($win.height() - 250) / 2 ],
-			title: 'Cute-Selection: Specify the options, please',
+			title: cuteI18n.heading,
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgSelectButtons,
