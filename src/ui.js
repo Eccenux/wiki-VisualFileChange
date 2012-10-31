@@ -16,6 +16,7 @@ if (window.VisualFileChange.displayComponents) return;
 
 var css,
 	vfc = window.VisualFileChange,
+	i18n = vfc.i18n,
 	$doc = $(document),
 	$win = $(window);
 	
@@ -90,7 +91,7 @@ $.extend(window.VisualFileChange,
 		vfc.pb.setCurrentTaskDone();
 		vfc.pb.setTaskState( 'list', 'md-doing' );
 		if (vfc.mdFirstRun) { // First time only
-			vfc.pb.setHelp(vfc.i18n.mdPleaseWait);
+			vfc.pb.setHelp(i18n.mdPleaseWait);
 		}
 		
 		if (vfc.internalState !== 'md') return;
@@ -634,7 +635,7 @@ $.extend(window.VisualFileChange,
 		/*  The UI  */
 		var _callExec = function(action) {
 			// Save suggestions:
-			if (vfc.i18n.reasonAutoSuggest[action]) {
+			if (i18n.reasonAutoSuggest[action]) {
 				var s  = $.jStorage.get(vfc.summaryChageKey) || {},
 					ss = s[action] || [],
 					nv = vfc.$ctrs.editSummary.val();
@@ -675,21 +676,21 @@ $.extend(window.VisualFileChange,
 		};
 		
 		var dlgButtons = {};
-		dlgButtons[vfc.i18n.submitButtonLabel] = function() {
+		dlgButtons[i18n.submitButtonLabel] = function() {
 			var action = vfc.$ctrs.ajaxMdType.val(),
-				pp = vfc.i18n.mdPotentialProblems,
+				pp = i18n.mdPotentialProblems,
 				cf = vfc.mdCommandsExec[action].confirm;
 				
 			if ($('input[name="mdCheckDelete"]:checked').length === 0) {
 				confirmDlg(pp.titleNf, pp.textNf, pp.back, pp.proceed, vfc.icons.info, action);
 			} else if (cf) {
-				var cfl = vfc.i18n.mdConfirm;
+				var cfl = i18n.mdConfirm;
 				confirmDlg(cfl[cf+'Title'] , cfl[cf], cfl[cf+'Cancel'], cfl[cf+'Ignore'], vfc.icons.question, action);
 			} else {
 				_callExec(action);
 			}
 		};
-		dlgButtons[vfc.i18n.cancelButtonLabel] = function() {
+		dlgButtons[i18n.cancelButtonLabel] = function() {
 			$(this).dialog("close");
 		};
 
@@ -702,7 +703,7 @@ $.extend(window.VisualFileChange,
 					var ugsIntersect = $.map(mw.config.get('wgUserGroups'), function(a) {return $.inArray(a, ugs) < 0 ? null : a;});
 					if (0 === ugsIntersect.length) disabled = 'disabled="disabled"';
 				}
-				sel += '<option value="' + id + '" ' + disabled + '>' + mw.html.escape(vfc.i18n.mdOptions[id]) + '</option>';
+				sel += '<option value="' + id + '" ' + disabled + '>' + mw.html.escape(i18n.mdOptions[id]) + '</option>';
 			});
 			sel += '</select>';
 			return sel;
@@ -718,9 +719,9 @@ $.extend(window.VisualFileChange,
 		vfc.dlg.dialog({
 			modal: false,
 			title: vfc.mdHelpNode +
-				' Action:&nbsp;' +
+				' ' + i18n.action + ':&nbsp;' +
 				getSelect() +
-				'<label for="AjaxMdIa">' + vfc.i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
+				'<label for="AjaxMdIa">' + i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
 			width: $win.width() - 250,
 			height: $win.height(),
 			buttons: dlgButtons,
@@ -746,17 +747,17 @@ $.extend(window.VisualFileChange,
 			defaultHeading;
 		
 		if (si.modeCat) {
-			subHeading = vfc.i18n.filesIn + ' -';
+			subHeading = i18n.filesIn + ' -';
 			defaultHeading = 'Files in [[:' + target + ']] ';
 		}
 		if (si.modeUser) {
-			subHeading = vfc.i18n.filesBy + ' -';
+			subHeading = i18n.filesBy + ' -';
 			targetHref = vfc.mdUserTalkPrefix + targetHref;
 			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] '
 				+ '([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
 		}
 		if (si.modePage) {
-			subHeading = vfc.i18n.filesOn + ' -';
+			subHeading = i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + target + ']] ';
 		}
 		targetHref = mw.util.wikiGetlink(targetHref);
@@ -767,9 +768,9 @@ $.extend(window.VisualFileChange,
 		$.extend(vfc.$ctrs, {
 			ajaxMdType: $('#AjaxMdType'),
 			ajaxMdIa: $('#AjaxMdIa'),
-			taskForUser: $('<label>', { text: vfc.i18n.mdInsertDeleteReasen }).attr({ id: 'mdTaskForUser', 'for': 'mdDeleteReason' }),
+			taskForUser: $('<label>', { text: i18n.mdInsertDeleteReasen }).attr({ id: 'mdTaskForUser', 'for': 'mdDeleteReason' }),
 			deleteReason: $('<textarea></textarea>').attr({ id: 'mdDeleteReason', style: 'width: 99%; height: 40px;' }),
-			editSummaryL: $('<label>', { text: vfc.i18n.mdInsertEditSummary }).attr({ 'for': 'mdEditSummary' }),
+			editSummaryL: $('<label>', { text: i18n.mdInsertEditSummary }).attr({ 'for': 'mdEditSummary' }),
 			editSummary: $('<input>').attr({ type: 'text', id: 'mdEditSummary', style: 'width: 70%;', maxlength: 255, placeholder: "+Edit summary or reason" }),
 			replacePermission: $('<input>').attr({ type: 'checkbox', id: 'mdReplacePermission' }),
 			deleteHeading: $('<input>', { value: defaultHeading }).attr({ type: 'text', id: 'mdDeleteHeading', style: 'width: 99%;', placeholder: "Heading for deletion request" }),
@@ -801,7 +802,7 @@ $.extend(window.VisualFileChange,
 
 		if (!vfc.dlg) return 0;
 		
-		$('<a>', { href: '#', text: vfc.i18n.mdInvertSelection }).button().css('margin', '0px').click(function(e) {
+		$('<a>', { href: '#', text: i18n.mdInvertSelection }).button().css('margin', '0px').click(function(e) {
 			e.preventDefault();
 			var $inputs = $('input[name="mdCheckDelete"]'),
 				$checkedInputs = $inputs.filter(':checked').prop('checked', false),
@@ -809,7 +810,7 @@ $.extend(window.VisualFileChange,
 			updateSelectedCount();
 		}).appendTo( vfc.$ctrs.ajaxMdIa.parent() );		
 		
-		$('<a>', { href: '#', text: vfc.i18n.mdCuteSelectLabel }).button().css('margin', '0px').click(function(e) {
+		$('<a>', { href: '#', text: i18n.mdCuteSelectLabel }).button().css('margin', '0px').click(function(e) {
 			e.preventDefault();
 			vfc.mdCuteSelectDlg.dialog("open");
 		}).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
@@ -827,29 +828,29 @@ $.extend(window.VisualFileChange,
 				vfc.$ctrs.editSummary,
 				$('<span>', { id: 'mdReplacePermissionWrapper' }).append(
 					vfc.$ctrs.replacePermission, 
-					$('<label>', { 'for': 'mdReplacePermission', text: ' ' + vfc.i18n.mdReplacePermissionText })
+					$('<label>', { 'for': 'mdReplacePermission', text: ' ' + i18n.mdReplacePermissionText })
 				)
 			)
 			.append(
 				$('<table>', { cellspacing: 0, cellpadding: 0, style: 'position:relative;', width: '100%' })
 					.append($('<tr>', { id: 'mdRequestPageTitle' }).append(
-						$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: vfc.i18n.mdInsertDeleteHeading })),
+						$('<td>').append($('<label>', { 'for': 'mdDeleteHeading', text: i18n.mdInsertDeleteHeading })),
 						$('<td>', { width: '70%' }).append(vfc.$ctrs.deleteHeading)
 					)).append($('<tr>', { id: 'mdTalkNoteNode' }).append(
-						$('<td>').append($('<label>', { 'for': 'mdTalkNote', text: vfc.i18n.mdInsertTalkNote })),
+						$('<td>').append($('<label>', { 'for': 'mdTalkNote', text: i18n.mdInsertTalkNote })),
 						$('<td>', { width: '70%' }).append(vfc.$ctrs.talkNote)
 					)).append(vfc.mdCreateReplaceNode())
 			)
 			.appendTo($AjaxMdContainer);
 
 			$AjaxMdContainer
-				.append(vfc.$createToggler(vfc.i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads))
+				.append(vfc.$createToggler(i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads))
 				.append(vfc.$ctrs.ajaxMdNotReady, vfc.$ctrs.ajaxMdUlContainer);
  
 		// Add label to the button
 		var $buttons = vfc.dlg.parent().find('.ui-dialog-buttonpane button'),
 			$submitButton = $buttons.eq(0).specialButton('proceed').button({ 
-				label: $('<span>', { text: vfc.i18n.submitButtonLabel }).append( vfc.$ctrs.ajaxMdActionConfirm ) 
+				label: $('<span>', { text: i18n.submitButtonLabel }).append( vfc.$ctrs.ajaxMdActionConfirm ) 
 			}),
 			$cancelButton = $buttons.eq(1).specialButton('cancel');
 
@@ -865,7 +866,7 @@ $.extend(window.VisualFileChange,
 			if ( (reason.length < vfc.minLenReq ) || (summary.length < vfc.summaryMinLen) ) {
 				$submitButton.button('option', 'disabled', true);
 				if (vfc.minLenReq) {
-					vfc.pb.setHelp2(vfc.i18n.mdSpecifyReason.replace('%mdMinReasonLen%', vfc.minLenReq), true);
+					vfc.pb.setHelp2(i18n.mdSpecifyReason.replace('%mdMinReasonLen%', vfc.minLenReq), true);
 				}
 			} else {
 				$submitButton.button('option', 'disabled', false);
@@ -892,7 +893,7 @@ $.extend(window.VisualFileChange,
 		var updateSelectedCount = function () {
 			var $inputs = $('input[name="mdCheckDelete"]');
 			var $checkedInputs = $inputs.filter(':checked');
-			vfc.pb.setHelp3(vfc.i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
+			vfc.pb.setHelp3(i18n.mdSelectedCount.replace('%C%', $checkedInputs.length));
 			$inputs.closest('li.gallerybox').removeClass('md-selected');
 			$checkedInputs.closest('li.gallerybox').addClass('md-selected');
 		};
@@ -969,7 +970,7 @@ $.extend(window.VisualFileChange,
 			
 			// acceptReason
 			if (opt.reasonText) {
-				vfc.$ctrs.taskForUser.text(vfc.i18n[opt.reasonText]);
+				vfc.$ctrs.taskForUser.text(i18n[opt.reasonText]);
 				vfc.$ctrs.taskForUser.show();
 				vfc.$ctrs.deleteReason.show();
 			} else {
@@ -985,7 +986,7 @@ $.extend(window.VisualFileChange,
 			}
 			// confirmation
 			if (opt.reasonParse) {
-				vfc.pb.setHelp(vfc.i18n[opt.reasonParse]);
+				vfc.pb.setHelp(i18n[opt.reasonParse]);
 			} else {
 				vfc.pb.setHelp2('');
 				vfc.pb.setHelp('');
@@ -1008,13 +1009,13 @@ $.extend(window.VisualFileChange,
 			} else {
 				$('#mdReplacePermissionWrapper').hide();
 			}
-			vfc.$ctrs.ajaxMdActionConfirm.text(' (' + vfc.i18n.mdOptions[action] + ')');
+			vfc.$ctrs.ajaxMdActionConfirm.text(' (' + i18n.mdOptions[action] + ')');
 			
 			// Summary / Reason input
-			vfc.$ctrs.editSummaryL.text(vfc.i18n[(opt.addSummary || 'mdInsertEditSummary')]);
+			vfc.$ctrs.editSummaryL.text(i18n[(opt.addSummary || 'mdInsertEditSummary')]);
 			
 			// Reason autocomplete
-			vfc.mdMwReasonToAutocomplete(vfc.i18n.reasonAutoSuggest[action], vfc.$ctrs.editSummary, action);
+			vfc.mdMwReasonToAutocomplete(i18n.reasonAutoSuggest[action], vfc.$ctrs.editSummary, action);
 		});
 		vfc.$ctrs.ajaxMdType.val(vfc.mdSettings.defaultAction);
 		vfc.$ctrs.ajaxMdType.change();
@@ -1024,10 +1025,10 @@ $.extend(window.VisualFileChange,
  
 		// cute-selection dialog
 		var $metaSelect = $('<select>').attr({ style: 'width:10em;', size: 1 }),
-			$uploaderSelect = $('<select>').attr({ type: 'text', id: 'txtAjaxMdSelectUploader', 'size': 1, placeholder: vfc.i18n.cuteSelect.uploader });
+			$uploaderSelect = $('<select>').attr({ type: 'text', id: 'txtAjaxMdSelectUploader', 'size': 1, placeholder: i18n.cuteSelect.uploader });
 			
 		var dlgSelectButtons = {};
-		dlgSelectButtons[vfc.i18n.cuteSelect.button] = function () { 
+		dlgSelectButtons[i18n.cuteSelect.button] = function () { 
 			var $curThmb = '';
 			var newVal = $('#chkAjaxMdSelect')[0].checked;
 			var v_txtAjaxMdSelectCat = $.trim($('#txtAjaxMdSelectCat').val().replace(/^Category\:/, "").replace(/_/g, ''));
@@ -1117,7 +1118,7 @@ $.extend(window.VisualFileChange,
 			updateSelectedCount();
 		};
 		
-		var cuteI18n = vfc.i18n.cuteSelect,
+		var cuteI18n = i18n.cuteSelect,
 			$AjaxMdCuteSelect = $('<div>', { id: 'AjaxMdCuteSelect' } );
 		$AjaxMdCuteSelect
 			.append(cuteI18n.intro)
@@ -1166,7 +1167,7 @@ $.extend(window.VisualFileChange,
 								gravity: 's',
 								html: true,
 								title: function() {
-									return vfc.i18n.optStartAtHowTo;
+									return i18n.optStartAtHowTo;
 							} }),
 						$('<label>', { 'for': 'txtAjaxMdSelectDate1' }).append($('<abbr>', { 
 							text: cuteI18n.and,
@@ -1186,7 +1187,7 @@ $.extend(window.VisualFileChange,
 								gravity: 's',
 								html: true,
 								title: function() {
-									return vfc.i18n.optStartAtHowTo;
+									return i18n.optStartAtHowTo;
 							} })
 					))
 			)
@@ -1234,7 +1235,7 @@ $.extend(window.VisualFileChange,
 			id: "mdQueryMore",
 			align: "center"
 		});
-		vfc.$mdQueryMoreBtn = $('<button>', { id: 'mdQueryMoreBtn', text: vfc.i18n.mdMore })
+		vfc.$mdQueryMoreBtn = $('<button>', { id: 'mdQueryMoreBtn', text: i18n.mdMore })
 				.button({ disabled: true, icons: { primary: 'ui-icon-arrowthick-1-s', secondary: 'ui-icon-arrowthick-1-s' } })
 				.click( function (event) { vfc.mdQueryMore(); })
 				.appendTo($queryMore);
@@ -1641,13 +1642,13 @@ $.extend(window.VisualFileChange,
 					if (si.modeUser && !vfc.mdNoMoreFiles) {	// When no files in cat/page-mode are found, it's clear there are no more files
 						return;
 					} else {
-						vfc.infoTextToEndDlg.push(vfc.i18n.mdNoResult.replace("%TARGET%", vfc.queryParams.target));
+						vfc.infoTextToEndDlg.push(i18n.mdNoResult.replace("%TARGET%", vfc.queryParams.target));
 					}
 				}
 				if (si.modeUser) {
 					$.each(vfc.mdCommandsPostExec[vfc.mdSettings.defaultAction], function(id, task) {
 						vfc.addTask(task);
-						if (task in vfc.i18n.task) vfc.pb.addTask(task);
+						if (task in i18n.task) vfc.pb.addTask(task);
 					});
 				}
 				vfc.addTask('mdExecuteReady');
@@ -1689,13 +1690,13 @@ $.extend(window.VisualFileChange,
 		this.internalState = 'ready';
 		this.pb.setCurrentTaskDone();
 
-		var i18n = vfc.i18n.endDlg,
-			$dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: i18n.heading, text: i18n.intro })
-			.append($('<br/>'), $('<a>', { href: '#', text: i18n.saveInProfile }).button().click(function(e) {
+		var i18nED = i18n.endDlg,
+			$dlgNode = $('<div>', { id: 'mdWhereToGoDlg', title: i18nED.heading, text: i18nED.intro })
+			.append($('<br/>'), $('<a>', { href: '#', text: i18nED.saveInProfile }).button().click(function(e) {
 				e.preventDefault();
 				vfc.mdProfile();
 			}))
-			.append($('<br/>'), mw.html.escape(i18n.aboutLastExec));
+			.append($('<br/>'), mw.html.escape(i18nED.aboutLastExec));
 		var $ulNode = $('<ul>');
 		
 		var addLink = function(href, text, target) {
@@ -1709,32 +1710,32 @@ $.extend(window.VisualFileChange,
 		
 		if (this.api.wasError) {
 			$dlgNode.append(
-				$.createNotifyArea(i18n.errorDuringTask, 'ui-icon-alert', 'ui-state-error')
+				$.createNotifyArea(i18nED.errorDuringTask, 'ui-icon-alert', 'ui-state-error')
 			);
 		}
 		$.each(this.infoTextToEndDlg, function(i, text) {
 			$dlgNode.append($.createNotifyArea(text, 'ui-icon-info', 'ui-state-highlight'));			
 		});
-		addLink('Special:MyContributions', i18n.checkContribs, 'contribswindow');
+		addLink('Special:MyContributions', i18nED.checkContribs, 'contribswindow');
 		
 		if ( this.mdInsertedTag ) {
 			var encTitle;
 			if ('del' === this.mdTaskToPerform) {
 				// allow navigating to the new created deletion request
-				addLink(this.requestPage, i18n.goToRequestPage);
+				addLink(this.requestPage, i18nED.goToRequestPage);
 			}
 			if (this.startInput.modeUser && (-1 === $.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']))) {
-				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, i18n.goUserTalk);
-				addLink(this.mdContribPrefix + vfc.queryParams.target, i18n.goUserContribs);
+				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, i18nED.goUserTalk);
+				addLink(this.mdContribPrefix + vfc.queryParams.target, i18nED.goUserContribs);
 				// Revert files overwritten by this user ....
 			}
-			addLink(mw.config.get('wgPageName'), i18n.reload, '_self');
+			addLink(mw.config.get('wgPageName'), i18nED.reload, '_self');
 		}
 		$dlgNode.append($ulNode).dialog({
 			show: { effect: 'highlight', duration: 1800 },
 			width: Math.min(450, $win.width())
 		});
-		document.title = i18n.title;
+		document.title = i18nED.title;
 		vfc.$dialogsToClose.push($dlgNode);
 	}
 });
