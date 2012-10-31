@@ -51,6 +51,7 @@ $(function () {
 var VisualFileChange,
 	vfc,
 	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1),
+	portletText = "VFC: Translation…",
 	$doc = $(document),
 	$win = $(window);
 
@@ -70,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.39.0',
+	scriptRevision: '0.9.40.0',
 	
 
 	/**
@@ -96,26 +97,43 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.username = mw.user.getName() || Geo.IP || "anonymous";
 
 
-		var $tAjaxQuickDeleteOnDemand = $("#t-AjaxQuickDeleteOnDemand");
-		if ( 1 === $tAjaxQuickDeleteOnDemand.length ) {
+		var $nestedA,
+			autostart = false,
+			$portlet = $("#t-AjaxQuickDeleteOnDemand");
+			
+		if ( 1 === $portlet.length ) {
 			// User is using the load on demand feature. 
-			// Replace the link
-			$tAjaxQuickDeleteOnDemand.remove();
-			mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.start();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
+			// alter the link later but start now
+			$nestedA = $portlet.find('a');
+			if ($nestedA.length) $portlet = $nestedA;
 			
 			// Immedately start Md
-			vfc.start();
+			autostart = true;
 		} else {
 			if ( "MediaWiki:VisualFileChange.js" === mw.util.getParamValue('withJS') ) {
 				// Load immediately and add no link
+				autostart = true;
+			} // else: User wrongly uses VFC with importScript
+			
+			// Create a new portlet
+			$portlet = $(mw.util.addPortletLink('p-tb', '#', 'VFC'));
+		}
+		if ( 1 === $portlet.length ) {
+			$nestedA = $portlet.find('a');
+			if ($nestedA.length) $portlet = $nestedA;
+			$portlet.text(vfc.i18n.mdButtonLabel).attr({
+				href: '#start_VisualFileChange',
+				title: "Launch VisualFileChange",
+				id: 't-AjaxQuickDeletx2'
+			}).click(function(e) {
+				e.preventDefault();
+				$portlet.text(portletText);
 				vfc.start();
- 
-			} else if (mw.config.get('wgNamespaceNumber') !== 14) {
-				// Set up toolbox link
-				mw.util.addPortletLink('p-tb', 'javascript:VisualFileChange.start();', vfc.i18n.mdButtonLabel, 't-AjaxQuickDeletx2');
-			}
+			});
+			vfc.$portlet = $portlet;
 		}
 		$doc.triggerHandler('vFC', ['installed', vfc]);
+		if (autostart) $portlet.click();
 	},
 	
 	/**
@@ -214,6 +232,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			pb;
 		
 		$doc.triggerHandler('vFC', ['starting procedure', vfc]);
+		vfc.$portlet.text(vfc.i18n.mdButtonLabel);
 
 		pb = vfc.pb = new ProgressBox(undefined, vfc);
 		pb.addTask('start');
@@ -1440,6 +1459,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdTargetInput: "User or category:",
 		mdLoadThumbs: "Load thumbnails",
 		mdLoadWikitext: "Load wikitext",
+		action: "Action",
 		mdDisselectAll: " (De-)select&nbsp;all&nbsp;loaded:&nbsp;",
 		mdInvertSelection: "Invert selection",
 		mdInsertDeleteReasen: "Select the files to delete and fill in the reason, please",
