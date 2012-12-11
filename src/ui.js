@@ -328,7 +328,7 @@ $.extend(window.VisualFileChange,
 
 				var newText,
 					oldText = curUpld.content,
-					replaceContainer = vfc.nowikiEscaper(oldText);
+					replaceContainer = mw.libs.wikiDOM.nowikiEscaper(oldText);
 					
 				replaceContainer.alsoPreserve(vfc.$alsoPreserve.val());
 
@@ -1335,7 +1335,7 @@ $.extend(window.VisualFileChange,
 		});
 		$galleryBox.$thumb = $thumb;
 		if (addGU) {
-			$gbGU.badge(Infinity);
+			$gbGU.badge('?');
 			$galleryBox.$gbGU = $gbGU;
 		}
 		return $galleryBox;
@@ -1760,7 +1760,8 @@ mw.loader.using([
 	'jquery.jStorage',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
-	'ext.gadget.jquery.blockUI'
+	'ext.gadget.jquery.blockUI',
+	'ext.gadget.libWikiDOM'
 ], function() {
 	$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'displayComponents']);
 });
