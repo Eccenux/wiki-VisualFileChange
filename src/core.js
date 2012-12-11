@@ -1283,7 +1283,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		{
 			'name': 'userNote', 
 			'label': 'Additional note to leave on the user\'s talk page', 
-			'default': 'Yours sincerely',
+			'default': 'Yours sincerely,',
 			'controls': '#mdTalkNote'
 		}, {
 			'name': 'firstTest', 
