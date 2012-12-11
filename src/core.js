@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.42.0',
+	scriptRevision: '0.9.43.0',
 	
 
 	/**
@@ -1283,7 +1283,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		{
 			'name': 'userNote', 
 			'label': 'Additional note to leave on the user\'s talk page', 
-			'default': 'Yours sincerely,',
+			'default': 'Yours sincerely',
 			'controls': '#mdTalkNote'
 		}, {
 			'name': 'firstTest', 
