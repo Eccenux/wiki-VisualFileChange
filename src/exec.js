@@ -260,236 +260,6 @@ $.extend(window.VisualFileChange,
 		if (0 === this.mdUploadCt) this.nextTask();
 	},
 	
-	/**
-	 *  A powerful and easily extensible way to preserve certain areas during regex-replaces
-	 *  (c) 2012 Rainer Rillke, License: GPL
-	 *
-	 * @constructormethod
-	 *   @example
-	 *      var nwe1 = VisualFileChange.nowikiEscaper(pageText1);
-	 *      var nwe2 = VisualFileChange.nowikiEscaper(pageText2);
-	 *   @description
-	 *      You can pass an initial text to the object-function. 
-	 *      The return value is an object. Perform all actions on the returned object!
-	 *
-	 * @methods
-	 * -getText()
-	 *   @example var newPageText = nwe.getText()
-	 *   @description -> retrieves the stored text
-	 *
-	 * -setText(pageText)
-	 *   @example nwe.setText(pageText) 
-	 *   @description -> set a new text; overrides the old content
-	 *
-	 * -secureReplace(pattern, replace)
-	 *   @example nwe.secureReplace(pattern, replace)
-	 *   @description -> replace the pattern with replace; securely preserve nowikis
-	 *
-	 * -ordinaryReplace(pattern, replace)
-	 *   @example nwe.ordinaryReplace('<!-- Comment to remove -->', '')
-	 *   @description -> do an ordinary javaScript replace
-	 *
-	 * -replace(pattern, replace)
-	 *   @example nwe.replace(/(.)abc(.)/, '$2abc$1')
-	 *   @description -> replace the pattern with replace; allow extended use of substring () and $1..$9
-	 *
-	 * -doCleanUp(pattern, replace)
-	 *   @example nwe.doCleanUp()
-	 *   @description -> clean up the stored text
-	 *
-	 * -alsoPreserve(regexp)
-	 *   @example nwe.alsoPreserve('(<gallery>(?:.|\n)*?<\/gallery>)')
-	 *   @description -> allows preserving other areas than just the predefined ones
-	 *
-	**/
-	nowikiEscaper: function(inputText) {
-		// Private
-		// Data-variables
-		var // The text is always kept up-to-date and contains the actual wikitext
-			_text = inputText || '',
-			// Contains the text where <nowikis> have been replaced by a placeholder
-			placeholderText = '',
-			// Contains the stripped nowikis from placeholderText
-			nowikis = {},
-			// An array of objects [{ preserve: bool, text: textfragment }, ... ]
-			fragmentedText = [],
-			// If the fragments are altered and this is not reflected in the placeholderText yet
-			fragmentsAreDirty = false,
-			// If the placeholderText is altered and this is not reflected in the fragmentedText yet
-			placeholderTextDirty = false,
-			// If the text was manipulated and this is not reflected in the "escaped" texts yet
-			textDirty = false;
-		
-		// Constants
-		// The order is important here in cases where they match the same, the fist will be used
-		var reToPreserve = 
-		[
-			/(<nowiki>(?:.|\n)*?<\/nowiki>)/,
-			/(<\!\-\-\s*categories\s*by\s*commonsense\s*\-\->)/i,
-			/(<!\-\-(?:.|\n)*?\-\->)/
-		];
-		
-		var reToPreservePattern = /^\s*(\/\(\)\/)\s*$/;
-		
-		// Functions
-		var noMatchToInfinity = function(pos) {
-			if (-1===pos) return Infinity;
-			return pos;
-		};
-		var eachPosition = function(text, fn) {
-			while ( text ) {
-				var arrPos = [];
-				$.each(reToPreserve, function(i, regex) {
-					arrPos.push(noMatchToInfinity(text.search(regex)));
-				});
-				text = fn(text, arrPos);
-			}
-		};
-		var nearestMatch = function(paramArray) {
-			var validArgs = [],
-				a = paramArray.length-1;
-
-			for (;a >= 0; a--) {
-				if (-1 !== paramArray[a]) validArgs.push(paramArray[a]);
-			}
-			// If validArgs.length is 0, Infinity (the biggest number possible) is returned
-			return Math.min.apply(window, validArgs);
-		};
-		var buildFragmentsFromText = function() {
-			fragmentedText = [];
-			eachPosition(_text, function(text, arrPos) {
-				var nearestPos = nearestMatch(arrPos);
-				if (0 !== nearestPos) {
-					// Slice until this position
-					fragmentedText.push({ preserve: false, text: text.slice(0, nearestPos) });
-					return text.slice(nearestPos);
-				} else {
-					var newText;
-					$.each(arrPos, function(i, pos) {
-						if (0 === pos) {
-							newText = text.replace(reToPreserve[i], '');
-							fragmentedText.push({ preserve: true, text: RegExp.$1 });
-							return false;
-						}
-					});
-					return newText;
-				}
-			});
-			return fragmentedText;
-		};
-		var buildPlaceholderText = function() {
-			placeholderText = '';
-			eachPosition(_text, function(text, arrPos) {
-				var nearestPos = nearestMatch(arrPos);
-				if (0 !== nearestPos) {
-					// Slice until this position
-					placeholderText += text.slice(0, nearestPos);
-					return text.slice(nearestPos);
-				} else {
-					var newText, rdm = '%v%f%c%' + Math.round(Math.random()*68719476736) + '%V%F%C%';
-					$.each(arrPos, function(i, pos) {
-						if (0 === pos) {
-							newText = text.replace(reToPreserve[i], '');
-							placeholderText += rdm;
-							nowikis[rdm] = RegExp.$1;
-							return false;
-						}
-					});
-					return newText;
-				}
-			});
-			return placeholderText;
-		};
-		var fragmentsToText = function() {
-			_text = '';
-			$.each(fragmentedText, function(i, fragmentObj) {
-				_text += fragmentObj.text;
-			});
-			return _text;
-		};
-		var placeholderTextToText = function() {
-			_text = placeholderText;
-			$.each(nowikis, function(id, nowikiContent) {
-				_text = _text.replace(id, nowikiContent);
-			});
-			return _text;
-		};
-		var updateFragments = function() {
-			_text = placeholderTextToText();
-			placeholderTextDirty = false;
-			return buildFragmentsFromText();
-		};
-		var updatePlaceholderText = function() {
-			_text = fragmentsToText();
-			fragmentsAreDirty = false;
-			return buildPlaceholderText();
-		};
-		var updateEscapedText = function() {
-			buildFragmentsFromText();
-			buildPlaceholderText();
-			textDirty = false;
-		};
-		if (_text) {
-			textDirty = true;
-		}
-
-		// Public interface
-		return {
-			setText: function(text) {
-				_text = text;
-				placeholderTextDirty = false;
-				fragmentsAreDirty = false;
-				textDirty = true;
-			},
-			getText: function() {
-				if (placeholderTextDirty) placeholderTextToText();
-				if (fragmentsAreDirty) fragmentsToText();
-				return _text;
-			},
-			secureReplace: function(pattern, replace) {
-				if (textDirty) updateEscapedText();
-				if (placeholderTextDirty) updateFragments();
-				$.each(fragmentedText, function(i, fragmentObj) {
-					if (fragmentObj.preserve) return;
-					fragmentObj.text = fragmentObj.text.replace(pattern, replace);
-				});
-				fragmentsAreDirty = true;
-			},
-			ordinaryReplace: function(pattern, replace) {
-				if (fragmentsAreDirty) updatePlaceholderText();
-				if (placeholderTextDirty) updateFragments();
-				_text = _text.replace(pattern, replace);
-				textDirty = true;
-			},
-			replace: function(pattern, replace) {
-				if (textDirty) updateEscapedText();
-				if (fragmentsAreDirty) updatePlaceholderText();
-				placeholderText = placeholderText.replace(pattern, replace);
-				placeholderTextDirty = true;
-			},
-			alsoPreserve: function(regex) {
-				if ('object' === typeof regex && regex.test){
-					reToPreserve.push(regex);
-					return true;
-				} else if ('string' === typeof regex) {
-					var m = regex.match(reToPreservePattern);
-					if (m && m[1]) {
-						reToPreserve.push(new RegExp(m[1]));
-						return true;
-					}
-				}
-			},
-			doCleanUp: function() {
-				this.secureReplace('== Summary ==', '== {{int:filedesc}} ==');
-				this.secureReplace('== Beschreibung ==', '== {{int:filedesc}} ==');
-				this.secureReplace('== Licensing ==', '== {{int:license-header}} ==');
-				this.secureReplace('== License ==', '== {{int:license-header}} ==');
-				this.secureReplace('== Lizenz ==', '== {{int:license-header}} ==');
-				return this.getText();
-			}
-		};
-	},
-	
 	mdRefreshCache: function () {
 		$doc.triggerHandler('vFC', ['refreshing cache of file-wikitext', vfc]);
 		vfc.pb.setCurrentTaskDone();
@@ -542,7 +312,7 @@ $.extend(window.VisualFileChange,
 		vfc.mdUploadCt = 0;
 
 		var replaceSecurityLevel = vfc.$selPreserve.val(),
-			replaceContainer = vfc.nowikiEscaper();
+			replaceContainer = mw.libs.wikiDOM.nowikiEscaper();
 
 			if ('c_replace' === vfc.mdTaskToPerform) replaceContainer.alsoPreserve(vfc.$alsoPreserve.val());
 
@@ -811,7 +581,11 @@ $.extend(window.VisualFileChange,
 	}
 });
 
-$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
+mw.loader.using([
+	'ext.gadget.libWikiDOM'
+	], function() {
+	$doc.triggerHandler('scriptLoaded', ['VisualFileChange', 'editComponents']);
+});
 
 }(jQuery, mediaWiki));
 // </nowiki>
