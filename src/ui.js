@@ -1725,7 +1725,11 @@ $.extend(window.VisualFileChange,
 		$.each(this.infoTextToEndDlg, function(i, text) {
 			$dlgNode.append($.createNotifyArea(text, 'ui-icon-info', 'ui-state-highlight'));			
 		});
-		addLink('Special:MyContributions', i18nED.checkContribs, 'contribswindow');
+		if ('aDelete' === this.mdTaskToPerform) {
+			addLink('Special:Log/delete/' + this.username.replace(/ /g, '_'), i18nED.checkDeletions);
+		} else {
+			addLink('Special:MyContributions', i18nED.checkContribs, 'contribswindow');
+		}
 		
 		if ( this.mdInsertedTag ) {
 			var encTitle;
