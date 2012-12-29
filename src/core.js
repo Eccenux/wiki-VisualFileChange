@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.43.0',
+	scriptRevision: '0.9.43.2',
 	
 
 	/**
@@ -1202,7 +1202,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'prepNf':	{ summary: "Inserting \"%pattern%\"" },
 		'append':	{ summary: "Inserting \"%pattern%\"" },
 		'cv':		{ tag: "{{copyvio|1=%REASON%}}\n",    summary: "%cv% %REASON%" },
-		'cv-dw':	{ tag: "{{Derivative|1=%REASON%}}\n", summary: "%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright." },
+		'cv-dw':	{ tag: "{{copyvio|1=Derivative work of copyrighted material. %REASON%}}\n", summary: "%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright." },
 		'cv-fu':	{ tag: "{{Fair use}}\n",              summary: "%cv% [[COM:FU|fair use]] media are not allowed on Commons." },
 		'cv-logo':	{ tag: "{{Logo}}\n",                  summary: "%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright." },
 		'cv-ndw':	{ tag: "{{Nonderivative}}\n",         summary: "%cv% no derivatives are allowed, which is [[COM:L|incompatible with Commons]]." },
@@ -1551,6 +1551,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			errorDuringTask: "We regret the the inconvenience: The Server-API returned an error during executing your requested task. " +
 				"Please check your contributions, whether something went wrong.",
 			checkContribs: "Check your contributions",
+			checkDeletions: "Check deletion log",
 			goToRequestPage: "Go to the created request page",
 			goUserTalk: "Look at the user\'s talk-page",
 			goUserContribs: "…or the user\'s contribs",
