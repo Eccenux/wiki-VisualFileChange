@@ -1113,7 +1113,7 @@ $.extend(window.VisualFileChange,
 						}
 					} else { isMatch.meta = true; }
  
-					if ( isMatch.cat && isMatch.title && isMatch.content && isMatch.size && isMatch.meta && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
+					if ( isMatch.cat && isMatch.title && isMatch.content && isMatch.size && isMatch.meta && isMatch.uploder && isMatch.date0 && isMatch.date1 && (1 === $curThmb.length) ) $curThmb[0].checked = newVal;
 				} catch (ex) { vfc.log('Error: ' + ex); }
 			});
 			updateSelectedCount();
@@ -1207,6 +1207,7 @@ $.extend(window.VisualFileChange,
 			buttons: dlgSelectButtons,
 			open: function(evt, ui) {
 				$metaSelect.children().remove();
+				$uploaderSelect.children().remove();
 				$('<option>', { text: ' ', value: '' }).appendTo($metaSelect).clone().appendTo($uploaderSelect);
 				vfc.metaKeys.sort();
 				vfc.allUploaders.sort();
