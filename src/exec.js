@@ -432,12 +432,12 @@ $.extend(window.VisualFileChange,
 		$doc.triggerHandler('vFC', ['creating request subpage', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdListRequestSubpage', 'md-doing');
-		var page = {};
-		page.title = this.dailyLogPage;
-
-		page.text = "\n{{" + this.requestPage + "}}\n";
-		page.watchlist = 'nochange';
-		page.editType = 'appendtext';
+		var page = {
+			title: this.dailyLogPage,
+			text: '\n{{' + this.requestPage + '}}\n',
+			watchlist: 'nochange',
+			editType: 'appendtext'
+		};
 
 		this.mdEdit(page, "Listing [[" + this.requestPage + "]]", 'mdListRequestSubpageCB', 'mdListRequestSubpageCB');
 	},
@@ -450,6 +450,73 @@ $.extend(window.VisualFileChange,
 			this.pb.setCurrentTaskDone();
 		}
 		this.nextTask();
+	},
+	
+	isMobile: function (cats) {
+		var isMobile = false;
+
+		for (var i = 0, len = cats.length; i < len; i++) {
+			isMobile = isMobile || /^Category:Uploaded with Mobile/.test(cats[i].title);
+		}
+		return isMobile;
+	},
+
+	listMobileUpload: function () {
+		var isMobile = false;
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('listMobileUpload', 'md-doing');
+		
+		$.each(vfc.iUploads, function(title, upli) {
+			if (!vfc.iUploads.hasOwnProperty(title) || -2 !== upli.iId) return;
+			isMobile = isMobile || vfc.isMobile(upli.categories);
+		});
+		if (!isMobile) {
+			vfc.pb.setCurrentTaskDone();
+			return vfc.nextTask();
+		}
+		
+		var page = {
+			title: 'Commons:Deletion requests/mobile tracking',
+			text: '\n{{' + vfc.requestPage + '}}\n',
+			watchlist: 'nochange',
+			editType: 'appendtext'
+		};
+
+		vfc.mdEdit(page, "Listing [[" + vfc.requestPage + "]]", 'listMobileUploadCB', 'listMobileUploadCB');
+	},
+	
+	listMobileUploadCB: function (result, query, err) {
+		if (err) {
+			this.pb.setCurrentTaskState('md-attention');
+			this.pb.setError(err);
+		} else {
+			this.pb.setCurrentTaskDone();
+		}
+		this.nextTask();
+	},
+
+	listMobileUploadSpeedy: function () {
+		var mobileUploads = [];
+		vfc.pb.setCurrentTaskDone();
+		vfc.pb.setTaskState('listMobileUploadSpeedy', 'md-doing');
+		
+		$.each(vfc.iUploads, function(title, upli) {
+			if (!vfc.iUploads.hasOwnProperty(title) || -2 !== upli.iId) return;
+			if (vfc.isMobile(upli.categories)) mobileUploads.push(title);
+		});
+		if (!mobileUploads.length) {
+			vfc.pb.setCurrentTaskDone();
+			return vfc.nextTask();
+		}
+	
+		var page = {
+			title: 'Commons:Mobile app/deletion request tracking',
+			text: '\n# [[:' + mobileUploads.join(']]\n# [[:') + ']]',
+			watchlist: 'nochange',
+			editType: 'appendtext'
+		};
+
+		vfc.mdEdit(page, "Listing uploads", 'listMobileUploadCB', 'listMobileUploadCB');
 	},
 	
 	mdTemplateAdded: function (result, query, err) {
