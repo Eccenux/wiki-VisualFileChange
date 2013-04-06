@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.44.0',
+	scriptRevision: '0.9.45.0',
 	
 
 	/**
@@ -1241,16 +1241,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'] },
 		'prepNf':	{ tasks: ['mdPrependText', 'mdPrependTemplate', 'mdNotifyUploaders'] },
 		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'] },
-		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'cv-fu':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'del':		{ cleanReason: true, tasks: ['mdCreateRequestSubpage', 'mdPrependTemplate', 'mdNotifyUploaders', 'mdListRequestSubpage'] },
-		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'], userGroups: ['user'] },
-		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
-		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
+		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'cv-fu':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'del':		{ cleanReason: true, tasks: ['mdCreateRequestSubpage', 'mdPrependTemplate', 'mdNotifyUploaders', 'mdListRequestSubpage', 'listMobileUpload'] },
+		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
 		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'aDelete':	{ cleanReason: true, tasks: ['mdDelete'], userGroups: ['sysop'], confirm: 'deleteConfirm' }
@@ -1648,6 +1648,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdNotifyUploaders: 'Notifying uploaders.',
 			mdCreateRequestSubpage: 'Creating request subpage.',
 			mdListRequestSubpage: 'Listing request subpage to the daily list.',
+			listMobileUpload: 'tracking mobile uploads',
+			listMobileUploadSpeedy: 'tracking mobile uploads',
 			mdRvGenOGallery: 'Revert overwritten files?',
 			mdDelete: 'Deleting files'
 		},
@@ -1678,6 +1680,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdInsertOTRS: "An error occurred while preparing the page-content of permission.",
 			mdCreateRequestSubpage: "An error occurred creating the deletion-request subpage.",
 			mdListRequestSubpage: "There was an error while listing the request-subpage.",
+			listMobileUpload: 'There was an error while listing mobile upload',
+			listMobileUploadSpeedy: 'There was an error while listing mobile upload',
 			mdPrependText: "There was an error prepending free-text to files.",
 			mdAppendText: "There was an error appending free-text to files.",
 			mdTemplateAdded: "An error occurred after a template has been added to a description page.",
