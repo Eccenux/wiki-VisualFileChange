@@ -247,11 +247,12 @@ $.extend(window.VisualFileChange,
  
 		for (var upload in this.iUploads) {
 			if (this.iUploads.hasOwnProperty(upload) && (-2 === this.iUploads[upload].iId)) {
-				var page = {};
-				page.title = upload;
-				page.text = this.tag;
-				page.editType = edittype;
-				page.watchlist = this.mdSettings.watchlistFiles;
+				var page = {
+					title: upload,
+					text: this.tag,
+					editType: edittype,
+					watchlist: this.mdSettings.watchlistFiles
+				};
 				
 				this.mdUploadCt++;
 				this.mdEdit(page, this.file_summary, 'mdTemplateAdded', 'mdTemplateAdded');
@@ -399,12 +400,13 @@ $.extend(window.VisualFileChange,
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState('mdCreateRequestSubpage', 'md-doing');
 		
-		var page = {};
-		page.title = this.requestPage;
-		page.text = "\n\n=== " + this.mdDeleteHeading + " ===\n\n" + this.requestPageContents + "\n~~" + "~~\n";
-		page.watchlist = 'watch';
-		page.editType = 'appendtext';
-		page.create = true;
+		var page = {
+			title: this.requestPage,
+			text: '\n=== ' + this.mdDeleteHeading + ' ===\n\n' + this.requestPageContents + '\n~~' + '~~\n',
+			watchlist: 'watch',
+			editType: 'appendtext',
+			create: true
+		};
 		
 		$doc.triggerHandler('vFC', ['request subpage', this, page]);
 		this.mdEdit(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
@@ -419,6 +421,8 @@ $.extend(window.VisualFileChange,
 		}
 		this.nextTask();
 	},
+	
+	
 	
 	/**
 	** Transclude the nomination page onto today's DR log page, creating it if necessary.
