@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.43.2',
+	scriptRevision: '0.9.44.0',
 	
 
 	/**
@@ -1192,6 +1192,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ tag: "{{subst:image permission|1=%FILE%}}", summary: "Please send permission for [[%FILE%]] (and the listed ones) to [[COM:OTRS|OTRS]]." },
 		'ns':		{ tag: "{{subst:image source|1=%FILE%}}" ,    summary: "[[%FILE%]] (and the listed ones) need [[COM:Source|a source]] added to the file description." },
 		'ns-dw':	{ tag: "{{subst:dw image source|1=%FILE%}}",  summary: "[[%FILE%]] (and the listed ones) are [[COM:DW|derivative works]] and adding sources to the file description is required." },
+		'nl':		{ tag: "{{subst:image license|1=%FILE%}}",    summary: "[[%FILE%]] (and the listed ones) do not have valid [[Commons:Copyright tags|copyright tags]]." },
 		'otrs':		{ },
 		'other':	{ },
 		'aDelete':	{ }
@@ -1210,6 +1211,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ tag: "{{subst:npd}}\n",             summary: "Missing [[COM:PERMISSION|permission]]." },
 		'ns':		{ tag: "{{subst:nsd}}\n" ,            summary: "File has no [[COM:Source|source]]." },
 		'ns-dw':	{ tag: "{{subst:Dw-nsd}}\n",          summary: "File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given." },
+		'nl':		{ tag: "{{subst:nld}}",               summary: "Missing a valid [[Commons:Copyright tags|copyright tag]] (/[[Commons:Licensing|license]])." },
 		'otrs':		{ summary: "Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags." },
 		'other':	{ summary: "Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file." },
 		'aDelete':	{ summary: "" }
@@ -1229,6 +1231,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ minLenReq: 0, bLimit: 140 },
 		'ns':		{ minLenReq: 0, bLimit: 140 },
 		'ns-dw':	{ minLenReq: 0, bLimit: 80 },
+		'nl':		{ minLenReq: 0, bLimit: 90 },
 		'otrs':		{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 85 },
 		'other':	{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 90 },
 		'aDelete':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' }
@@ -1247,6 +1250,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'], userGroups: ['user'] },
 		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
 		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
+		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders'] },
 		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'aDelete':	{ cleanReason: true, tasks: ['mdDelete'], userGroups: ['sysop'], confirm: 'deleteConfirm' }
@@ -1265,6 +1269,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ tasks: ['mdRvGenOGallery'] },
 		'ns':		{ tasks: ['mdRvGenOGallery'] },
 		'ns-dw':	{ tasks: ['mdRvGenOGallery'] },
+		'nl':		{ tasks: ['mdRvGenOGallery'] },
 		'otrs':		{ tasks: [] },
 		'other':	{ tasks: [] },
 		'aDelete':	{ tasks: ['mdRvGenOGallery'] }
@@ -1580,6 +1585,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'np': "No permission",
 			'ns': "No source",
 			'ns-dw': "No source -Derivative",
+			'nl': "No license",
 			'other': "OTRS- add",
 			'otrs': "OTRS- remove tags",
 			'c_replace': "custom replace",
