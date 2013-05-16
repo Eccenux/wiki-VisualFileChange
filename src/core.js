@@ -1211,7 +1211,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'np':		{ tag: "{{subst:npd}}\n",             summary: "Missing [[COM:PERMISSION|permission]]." },
 		'ns':		{ tag: "{{subst:nsd}}\n" ,            summary: "File has no [[COM:Source|source]]." },
 		'ns-dw':	{ tag: "{{subst:Dw-nsd}}\n",          summary: "File is a [[COM:DW|derivative work]] and sources or permission of the original works are not given." },
-		'nl':		{ tag: "{{subst:nld}}",               summary: "Missing a valid [[Commons:Copyright tags|copyright tag]] (/[[Commons:Licensing|license]])." },
+		'nl':		{ tag: "{{subst:nld}}\n",             summary: "Missing a valid [[Commons:Copyright tags|copyright tag]] (/[[Commons:Licensing|license]])." },
 		'otrs':		{ summary: "Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags." },
 		'other':	{ summary: "Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file." },
 		'aDelete':	{ summary: "" }
