@@ -559,6 +559,7 @@ $.extend(window.VisualFileChange,
 			page.redirect = true;
 			page.create = true;
 			page.watchlist = vfc.mdSettings.watchlistUserTalk;
+			page.minor = false;
 			vfc.mdEdit(page, upli.summary, 'mdUploaderNotified');
 
 			vfc.uploadersToNotify++;
@@ -587,6 +588,7 @@ $.extend(window.VisualFileChange,
 		if (!page.create) edit.nocreate = true;
 		if (page.redirect) edit.redirect = true;
 		if (page.basetimestamp) edit.basetimestamp = page.basetimestamp;
+		if ('minor' in page) edit.minor = page.minor;
 		// Token last - will be set by libAPI
 		
 		// submit edit and showProgress
