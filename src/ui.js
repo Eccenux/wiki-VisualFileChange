@@ -759,7 +759,7 @@ $.extend(window.VisualFileChange,
 		}
 		if (si.modePage) {
 			subHeading = i18n.filesOn + ' -';
-			defaultHeading = 'Files on [[' + target + ']] ';
+			defaultHeading = 'Files on [[' + (/^(?:File|Category)/.test(target) ? ':' : '') + target + ']] ';
 		}
 		targetHref = mw.util.wikiGetlink(targetHref);
 		
