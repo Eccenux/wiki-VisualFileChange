@@ -1512,7 +1512,7 @@ $.extend(window.VisualFileChange,
 			
 			vfc.$ctrs.ajaxMdNotReady.text(vfc._msg('query-progress', vfc.mdUploadCt, vfc.iiUploads, dirtyTitle)); 
 
-			if (undefined === pg.imageinfo) { 
+			if (undefined === pg.imageinfo || undefined === pg.revisions) { 
 				try { 
 					vfc.$ctrs.ajaxDeletedUploads.append(vfc.secureCall('mdCreateDelUploadItem', dirtyTitle));
 				} catch (e) {} 
