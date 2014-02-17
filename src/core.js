@@ -71,7 +71,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.45.3',
+	scriptRevision: '0.9.46.0',
 	
 
 	/**
@@ -1195,7 +1195,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'nl':		{ tag: "{{subst:image license|1=%FILE%}}",    summary: "[[%FILE%]] (and the listed ones) do not have valid [[Commons:Copyright tags|copyright tags]]." },
 		'otrs':		{ },
 		'other':	{ },
-		'aDelete':	{ }
+		'aDelete':	{  },
+		'aDeleteCV':	{ tag: "{{subst:speedywhat|1=%FILE%}}",    summary: "Notification about the deletion of multiple possible copyright violations." }
 	},
 	mdFileTags: {
 		'c_replace':{ summary: "Doing %replacementcount% replacements." },
@@ -1214,7 +1215,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'nl':		{ tag: "{{subst:nld}}\n",             summary: "Missing a valid [[Commons:Copyright tags|copyright tag]] (/[[Commons:Licensing|license]])." },
 		'otrs':		{ summary: "Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags." },
 		'other':	{ summary: "Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file." },
-		'aDelete':	{ summary: "" }
+		'aDelete':	{ summary: "" },
+		'aDeleteCV':	{ summary: "" }
 	},
 	mdOpt: {
 		// minLenReq - Minimum length of reason / text to insert; bLimit - Limit of additional summary length
@@ -1234,7 +1236,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'nl':		{ minLenReq: 0, bLimit: 90 },
 		'otrs':		{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 85 },
 		'other':	{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 90 },
-		'aDelete':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' }
+		'aDelete':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' },
+		'aDeleteCV':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' }
 	},
 	mdCommandsExec: {
 		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
@@ -1253,7 +1256,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
 		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
-		'aDelete':	{ cleanReason: true, tasks: ['mdDelete'], userGroups: ['sysop'], confirm: 'deleteConfirm' }
+		'aDelete':	{ cleanReason: true, tasks: ['mdDelete'], userGroups: ['sysop'], confirm: 'deleteConfirm' },
+		'aDeleteCV':	{ cleanReason: true, tasks: ['mdDelete', 'mdNotifyUploaders'], userGroups: ['sysop'], confirm: 'deleteConfirm' }
 	},
 	mdCommandsPostExec: {
 		'c_replace':{ tasks: [] },
@@ -1272,7 +1276,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'nl':		{ tasks: ['mdRvGenOGallery'] },
 		'otrs':		{ tasks: [] },
 		'other':	{ tasks: [] },
-		'aDelete':	{ tasks: ['mdRvGenOGallery'] }
+		'aDelete':	{ tasks: ['mdRvGenOGallery'] },
+		'aDeleteCV':	{ tasks: ['mdRvGenOGallery'] }
 	},
 	mdOptText: {
 		'cv': 'Marking as possible [[COM:Copyvio|copyright violation]] because '
@@ -1592,11 +1597,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'prepend': "prepend any text",
 			'append': "append any text",
 			'prepNf': "prepend text, notify uploaders",
-			'aDelete': "Delete! (admin only)"
+			'aDelete': "Delete! (admin only)",
+			'aDeleteCV': "Delete and notify! (admin only)"
 		},
 
 		reasonAutoSuggest: {
-			'aDelete': 'MediaWiki:Deletereason-dropdown'
+			'aDelete': 'MediaWiki:Deletereason-dropdown',
+			'aDeleteCV': 'MediaWiki:Deletereason-dropdown'
 		},
 		
 		cfg: {
