@@ -1206,7 +1206,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'cv':		{ tag: "{{copyvio|1=%REASON%}}\n",    summary: "%cv% %REASON%" },
 		'cv-dw':	{ tag: "{{copyvio|1=Derivative work of copyrighted material. %REASON%}}\n", summary: "%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright." },
 		'cv-fu':	{ tag: "{{Fair use}}\n",              summary: "%cv% [[COM:FU|fair use]] media are not allowed on Commons." },
-		'cv-logo':	{ tag: "{{Logo}}\n",                  summary: "%cv% this logo exceeds the threshold of creativety and therefore is subject to copyright." },
+		'cv-logo':	{ tag: "{{Logo}}\n",                  summary: "%cv% this logo exceeds the [[threshold of originality]] and therefore is subject to copyright." },
 		'cv-ndw':	{ tag: "{{Nonderivative}}\n",         summary: "%cv% no derivatives are allowed, which is [[COM:L|incompatible with Commons]]." },
 		'del':		{ tag: "{{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", summary: "[[COM:DR|Nominating for deletion]]." },
 		'np':		{ tag: "{{subst:npd}}\n",             summary: "Missing [[COM:PERMISSION|permission]]." },
