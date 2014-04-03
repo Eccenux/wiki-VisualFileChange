@@ -3,7 +3,7 @@
  **  VisualFileChange, formerly AjaxMassDelete was composed by [[User:Rillke]] in 2011
  **  Removed previous credit per diff=75592478&oldid=75591275 
  **  (nothing eligible for copyright in it any more)
- **  If you propse changes or make changes to this script you agree to publish them under
+ **  If you propose changes or make changes to this script you agree to publish them under
  **  the licenses this script is licensed under (see following lines)
  **
  **  TODO if version 1.18 ready, add possibility to revert all images
@@ -13,9 +13,9 @@
  **  Depends on MediaWiki:VisualFileChange.js/exec.js, ./ui.js, ./cfg.js
  **
  **  @description
- **     Helps performing mass-changes on the uploads of a paricular user or files in one category.
+ **     Helps performing mass-changes on the uploads of a particular user or files in one category.
  **
- **  @autor Rillke, 2011
+ **  @author Rillke, 2011
  **  @license CC-BY-SA, GFDL; Attribution: User:Rillke.
  **   You must add attribution to the UI.
  **   Happy reusing!
@@ -107,7 +107,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$nestedA = $portlet.find('a');
 			if ($nestedA.length) $portlet = $nestedA;
 			
-			// Immedately start Md
+			// Immediately start Md
 			autostart = true;
 		} else {
 			if ( "MediaWiki:VisualFileChange.js" === mw.util.getParamValue('withJS') ) {
@@ -261,7 +261,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				vfc.queryParams.target = pageName;
 				break;
 		}
-		// Prettify the title (nomalizing)
+		// Prettify the title (normalizing)
 		vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
 		
 		$doc.triggerHandler('vFC', ['prepared', vfc]);
@@ -303,7 +303,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
  
 	reinit: function () {
-		$doc.triggerHandler('vFC', ['peparing to ask for target', this]);
+		$doc.triggerHandler('vFC', ['preparing to ask for target', this]);
 		this.pb.setCurrentTaskDone();
 		this.pb.setTaskState( 'target', 'md-doing' );
 		this.pb.setHelp(this.i18n.mdPerformOnWhichTarget);
@@ -317,7 +317,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		var pefilledUser = '';
 		this.iUploads = {};     // i-initial file list
 		this.iiUploads = 0;     // Number of initially uploaded files in the list
-		this.metaKeys = [];     // Contains all keys(names) of metadata available; building while processing quried files
+		this.metaKeys = [];     // Contains all keys(names) of metadata available; building while processing queried files
 		this.allUploaders = []; // All uploaders
 		this.gbs = {};          // File --> Gallery Box
 		this.gbu = {};          // File --> Global Usage Box
@@ -1206,7 +1206,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'cv':		{ tag: "{{copyvio|1=%REASON%}}\n",    summary: "%cv% %REASON%" },
 		'cv-dw':	{ tag: "{{copyvio|1=Derivative work of copyrighted material. %REASON%}}\n", summary: "%cv% it is a [[COM:DW|derivative work]] of a work protected by copyright." },
 		'cv-fu':	{ tag: "{{Fair use}}\n",              summary: "%cv% [[COM:FU|fair use]] media are not allowed on Commons." },
-		'cv-logo':	{ tag: "{{Logo}}\n",                  summary: "%cv% this logo exeeds the threshold of creativety and therefore is subject to copyright." },
+		'cv-logo':	{ tag: "{{Logo}}\n",                  summary: "%cv% this logo exceeds the threshold of creativety and therefore is subject to copyright." },
 		'cv-ndw':	{ tag: "{{Nonderivative}}\n",         summary: "%cv% no derivatives are allowed, which is [[COM:L|incompatible with Commons]]." },
 		'del':		{ tag: "{{delete|reason=%REASON%|subpage=%SUBPAGE%|%D%}}\n", summary: "[[COM:DR|Nominating for deletion]]." },
 		'np':		{ tag: "{{subst:npd}}\n",             summary: "Missing [[COM:PERMISSION|permission]]." },
@@ -1504,7 +1504,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdPleaseWait: "Please wait.",
 		
 		filesIn: "Files in",
-		filesBy: "Initally uploaded files by",
+		filesBy: "Initially uploaded files by",
 		filesOn: "Files on page",
 		
 		browsertitle: "VisualFileChange: Welcome, %USER%!",
@@ -1700,7 +1700,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdRvEvalSelction: "An error occurred processing selected files.",
 			mdRevertImage: "There was an error before or while posting the revert-request.",
 			mdReverted: "An error occurred after posting the revert-request.",
-			mdExecuteReady: "And error occurred after all sheduled tasks are done."
+			mdExecuteReady: "And error occurred after all scheduled tasks are done."
 		}
 	},
 	_msg: function(params) {
@@ -1724,7 +1724,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
  * @example
  *      new ProgressBox( 150, this );
  *
- * @param width {Number} The initial width of the panal.
+ * @param width {Number} The initial width of the panel.
  * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like this.icons.current
  */
 function ProgressBox(width, o) {
