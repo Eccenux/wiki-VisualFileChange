@@ -158,7 +158,7 @@ $.extend(window.VisualFileChange,
 			vfc.mdNoMoreFiles = true;
 		}
 		if (!vfc.mdNoMoreFiles) {
-			qp.lestart = result['query-continue'].logevents.lestart;
+			qp.lestart = result['query-continue'].logevents.lecontinue;
 			vfc.mdSaveContinueKey(qp.lestart);
 		}
 		if (vfc.mdFirstRun) {			// Call nextTask the first time only
