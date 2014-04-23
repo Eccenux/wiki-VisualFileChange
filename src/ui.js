@@ -121,7 +121,7 @@ $.extend(window.VisualFileChange,
 			lelimit: vfc.mdSettings.loadBatchSize,
 			ledir: qp.ledir
 		};
-		if (qp.lestart) query.lestart = qp.lestart;
+		if (qp.lestart) query.lecontinue = qp.lestart;
 		$doc.triggerHandler('vFC', ['useruploads', vfc, query]);
 		vfc.queryAPI(query, 'mdFindUploadsCB');
 	},
