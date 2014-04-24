@@ -51,6 +51,7 @@ $(function () {
 var VisualFileChange,
 	vfc,
 	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1),
+	isBot = ($.inArray('bot', mw.config.get('wgUserGroups')) !== -1),
 	portletText = "VFC: Translation…",
 	$doc = $(document),
 	$win = $(window);
@@ -71,7 +72,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.46.1',
+	scriptRevision: '0.9.47.0',
 	
 
 	/**
@@ -1349,7 +1350,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'label': 'Amount of files to be loaded when clicking on more or when scrolling down', 
 			'default': 30,
 			'min': 1, 
-			'max': (isSysop ? 1000 : 100)
+			'max': ((isSysop || isBot) ? 1000 : 100)
 		}, {
 			'name': 'maxSimultaneousReq', 
 			'label': 'Maximum number of requests to send to the API simultaneously', 
