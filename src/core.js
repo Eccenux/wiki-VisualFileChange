@@ -942,7 +942,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		
 		vfc.api.$countDlg = $('<div>', { text: reason }).append($('<br>'), $('<a>', { 
 			style: 'height:5em; font-size:2em; line-height:1.8em', 
-			href: mw.util.wikiGetlink('Special:MyContributions'),
+			href: mw.util.getUrl('Special:MyContributions'),
 			target: 'contribswindow',
 			text: 'My Contributions'
 		}).click(function(e) {
@@ -1450,8 +1450,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	mdErrorsReportPath: mw.util.wikiGetlink('User talk:Rillke'),
-	mdHelpNode: '<a href="' + mw.util.wikiGetlink('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
+	mdErrorsReportPath: mw.util.getUrl('User talk:Rillke'),
+	mdHelpNode: '<a href="' + mw.util.getUrl('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
 		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
