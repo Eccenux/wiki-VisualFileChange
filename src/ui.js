@@ -418,7 +418,7 @@ $.extend(window.VisualFileChange,
 		var $table = $('<table>').attr({ style: 'border:1px solid #BBB', width: '100%', cellspacing: 0, cellpadding: 0 });
 		var $thead = $('<thead>').append(
 			$('<th>').append($('<abbr>', { title: "Replacing is done for each selected file from top to bottom", text: 'Nr ' })),
-			$('<th>').append($('<a>', { title: "Flags (=options) control how to treat your input.", text: 'Flags', target: '_blank', href: mw.util.wikiGetlink('Help:VisualFileChange.js') + '#Custom_replace:_Flags' })),
+			$('<th>').append($('<a>', { title: "Flags (=options) control how to treat your input.", text: 'Flags', target: '_blank', href: mw.util.getUrl('Help:VisualFileChange.js') + '#Custom_replace:_Flags' })),
 			$('<th>').append($('<abbr>', { title: "Simple string or a /Regular Expression/ \nSimple strings are only replaced once per file", text:  'Pattern to match' })),
 			$('<th>').append($('<abbr>', { title: "Text, %variables% and/or submatches of a RegExp ($1-$9) like /abc(.+?)ghi/", text: 'Text to insert instead' }))
 		).appendTo($table);
@@ -761,7 +761,7 @@ $.extend(window.VisualFileChange,
 			subHeading = i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + (/^(?:File|Category)/.test(target) ? ':' : '') + target + ']] ';
 		}
-		targetHref = mw.util.wikiGetlink(targetHref);
+		targetHref = mw.util.getUrl(targetHref);
 		
 		
 		// Build the input-ui
@@ -1383,7 +1383,7 @@ $.extend(window.VisualFileChange,
 			if (undefined === cats[id].hidden) $catsList.append( 
 				$('<li>', { 'class': (asTags ? ' j-cat-label' : '') }).append($('<a>', 
 					{	'class': (asTags ? ' j-cat-label' : ''), 
-						href: mw.util.wikiGetlink(tCat.title), 
+						href: mw.util.getUrl(tCat.title), 
 						target: '_blank' 
 					}).text(tCat.title.replace('Category:', '')), ' ') );
 		});
@@ -1575,7 +1575,7 @@ $.extend(window.VisualFileChange,
 				(uItem.talkId ? 
 					$('<a>', { 
 						'class': 'md-talklink', 
-						href: mw.util.wikiGetlink(dirtyTitle.replace(/^File/, 'File_talk')), 
+						href: mw.util.getUrl(dirtyTitle.replace(/^File/, 'File_talk')), 
 						target: '_blank', title: i18n.hasTalk 
 					}).text('t') : 
 					''
@@ -1712,7 +1712,7 @@ $.extend(window.VisualFileChange,
 		var addLink = function(href, text, target) {
 			$('<li>').append($('<a>', { 
 				style: 'font-size:2em; line-height:1.8em', 
-				href: mw.util.wikiGetlink(href),
+				href: mw.util.getUrl(href),
 				target: target,
 				text: text
 			})).appendTo($ulNode);
