@@ -1406,7 +1406,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[/Other speedy deletions.*/,						'speedyd'],
 		[/Copyright violations.*/,							'copyvio'],
 		[/OTRS pending.*/,									'on',  'ddf'],
-		[/Items with OTRS permission confirmed.*/,			'opm', 'bcf'],
+		[/Items with (?:ticket )?OTRS permission confirmed.*/,	'opm', 'bcf'],
 		[/OTRS received.*/,									'or',  'cdf'],
 		[/[Aa]dmin[\- ]reviewed [licenses|Flickr images]/,	'lrd', '8fa'],
 		[/Flickr images reviewed by/,						'frd', '8fa'],
