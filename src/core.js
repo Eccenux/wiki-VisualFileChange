@@ -1495,7 +1495,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdNoResult: "Script cannot find any file / initial upload in / by %TARGET%.",
 		mdExecutingTaskEnumerateFiles: "Enumerating files for the requested task.",
 		mdExecutingTask: "Executing your requested task.",
-		mdCuteSelectLabel: "Cute Select Files",
+		mdCuteSelectLabel: "Advanced Select Files",
 		mdDelContribsButtonLabel: "Cached deleted uploads",
 		mdRevertButtonLabel: "Revert images",
 		proceedButtonLabel: "Proceed",
@@ -1533,7 +1533,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		},
 		
 		cuteSelect: {
-			'heading': "Cute-Selection: Specify the options, please",
+			'heading': "Advanced-Selection: Specify the options, please",
 			'and': "AND",
 			'intro': "The selection of matching and loaded files will be changed. If you want to apply changes, click on the button in the bottom. To close this dialog, click on the cross in the top right corner. Specify what to (de-)select, empty fields are considered fulfilling the condition:",
 			'select': "Select (/Deselect)",
