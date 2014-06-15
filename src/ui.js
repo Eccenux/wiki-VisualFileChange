@@ -316,15 +316,17 @@ $.extend(window.VisualFileChange,
 			});
 			return rl;
 		};
-		$examineInput = $('<input>').attr({ type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: 'file number' }).placeholder();
+		$examineInput = $('<input>').attr({ type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: "file number" }).placeholder();
 		$examineButton = $('<button>', { text: 'Compare!' }).click(function() {
 			$examineFirstDiv.text('');
 			$examineSecondDiv.text('');
 			if (!$examineInput.val()) return;
+
+			var examineInputVal = Number($examineInput.val()) - 1;
 			var replaceSecurityLevel = vfc.$selPreserve.val();
 
 			$.each(vfc.iUploads, function(upload, curUpld) {
-				if (!curUpld.content || (Number($examineInput.val()) !== curUpld.iId)) return;
+				if (!curUpld.content || (examineInputVal !== curUpld.iId)) return;
 
 				var newText,
 					oldText = curUpld.content,
@@ -1566,7 +1568,7 @@ $.extend(window.VisualFileChange,
 			var $galleryBox = vfc.mdCreateGalleryBox(
 				[ $('<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image' })
 					.append( loadThumb ? $('<img>', { src: ii.thumburl, width: ii.thumbwidth, height: ii.thumbheight, alt: dirtyTitle }) : '' ) ],
-				[ ('<i>' + uItem.iId + ': </i>'),
+				[ ('<i>' + (uItem.iId + 1) + ': </i>'),
 				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: dirtyTitle } ),
 				$('<span>', { 'class': 'tipsycategory' }).text('c'), ' ',
 				(($.isArray(ii.metadata) && !!ii.metadata.length) ? 
