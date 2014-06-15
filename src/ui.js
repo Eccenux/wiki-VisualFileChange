@@ -615,7 +615,7 @@ $.extend(window.VisualFileChange,
 		vfc.$ctrs = {};
 		
 		// Tipsy-tooltips for metadata and categories
-		$('.tipsymetadata').die();
+		$('.tipsymetadata').off();
 		$('.tipsymetadata').tipsy( {
 			title: function() {
 				$('.tipsy').remove();
