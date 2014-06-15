@@ -342,25 +342,23 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
 	
 	$createToggler: function (text, $content) {
+		var s = 'ui-icon-carat-1-e',
+			e = 'ui-icon-carat-1-s';
 		return $('<div>').append(
 			$('<a>', { text: text, href: '#show_or_hide', 'class':'md-collapsible ui-state-default' }).prepend(
 				$.createIcon('ui-icon-carat-1-e')
-			).toggle(
-			function(e){
+			).click(function(e) {
 				//e.preventDefault();
-				var $el = $(this);
+				var x,
+					$el = $(this);
 				$el.next().slideToggle('fast');
-				$el.find('span.ui-icon').removeClass('ui-icon-carat-1-e').addClass('ui-icon-carat-1-s');
-			}, 
-			function(e) {
-				var $el = $(this);
-				$el.next().slideToggle('fast');
-				$el.find('span.ui-icon').removeClass('ui-icon-carat-1-s').addClass('ui-icon-carat-1-e');
-			}).hover(
-			function() {
+				$el.find('span.ui-icon').removeClass(s).addClass(e);
+				x = s;
+				s = e;
+				e = x;
+			}).hover(function() {
 				$(this).addClass('ui-state-hover');
-			},
-			function() {
+			}, function() {
 				$(this).removeClass('ui-state-hover');
 			}),
 			$content.addClass('ui-widget-content').hide()
