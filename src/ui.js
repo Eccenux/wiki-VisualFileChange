@@ -121,7 +121,8 @@ $.extend(window.VisualFileChange,
 			lelimit: vfc.mdSettings.loadBatchSize,
 			ledir: qp.ledir
 		};
-		if (qp.lestart) query.lecontinue = qp.lestart;
+		if (qp.lecontinue) query.lecontinue = qp.lecontinue;
+		if (qp.lestart) query.lestart = qp.lestart;
 		$doc.triggerHandler('vFC', ['useruploads', vfc, query]);
 		vfc.queryAPI(query, 'mdFindUploadsCB');
 	},
@@ -158,8 +159,9 @@ $.extend(window.VisualFileChange,
 			vfc.mdNoMoreFiles = true;
 		}
 		if (!vfc.mdNoMoreFiles) {
-			qp.lestart = result['query-continue'].logevents.lecontinue;
-			vfc.mdSaveContinueKey(qp.lestart);
+			qp.lecontinue = result['query-continue'].logevents.lecontinue;
+			qp.lestart = result['query-continue'].logevents.lestart;
+			vfc.mdSaveContinueKey(qp.lecontinue);
 		}
 		if (vfc.mdFirstRun) {			// Call nextTask the first time only
 			vfc.mdFirstRun = false;
