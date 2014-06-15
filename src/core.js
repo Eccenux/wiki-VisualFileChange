@@ -57,10 +57,12 @@ var VisualFileChange,
 	$win = $(window);
 
 // Adding Style-definitions
-mw.util.addCSS(' .md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n' +
+mw.util.addCSS(
+	'.md-collapsible { padding:3px; padding-top:0px; padding-left:0px; margin-top:2px; display:inline-block; }\n' +
 	'.md-optioncontainer { padding:3px; margin:5px 0px; }\n' +
 	'.md-option-space-v { padding:5px 0 }' +
-	'.md-option-space-v>input,select { margin:0 3px }');
+	'.md-option-space-v>input,select { margin:0 3px }'
+);
 
 /**
  * Create a new VisualFileChange-Object-literal.
@@ -72,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.47.0',
+	scriptRevision: '0.9.48.0',
 	
 
 	/**
@@ -407,7 +409,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			if (m1) return (m1[1] + '-' + m1[2] + '-' + m1[3] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
 			m1 = dateX.match(/(\d{2}).(\d{2}).(\d{4})\D*(\d{2}:\d{2}:\d{2})?/);
 			if (m1) return (m1[3] + '-' + m1[2] + '-' + m1[1] + 'T' + (m1[4] ? m1[4] : '12:00:00') + 'Z');
-			else return '';
+			else return dateX;
 		};
 		
 		dlgButtons[vfc.i18n.proceedButtonLabel] = function () {
@@ -436,7 +438,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			if (si.modeUser) {
 				qp.lestart = si.startDate;
 				qp.target = qp.target.replace(rxUser, ''); // WARNING: INPUT IS UNCHECKED
-				vfc.lastContinues.setVals = ['lestart'];
+				vfc.lastContinues.setVals = ['lecontinue'];
 			} else if (si.modePage) {
 				qp.target = qp.target.replace(rxPage, '');
 				vfc.lastContinues.setVals = ['imcontinue'];
@@ -683,7 +685,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				id: 'gStartAt'
 				,type: 'text'
 				,title: vfc.i18n.optStartAt
-				,value: vfc.queryParams.lestart
+				,value: vfc.queryParams.lecontinue
 			} )
 			.datepicker( {
 				changeYear: true
