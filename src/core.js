@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.48.0',
+	scriptRevision: '0.9.48.1',
 	
 
 	/**
@@ -346,11 +346,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			e = 'ui-icon-carat-1-s';
 		return $('<div>').append(
 			$('<a>', { text: text, href: '#show_or_hide', 'class':'md-collapsible ui-state-default' }).prepend(
-				$.createIcon('ui-icon-carat-1-e')
+				$.createIcon(e)
 			).click(function(e) {
 				//e.preventDefault();
 				var x,
 					$el = $(this);
+
 				$el.next().slideToggle('fast');
 				$el.find('span.ui-icon').removeClass(s).addClass(e);
 				x = s;
