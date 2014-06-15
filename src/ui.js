@@ -911,13 +911,13 @@ $.extend(window.VisualFileChange,
 			clearTimeout(timoutID);
 			timoutID = setTimeout(updateSelectedCount, 200);
 		} );
-		$('input[name="mdCheckDelete"]').die( 'change' );
-		$('input[name="mdCheckDelete"]').live( 'change', function (e) {
+		$( document ).off( 'change', 'input[name="mdCheckDelete"]' );
+		$( document ).on( 'change', 'input[name="mdCheckDelete"]', function (e) {
 			clearTimeout(timoutID);
 			timoutID = setTimeout(updateSelectedCount, 200);
 		});
-		$('input[name="mdCheckDelete"]').die( 'mouseup' );
-		$('input[name="mdCheckDelete"]').live( 'mouseup', function (e) {
+		$( document ).off( 'mouseup', 'input[name="mdCheckDelete"]' );
+		$( document ).on( 'mouseup', 'input[name="mdCheckDelete"]', function (e) {
 			var $ls, $this, newVal, $lsBox;
 			$ls = $('#mdLastSelected');
 			$lsBox = $ls.find('input[name="mdCheckDelete"]');
