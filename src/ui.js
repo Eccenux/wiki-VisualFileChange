@@ -625,7 +625,7 @@ $.extend(window.VisualFileChange,
 			html: true,
 			gravity: $.fn.tipsy.autoNS
 		} );
-		$('.tipsycategory').die();
+		$('.tipsycategory').off();
 		$('.tipsycategory').tipsy( {
 			title: function() { 
 				$('.tipsy').remove();
