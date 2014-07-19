@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.49.2',
+	scriptRevision: '0.9.49.3',
 	
 
 	/**
@@ -164,7 +164,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				break;
 			case 'diff':
 				if (!mw.libs.schnark_diff) {
-					if (cb) mw.hook('userjs.load-script.diff').add(function() {
+					if (cb) mw.hook('userjs.load-script.diff-core').add(function() {
 						mw.libs.schnark_diff.css.ins = 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #B0C0F0; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;';
 						mw.libs.schnark_diff.css.del = 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FFD89D; -moz-text-decoration-color:#744;';
 						mw.util.addCSS( mw.libs.schnark_diff.getCSS() );
