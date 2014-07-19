@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.49.0',
+	scriptRevision: '0.9.49.1',
 	
 
 	/**
@@ -348,7 +348,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$('<a>', { text: text, href: '#show_or_hide', 'class':'md-collapsible ui-state-default' }).prepend(
 				$.createIcon(ie)
 			).click(function(e) {
-				//e.preventDefault();
+				e.preventDefault();
 				var x,
 					$el = $(this);
 
