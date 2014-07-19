@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.49.1',
+	scriptRevision: '0.9.49.2',
 	
 
 	/**
@@ -164,18 +164,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				break;
 			case 'diff':
 				if (!mw.libs.schnark_diff) {
-					mw.loader.load('//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript');
-					if (cb) $doc.bind('loadWikiScript.vFCListener', function(e, what) {
-						if ('Benutzer:Schnark/js/diff.js/core.js' === what) {
-							$doc.unbind('loadWikiScript.vFCListener');
-							mw.libs.schnark_diff.css.ins = 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #B0C0F0; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;';
-							mw.libs.schnark_diff.css.del = 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FFD89D; -moz-text-decoration-color:#744;';
-							mw.util.addCSS( mw.libs.schnark_diff.getCSS() );
-							mw.libs.schnark_diff.config.min_moved_length = 20;
-							mw.libs.schnark_diff.config.too_short = 3;
-							executeCB();
-						}
+					if (cb) mw.hook('userjs.load-script.diff').add(function() {
+						mw.libs.schnark_diff.css.ins = 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #B0C0F0; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;';
+						mw.libs.schnark_diff.css.del = 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FFD89D; -moz-text-decoration-color:#744;';
+						mw.util.addCSS( mw.libs.schnark_diff.getCSS() );
+						mw.libs.schnark_diff.config.min_moved_length = 20;
+						mw.libs.schnark_diff.config.too_short = 3;
+						executeCB();
 					});
+					mw.loader.load('//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript');
 				} else {
 					executeCB();
 				}
