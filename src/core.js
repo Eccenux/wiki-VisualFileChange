@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.48.1',
+	scriptRevision: '0.9.49.0',
 	
 
 	/**
@@ -1445,6 +1445,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
 	mdWikipageRegExp: new RegExp($.escapeRE(mw.config.get('wgArticlePath').replace('$1', '')) + '(.+)'),
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
+	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ':',
 	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ':',
