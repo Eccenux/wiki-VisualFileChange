@@ -5,7 +5,7 @@
 // Invoke jsHint-validation
 
 /*global jQuery:false, mediaWiki:false, alert:false */
-/*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false,*/
+/*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false*/
 (function ($, mw, undefined) {
 'use strict';
 
