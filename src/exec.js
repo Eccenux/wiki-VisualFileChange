@@ -144,7 +144,7 @@ $.extend(window.VisualFileChange,
 		
 		vfc.file_summary = (vfc.mdAddEditSummary && (vfc.mdAddEditSummary + ' - ')) + 
 			(fTag.summary && fTag.summary.replace('%pattern%', vfc.reason).replace('%replacementcount%', vfc.mdReplacementMatrix.length-1).replace('%REASON%', vfc.reason)) + 
-			' Using [[' + vfc.mdSelfPath + '|VisualFileChange.js]].';
+			' Using [[' + vfc.mdHelpPath + '|VisualFileChange]].';
 		var r = vfc.file_summary.match(/\%(.{1,9})\%/);
 		if (r && r[1]) vfc.file_summary = vfc.file_summary.replace('%' + r[1] + '%', vfc.mdOptText[r[1]]);
 		
@@ -409,7 +409,7 @@ $.extend(window.VisualFileChange,
 		};
 		
 		$doc.triggerHandler('vFC', ['request subpage', this, page]);
-		this.mdEdit(page, 'Starting mass deletion request using [[' + this.mdSelfPath + '|VisualFileChange.js]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
+		this.mdEdit(page, 'Starting mass deletion request using [[' + this.mdHelpPath + '|VisualFileChange]]', 'mdCreateRequestSubpageCB', 'mdCreateRequestSubpageCB');
 	},
 	
 	mdCreateRequestSubpageCB: function (result, query, err) {
