@@ -369,8 +369,8 @@ $.extend(window.VisualFileChange,
 				$examineSecondDiv.prepend(_getRenderLink(newText, upload, $examineOuterDiv));
 				
 				// Diff
-				if (mw.libs.schnark_diff && mw.libs.schnark_diff.html_diff) {
-					$examineDiffDiv.html('<a target="_blank" href="//de.wikipedia.org/wiki/Benutzer:Schnark/js/diff/core" style="display:inline-block; float:right; font-family:sans-serif;">Powered by SchnarkDiff</a>' + mw.libs.schnark_diff.html_diff(oldText, newText, true));
+				if (mw.libs.schnarkDiff && mw.libs.schnarkDiff.htmlDiff) {
+					$examineDiffDiv.html('<a target="_blank" href="//de.wikipedia.org/wiki/Benutzer:Schnark/js/diff/core" style="display:inline-block; float:right; font-family:sans-serif;">Powered by SchnarkDiff</a>' + mw.libs.schnarkDiff.htmlDiff(oldText, newText, true));
 				}
 			});
 		}).button({ icons: { primary: 'ui-icon-search' } });
