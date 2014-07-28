@@ -1219,7 +1219,7 @@ $.extend(window.VisualFileChange,
 					$('<option>', { text: val }).appendTo($metaSelect);
 				});
 
-				var isRtl = !!$(document.body).filter('rtl').length,
+				var isRtl = !!$(document.body).filter('.rtl').length,
 					rtlEmbed = isRtl ? '\u202b' : '',
 					pdf      = isRtl ? '\u202c' : '',
 					bidiMark = isRtl ? '\u200f' : '\u200e';
