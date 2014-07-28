@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.50.0',
+	scriptRevision: '0.9.51.0',
 	
 
 	/**
@@ -319,6 +319,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.iiUploads = 0;     // Number of initially uploaded files in the list
 		this.metaKeys = [];     // Contains all keys(names) of metadata available; building while processing queried files
 		this.allUploaders = []; // All uploaders
+		this.uploadsByUser = {};
 		this.gbs = {};          // File --> Gallery Box
 		this.gbu = {};          // File --> Global Usage Box
 		this.mdNoMoreFiles = false;  // set to true, when API response did not contain a new Lestart
