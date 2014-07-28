@@ -1221,10 +1221,11 @@ $.extend(window.VisualFileChange,
 
 				var isRtl = !!$(document.body).filter('rtl').length,
 					rtlEmbed = isRtl ? '\u202b' : '',
+					pdf      = isRtl ? '\u202c' : '',
 					bidiMark = isRtl ? '\u200f' : '\u200e';
 
 				$.each(vfc.allUploaders, function(k, val) {
-					$('<option>', { value: val, text: rtlEmbed + val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' + bidiMark + rtlEmbed }).appendTo($uploaderSelect);
+					$('<option>', { value: val, text: rtlEmbed + val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' + bidiMark + pdf }).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
