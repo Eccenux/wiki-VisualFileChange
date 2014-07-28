@@ -1218,8 +1218,13 @@ $.extend(window.VisualFileChange,
 				$.each(vfc.metaKeys, function(k, val) {
 					$('<option>', { text: val }).appendTo($metaSelect);
 				});
+
+				var isRtl = !!$(document.body).filter('rtl').length,
+					rtlEmbed = isRtl ? '\u202b' : '',
+					bidiMark = isRtl ? '\u200f' : '\u200e';
+
 				$.each(vfc.allUploaders, function(k, val) {
-					$('<option>', { value: val, text: val + ' [' + vfc.uploadsByUser[val] + ']' }).appendTo($uploaderSelect);
+					$('<option>', { value: val, text: rtlEmbed + val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' + bidiMark + rtlEmbed }).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
