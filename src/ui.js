@@ -1219,7 +1219,7 @@ $.extend(window.VisualFileChange,
 					$('<option>', { text: val }).appendTo($metaSelect);
 				});
 				$.each(vfc.allUploaders, function(k, val) {
-					$('<option>', { text: val }).appendTo($uploaderSelect);
+					$('<option>', { value: val, text: val + ' [' + vfc.uploadsByUser[val] + ']' }).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
@@ -1535,6 +1535,8 @@ $.extend(window.VisualFileChange,
 						if (ii.user) {
 							uItem.uploader.push(ii.user);
 							uItem.comments.push(ii.comment || '');
+							vfc.uploadsByUser[ii.user] = vfc.uploadsByUser[ii.user] || 0;
+							vfc.uploadsByUser[ii.user]++;
 							if (-1 === $.inArray(ii.user, vfc.allUploaders)) vfc.allUploaders.push(ii.user);
 						}
 					}
