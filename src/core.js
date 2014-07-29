@@ -74,7 +74,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.51.0',
+	scriptRevision: '0.9.52.0',
 	
 
 	/**
@@ -125,7 +125,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			$nestedA = $portlet.find('a');
 			if ($nestedA.length) $portlet = $nestedA;
 			$portlet.text(vfc.i18n.mdButtonLabel).attr({
-				href: '#start_VisualFileChange',
+				href: '#!start_VisualFileChange',
 				title: "Launch VisualFileChange",
 				id: 't-AjaxQuickDeletx2'
 			}).click(function(e) {
@@ -134,6 +134,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				vfc.start();
 			});
 			vfc.$portlet = $portlet;
+		}
+		if ( location.hash === '#!start_VisualFileChange' ) {
+			autostart = true;
 		}
 		$doc.triggerHandler('vFC', ['installed', vfc]);
 		if (autostart) $portlet.click();
