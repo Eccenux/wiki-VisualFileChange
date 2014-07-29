@@ -1,5 +1,5 @@
 // Main script is at [[MediaWiki:VisualFileChange.js]]
-// These are the delayed loaded display components (UI) in order to speed up loading of the first UI
+// These are the delayed loaded display components (UI) in order to speed up loading of the first 
 // <nowiki>
 
 // Invoke jsHint-validation
@@ -1219,13 +1219,14 @@ $.extend(window.VisualFileChange,
 					$('<option>', { text: val }).appendTo($metaSelect);
 				});
 
-				var isRtl = !!$(document.body).filter('.rtl').length,
-					rtlEmbed = isRtl ? '\u202b' : '',
-					pdf      = isRtl ? '\u202c' : '',
-					bidiMark = isRtl ? '\u200f' : '\u200e';
+				var isRtl = $uploaderSelect.css('direction') == "rtl",
+					bidiMark = isRtl ? '\u200f' : '\u200e'; // rlm : lrm
 
 				$.each(vfc.allUploaders, function(k, val) {
-					$('<option>', { value: val, text: rtlEmbed + val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' + bidiMark + pdf }).appendTo($uploaderSelect);
+					$('<option>', { 
+						value: val,
+						text: val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' }
+					).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
