@@ -1219,14 +1219,14 @@ $.extend(window.VisualFileChange,
 					$('<option>', { text: val }).appendTo($metaSelect);
 				});
 
-				var isRtl = $uploaderSelect.css('direction') == "rtl",
+				var isRtl = $uploaderSelect.css('direction') === 'rtl',
 					bidiMark = isRtl ? '\u200f' : '\u200e'; // rlm : lrm
 
 				$.each(vfc.allUploaders, function(k, val) {
 					$('<option>', { 
 						value: val,
-						text: val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']' }
-					).appendTo($uploaderSelect);
+						text: val + ' ' + bidiMark + '[' + vfc.uploadsByUser[val] + ']'
+					}).appendTo($uploaderSelect);
 				});
 			},
 			autoOpen: false
