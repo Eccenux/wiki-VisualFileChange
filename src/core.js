@@ -46,6 +46,13 @@
 'use strict';
 if (window.VisualFileChange) return;
 
+// https://phabricator.wikimedia.org/T69989
+// http://code.jquery.com/jquery-migrate-1.2.1.js
+jQuery.fn.live = function( types, data, fn ) {
+	jQuery( this.context ).on( types, this.selector, data, fn );
+	return this;
+};
+
 $(function () {
 
 var VisualFileChange,
@@ -74,7 +81,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.52.0',
+	scriptRevision: '0.9.52.1',
 	
 
 	/**
