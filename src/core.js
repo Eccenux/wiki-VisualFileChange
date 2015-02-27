@@ -81,7 +81,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.52.1',
+	scriptRevision: '0.9.52.2',
 	
 
 	/**
@@ -1826,9 +1826,10 @@ function ProgressBox(width, o) {
 		text: 'Error:'
 	}).append(this.$error);
 	this.$credits = $('<div>', { id: 'mdCredits', style: 'position: absolute; bottom: 0px; font: small-caps 0.7em sans-serif; margin: 4px; color: #BBB;' })
-		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>' + o.i18n.mdTranslator ?
-			('Translation provided by ' + o.i18n.mdTranslator) :
-			('Thanks to all supporters, especially Saibo and LX for testing.')
+		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>'
+			+ ( o.i18n.mdTranslator
+			? 'Translation provided by ' + o.i18n.mdTranslator
+			: 'Thanks to all supporters, especially Saibo and LX for testing.' )
 		);
 		
 	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
