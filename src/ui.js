@@ -1200,11 +1200,11 @@ $.extend(window.VisualFileChange,
 		
 		var pbWidth = (vfc.pb.isHidden() ? 0 : 250);
 		var dlgWidth = Math.min(600, $win.width() - pbWidth);
-		vfc.mdCuteSelectDlg = $('<div></div>').append($AjaxMdCuteSelect).dialog({
+		vfc.mdCuteSelectDlg = $('<div>').append($AjaxMdCuteSelect).dialog({
 			modal: true,
 			resizable: false,
 			closeOnEscape: true,
-			position: [($win.width() - dlgWidth - pbWidth) / 2 + pbWidth, ($win.height() - 250) / 2 ],
+			position: [($win.width() - dlgWidth - pbWidth) / 2 + pbWidth, 0 ],
 			title: cuteI18n.heading,
 			height: 'auto',
 			width: dlgWidth,
