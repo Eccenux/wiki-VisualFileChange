@@ -80,8 +80,8 @@ mw.util.addCSS(
 VisualFileChange = vfc = window.VisualFileChange = {
 
 
-	/** REVISION CONTROL **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.52.2',
+	/** REVISION **/ //(x.major.minor.bug)
+	scriptRevision: '0.9.52.3',
 	
 
 	/**
