@@ -408,7 +408,7 @@ $.extend(window.VisualFileChange,
 		var rowCount = 0;
 		var $lastBigArea = 0;
 		
-		var $desc = $('<p>', { text: "Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped. When not using RegExp-replace only the first occurrence of the pattern in each file will be replaced." });
+		var $desc = $('<p>', { text: "This is a very powerful tool, and it is strongly suggested that you test your edits before running a batch task. You are fully responsible for your edits. Replacement is done row-by-row from top. Rows with empty or invalid pattern fields are skipped. When not using RegExp-replace only the first occurrence of the pattern in each file will be replaced." });
 		var $regExpEscapeHelper = $('<div>', { style: 'display:none;', 'class': 'md-re-escape-helper', html: 'R. → /R\\./g', title: "Convert pattern to a \'match-all-occurrences-RegExp\'" }).click(function() {
 			var $rREH = $(this),
 				$serviceFor = $rREH.data('mdServiceFor'),
