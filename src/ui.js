@@ -6,7 +6,7 @@
 
 /*global jQuery:false, mediaWiki:false, alert:false */
 /*jshint curly:false, maxerr:200, laxbreak:true, bitwise:false*/
-(function ($, mw, undefined) {
+(function ($, mw) {
 'use strict';
 
 // Return if Main Script is not loaded
