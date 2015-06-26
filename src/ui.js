@@ -414,7 +414,7 @@ $.extend(window.VisualFileChange,
 				$serviceFor = $rREH.data('mdServiceFor'),
 				$serviceForEnable = $rREH.data('mdServiceForEnable');
 				
-			$serviceFor.val('/' + vfc.mdEscapeSpecial($.escapeRE( $serviceFor.val() )) + '/g').keyup();
+			$serviceFor.val('/' + vfc.mdEscapeSpecial(mw.RegExp.escape( $serviceFor.val() )) + '/g').keyup();
 			if (!$serviceForEnable[0].checked) $serviceForEnable.click();
 			
 			$(this).hide();
@@ -1776,6 +1776,7 @@ mw.loader.using([
 	'jquery.byteLength',
 	'jquery.badge',
 	'jquery.jStorage',
+	'mediawiki.RegExp',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
 	'ext.gadget.jquery.blockUI',
