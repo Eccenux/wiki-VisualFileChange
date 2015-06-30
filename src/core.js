@@ -53,6 +53,7 @@ jQuery.fn.live = function( types, data, fn ) {
 	return this;
 };
 
+mw.loader.using('mediawiki.RegExp', function() {
 $(function () {
 
 var VisualFileChange,
@@ -81,7 +82,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.53.0',
+	scriptRevision: '0.9.54.0',
 	
 
 	/**
@@ -619,7 +620,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				nsId = rxNs[1].replace(/ /g, '_').toLowerCase();
 				nsId = namespaceIds[nsId];
 				if (nsId) {
-					rxNs = new RegExp('^' + $.escapeRE(rxNs[1]) + '\\:', 'i');
+					rxNs = new RegExp('^' + mw.RegExp.escape(rxNs[1]) + '\\:', 'i');
 					request.term = request.term.replace(rxNs, '');
 				} else {
 					nsId = undefined;
@@ -1451,7 +1452,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
-	mdWikipageRegExp: new RegExp($.escapeRE(mw.config.get('wgArticlePath').replace('$1', '')) + '(.+)'),
+	mdWikipageRegExp: new RegExp(mw.RegExp.escape(mw.config.get('wgArticlePath').replace('$1', '')) + '(.+)'),
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
@@ -1982,5 +1983,5 @@ mediaWiki.loader.using([
 	vfc.install();
 });
 
-}); }(jQuery, mediaWiki));
+}); }); }(jQuery, mediaWiki));
 // </nowiki>
