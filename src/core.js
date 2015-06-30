@@ -81,7 +81,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.52.3',
+	scriptRevision: '0.9.53.0',
 	
 
 	/**
