@@ -115,6 +115,7 @@ $.extend(window.VisualFileChange,
 		var query = {
 			action: 'query',
 			list: 'logevents',
+			rawcontinue: 1,
 			leprop: 'title|type|timestamp',
 			leaction: 'upload/upload',
 			leuser: qp.target,
@@ -177,6 +178,7 @@ $.extend(window.VisualFileChange,
 		var query = {
 			action: 'query',
 			list: 'categorymembers',
+			rawcontinue: 1,
 			cmtitle: qp.target,
 			cmtype: 'file',
 			cmprop: 'title|type|timestamp',
@@ -229,6 +231,7 @@ $.extend(window.VisualFileChange,
 		var query = {
 			action: 'query',
 			prop: 'images',
+			rawcontinue: 1,
 			titles: qp.target,
 			imlimit: vfc.mdSettings.loadBatchSize,
 			imdir: qp.imdir
