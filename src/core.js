@@ -54,6 +54,7 @@ jQuery.fn.live = function( types, data, fn ) {
 };
 
 mw.loader.using('mediawiki.RegExp', function() {
+$(function () {
 
 var VisualFileChange,
 	vfc,
@@ -1982,5 +1983,5 @@ mediaWiki.loader.using([
 	vfc.install();
 });
 
-}); }(jQuery, mediaWiki));
+}); }); }(jQuery, mediaWiki));
 // </nowiki>
