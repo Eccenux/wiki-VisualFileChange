@@ -1780,6 +1780,7 @@ mw.loader.using([
 	'jquery.badge',
 	'jquery.jStorage',
 	'mediawiki.RegExp',
+	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
 	'ext.gadget.jquery.blockUI',
