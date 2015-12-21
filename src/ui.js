@@ -950,7 +950,7 @@ $.extend(window.VisualFileChange,
 		//
 		vfc.$ctrs.ajaxMdType.click( function() {
 			if ( mw.user.isAnon() ) {
-				$anonInfo = $( '<div>' );
+				var $anonInfo = $( '<div>' );
 				$anonInfo.html( vfc._msg_parsed( 'anon-info' ) );
 				$anonInfo.dialog( {
 					'modal': true,
