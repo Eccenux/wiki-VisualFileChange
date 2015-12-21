@@ -948,6 +948,21 @@ $.extend(window.VisualFileChange,
 		//
 		// Event handler for the selection box (task to perform)
 		//
+		vfc.$ctrs.ajaxMdType.click( function() {
+			if ( mw.user.isAnon() ) {
+				$anonInfo = $( '<div>' );
+				$anonInfo.html( vfc._msg_parsed( 'anon-info' ) );
+				$anonInfo.dialog( {
+					'modal': true,
+					'resize': false,
+					'title': vfc._msg( 'anon-info-heading' ),
+					'close': function() {
+						$anonInfo.remove();
+					}
+				} );
+				return false;
+			}
+		} );
 		vfc.$ctrs.ajaxMdType.change( function (event) {
 			var action = $(this).val(),
 				opt   = vfc.mdOpt[action],
