@@ -82,7 +82,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 
 
 	/** REVISION **/ //(x.major.minor.bug)
-	scriptRevision: '0.9.54.1',
+	scriptRevision: '0.9.55.0',
 	
 
 	/**
@@ -1245,26 +1245,26 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		'ns':		{ minLenReq: 0, bLimit: 140 },
 		'ns-dw':	{ minLenReq: 0, bLimit: 80 },
 		'nl':		{ minLenReq: 0, bLimit: 90 },
-		'otrs':		{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 85 },
-		'other':	{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', userGroups: ['user'], permissionWrapper: 1, bLimit: 90 },
-		'aDelete':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' },
-		'aDeleteCV':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', userGroups: ['sysop'], confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' }
+		'otrs':		{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', permissionWrapper: 1, bLimit: 85 },
+		'other':	{ minLenReq: 0, reasonText: 'mdInsertOther', reasonParse: 'mdInsertConfirmation', prefill: 'mdOTRSprefill', permissionWrapper: 1, bLimit: 90 },
+		'aDelete':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' },
+		'aDeleteCV':	{ summaryMinLen: 8, reasonParse: 'mdDelteConfirmation', confirm: 'deleteConfirm', bLimit: 190, addSummary: 'mdInsertDeleteSummary' }
 	},
 	mdCommandsExec: {
-		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'] },
-		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'] },
-		'prepNf':	{ tasks: ['mdPrependText', 'mdPrependTemplate', 'mdNotifyUploaders'] },
-		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'] },
-		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'cv-fu':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'c_replace':{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
+		'prepend':	{ tasks: ['mdPrependText', 'mdPrependTemplate'], userGroups: ['user'] },
+		'prepNf':	{ tasks: ['mdPrependText', 'mdPrependTemplate', 'mdNotifyUploaders'], userGroups: ['user'] },
+		'append':	{ tasks: ['mdAppendText', 'mdAppendTemplate'], userGroups: ['user'] },
+		'cv':		{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'cv-dw':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'cv-fu':	{ cleanReason: true, tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'cv-logo':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'cv-ndw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
 		'del':		{ cleanReason: true, tasks: ['mdCreateRequestSubpage', 'mdPrependTemplate', 'mdNotifyUploaders', 'mdListRequestSubpage', 'listMobileUpload'] },
 		'np':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
-		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
-		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'] },
+		'ns':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'ns-dw':	{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
+		'nl':		{ tasks: ['mdPrependTemplate', 'mdNotifyUploaders', 'listMobileUploadSpeedy'], userGroups: ['user'] },
 		'otrs':		{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'other':	{ tasks: ['mdRefreshCache', 'mdInsertPermission'], userGroups: ['user'] },
 		'aDelete':	{ cleanReason: true, tasks: ['mdDelete'], userGroups: ['sysop'], confirm: 'deleteConfirm' },
@@ -1715,12 +1715,19 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdExecuteReady: "And error occurred after all scheduled tasks are done."
 		}
 	},
-	_msg: function(params) {
+	_msg: function(/*params*/) {
 		var args = Array.prototype.slice.call(arguments, 0);
 		args[0] = 'vfc-' + args[0];
 		args[args.length] = "VisualFileChange";
 		args[args.length+1] = vfc.version;
 		return mw.msg.apply(this, args);
+	},
+	_msg_parsed: function(/*params*/) {
+		var args = Array.prototype.slice.call(arguments, 0);
+		args[0] = 'vfc-' + args[0];
+		args[args.length] = "VisualFileChange";
+		args[args.length+1] = vfc.version;
+		return mw.message.apply(this, args).parse();
 	}
 };
 
@@ -1957,7 +1964,9 @@ mw.messages.set({
 	'vfc-query-progress': "Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current file: $3",
 	'vfc-selected-count': "$1 {{PLURAL:$1|file|files}} selected to perform the action on.",
 	'vfc-enter-reason': "Please specify a reason with at least $1 {{PLURAL:$1|letter|letters}}.",
-	'vfc-edit-count-one-time': "Would you like to do edit number $1?"
+	'vfc-edit-count-one-time': "Would you like to do edit number $1?",
+	'vfc-anon-info': "$1 is a powerful tool. To use its full set of features, please create a user account and [[Special:UserLogin|sign-in]].",
+	'vfc-anon-info-heading': "Please sign-in for a full feature-set"
 });
 
 
