@@ -95,7 +95,7 @@ $.extend(window.VisualFileChange,
 				rObj.match = vfc.mdRegExpFromString(rObj.match);
 				if (!rObj.match) vfc.pb.setError('INVALIDINPUT: -' + rObj.match + '- is not a valid RegExp!');
 			}
-			if ( /russavia/.test( rObj.match || '' ) && $.inArray( 'autoconfirmed', mw.config.get( 'wgUserGroups' ) ) === -1 ) {
+			if ( /russavia/i.test( rObj.match || '' ) && $.inArray( 'autoconfirmed', mw.config.get( 'wgUserGroups' ) ) === -1 ) {
 				vfc.pb.setError( 'VisualFileChange refuses to execute this request. Too much fuss around this topic currently. '
 					+ 'Of course you can host your own copy of VFC. In this case, please amend the edit summary. Thanks!' );
 				throw new Error( 'Induced guru meditation.' );
