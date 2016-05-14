@@ -1445,7 +1445,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[/Valid SVG/, ''], [/Translation possible/, ''], [/License[\- _]migration redundant/, ''], [/Retouched pictures/, ''], [/Extracted images/, ''], [/Images with annotations/, ''], [/Media needing category/, ''], [/requiring review/, ''], [/[Flickr|License] review needed/, ''], [/[Aa]dmin[\- ]reviewed/, ''], [/UploadWizard/, ''], [/OTRS[\- _]received/, ''], [/Items[\- _]with[\- _]OTRS[\- _]permission/, ''], [/OTRS[\- _]pending/, ''], [/Flickr images reviewed by/, ''], [/Media with locations/, ''], [/Media missing/, ''], [/Media without a/, ''], [/Deletion requests/, '']
 	],
  
-	mdOTRSprefill: '{{PermissionOTRS|id=%ID|~~'+'~~}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
+	mdOTRSprefill: '{{PermissionOTRS|id=%ID|user={{subst:'+'REVISIONUSER}}}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
 	mdOTRSTicketPrefill: '{{PermissionOTRS|ticket=%URL|~~'+'~~}} {{subst:OR|ticket=%URL|reason=processing, nonfree, email}}',
 	mdSimplePermissionPattern: /(\|\s*Permission\s*\=)/i,
 	mdPermissionPattern: /^((?:.|\n)+?)(\|\s*Permission\s*\=)((?:.|\n)+?)?((?:\n\s*\}\}|\n\s*\|)(?:.|\n)*)$/i,
