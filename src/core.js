@@ -46,13 +46,6 @@
 'use strict';
 if (window.VisualFileChange) return;
 
-// https://phabricator.wikimedia.org/T69989
-// http://code.jquery.com/jquery-migrate-1.2.1.js
-jQuery.fn.live = function( types, data, fn ) {
-	jQuery( this.context ).on( types, this.selector, data, fn );
-	return this;
-};
-
 mw.loader.using('mediawiki.RegExp', function() {
 $(function () {
 
