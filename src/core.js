@@ -46,8 +46,7 @@
 'use strict';
 if (window.VisualFileChange) return;
 
-mw.loader.using('mediawiki.RegExp', function() {
-$(function () {
+$.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function() {
 
 var VisualFileChange,
 	vfc,
@@ -1963,7 +1962,7 @@ mw.messages.set({
 });
 
 
-mediaWiki.loader.using([
+mw.loader.using([
 'jquery.ui.dialog',
 'jquery.ui.datepicker',
 'jquery.ui.autocomplete',
@@ -1985,5 +1984,5 @@ mediaWiki.loader.using([
 	vfc.install();
 });
 
-}); }); }(jQuery, mediaWiki));
+}); }(jQuery, mediaWiki));
 // </nowiki>
