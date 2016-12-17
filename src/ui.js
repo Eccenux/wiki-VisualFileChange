@@ -619,26 +619,7 @@ $.extend(window.VisualFileChange,
 		
 		// Tipsy-tooltips for metadata and categories
 		$('.tipsymetadata').off();
-		$('.tipsymetadata').tipsy( {
-			title: function() {
-				$('.tipsy').remove();
-				return vfc.secureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), vfc);
-			},
-			live: true,
-			html: true,
-			gravity: $.fn.tipsy.autoNS
-		} );
 		$('.tipsycategory').off();
-		$('.tipsycategory').tipsy( {
-			title: function() { 
-				$('.tipsy').remove();
-				return vfc.secureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), vfc, false).html(); 
-			},
-			live: true,
-			html: true,
-			delayOut: 1000,
-			gravity: $.fn.tipsy.autoNS
-		} );
 
 		/*  The UI  */
 		var _callExec = function(action) {
@@ -1599,9 +1580,24 @@ $.extend(window.VisualFileChange,
 					.append( loadThumb ? $('<img>', { src: ii.thumburl, width: ii.thumbwidth, height: ii.thumbheight, alt: dirtyTitle }) : '' ) ],
 				[ ('<i>' + (uItem.iId + 1) + ': </i>'),
 				$('<input>', { type: 'checkbox', name: 'mdCheckDelete', value: dirtyTitle } ),
-				$('<span>', { 'class': 'tipsycategory' }).text('c'), ' ',
+				$('<span>', { 'class': 'tipsycategory' }).text('c').tipsy( {
+					title: function() { 
+						$('.tipsy').remove();
+						return vfc.secureCall('mdGetCatTable', $(this).parent().attr('tipsy-title'), vfc, false).html(); 
+					},
+					html: true,
+					delayOut: 1000,
+					gravity: $.fn.tipsy.autoNS
+				} ), ' ',
 				(($.isArray(ii.metadata) && !!ii.metadata.length) ? 
-					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm') : 
+					$('<span>', { 'class': 'tipsymetadata' }).text(camModel || 'm').tipsy( {
+						title: function() {
+							$('.tipsy').remove();
+							return vfc.secureCall('mdGetMetaTable', $(this).parent().attr('tipsy-title'), vfc);
+						},
+						html: true,
+						gravity: $.fn.tipsy.autoNS
+					} ) : 
 					''), 
 				(uItem.talkId ? 
 					$('<a>', { 
