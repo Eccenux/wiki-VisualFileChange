@@ -102,6 +102,7 @@ $.extend(window.VisualFileChange,
 		if (si.modeCat) method = 'mdFindCatMembers';
 		if (si.modeUser) method = 'mdFindUploads';
 		if (si.modePage) method = 'mdFindFiles';
+		if (si.modeSearch) method = 'mdFindViaSearch';
 		vfc.secureCall(method);
 	},
 	
@@ -268,6 +269,51 @@ $.extend(window.VisualFileChange,
 		if (!vfc.mdNoMoreFiles) {
 			qp.imcontinue = result['query-continue'].images.imcontinue;
 			vfc.mdSaveContinueKey(qp.imcontinue);
+		}
+		if (vfc.mdFirstRun) {			// Call nextTask the first time only
+			vfc.mdFirstRun = false;
+			vfc.nextTask();
+		}
+	},
+	
+	mdFindViaSearch: function () {
+		var qp = vfc.queryParams;
+		
+		var query = {
+			action: 'query',
+			list: 'search',
+			rawcontinue: 1,
+			srsearch: qp.target,
+			srlimit: vfc.mdSettings.loadBatchSize,
+			srnamespace: 6
+		};
+		// Prevent passing empty params
+		if (qp.sroffset) query.sroffset = qp.sroffset;
+		$doc.triggerHandler('vFC', ['imagesonpage', vfc, query]);
+		
+		vfc.queryAPI(query, 'mdFindViaSearchCB');
+	},
+	
+	mdFindViaSearchCB: function (result) {
+		vfc.mdListUploadsPending--;
+		$doc.triggerHandler('vFC', ['got imagesonpage', vfc, result]);
+		vfc.pb.setCurrentTaskDone();
+		
+		var qp = vfc.queryParams;
+		
+		// loop through all search results (array)
+		$.each(result.query.search, function(id, sr) {
+			vfc.iUploads[sr.title] = { uploader: [], comments: [] };
+			vfc.iUploads[sr.title].iId = vfc.iiUploads;
+			vfc.iUploads[sr.title].time = sr.timestamp;
+			vfc.iiUploads++;
+		});
+		if (!result['query-continue']) { 
+			vfc.mdNoMoreFiles = true;
+		}
+		if (!vfc.mdNoMoreFiles) {
+			qp.sroffset = result['query-continue'].search.sroffset;
+			vfc.mdSaveContinueKey(qp.sroffset);
 		}
 		if (vfc.mdFirstRun) {			// Call nextTask the first time only
 			vfc.mdFirstRun = false;
