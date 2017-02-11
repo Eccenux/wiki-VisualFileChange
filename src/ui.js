@@ -795,6 +795,10 @@ $.extend(window.VisualFileChange,
 			subHeading = i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + (/^(?:File|Category)/.test(target) ? ':' : '') + target + ']] ';
 		}
+		if (si.modePage) {
+			subHeading = i18n.filesWith + ' -';
+			defaultHeading = 'Files found with [[Special:Search/' + target + ']] ';
+		}
 		targetHref = mw.util.getUrl(targetHref);
 		
 		
