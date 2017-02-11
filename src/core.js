@@ -260,7 +260,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			case 2: // User
 			case -1: // Special pages
 				if (mw.config.get('wgCanonicalSpecialPageName') === 'Search') {
-					vfc.queryParams.target = $('input[name="search"]').val();
+					// FIXME: Find a better way to auto-select search query
+					vfc.queryParams.target = 'Special:Search/' + $('input[name="search"]').val();
 					doPrettify = false;
 				} else {
 					vfc.queryParams.target = mw.libs.commons.guessUser() || '';
