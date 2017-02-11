@@ -232,6 +232,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	
 	_start: function() {
 		var pageName = mw.config.get('wgPageName'),
+			doPrettify = true,
 			pb;
 		
 		$doc.triggerHandler('vFC', ['starting procedure', vfc]);
@@ -258,14 +259,22 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			case 3: // User_talk
 			case 2: // User
 			case -1: // Special pages
-				vfc.queryParams.target = mw.libs.commons.guessUser() || '';
+				if (mw.config.get('wgCanonicalSpecialPageName') === 'Search') {
+					vfc.queryParams.target = $('input[name="search"]').val();
+					doPrettify = false;
+				} else {
+					vfc.queryParams.target = mw.libs.commons.guessUser() || '';
+				}
 				break;
 			case 14: // categories
 				vfc.queryParams.target = pageName;
 				break;
 		}
-		// Prettify the title (normalizing)
-		vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
+		
+		if (doPrettify) {
+			// Prettify the title (normalizing)
+			vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
+		}
 		
 		$doc.triggerHandler('vFC', ['prepared', vfc]);
 		
@@ -390,13 +399,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			formattedNamespaces = mw.config.get('wgFormattedNamespaces'),
 			nsCat  = formattedNamespaces[14],
 			nsUser = formattedNamespaces[2],
+			nsSpecial = formattedNamespaces[-1],
 			nsPage = 'Page', // Virtual helper namespace
+			spSearch = 'Search',
 			nsLocalCat  = vfc.i18n.namespace['14'] || nsCat,
 			nsLocalUser = vfc.i18n.namespace['2'] || nsUser,
 			nsLocalPage = vfc.i18n.namespace.page || nsPage, // Virtual helper namespace
+			spLocalSearch = vfc.i18n.specials.search || spSearch,
 			rxCat = new RegExp('^' + nsCat + ':', 'i'),
 			rxUser = new RegExp('^' + nsUser + ':', 'i'),
-			rxPage = new RegExp('^' + nsPage + ':', 'i'),
+			rxSearch = new RegExp('^' + nsSpecial + ':' + spSearch + '(/|$)', 'i'),
 			lastXHR = 0,
 			pLastCB = 0,
 			delayXHR = 500;
@@ -422,7 +434,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				modeCat: $targetSelect.val() === nsCat,
 				modeUser: $targetSelect.val() === nsUser,
 				modePage: $targetSelect.val() === nsPage,
-				target: vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val().replace(/_/g, ' ')),
+				modeSearch: $targetSelect.val() === spSearch,
+				target: null, // populate later
 				loadThumbs: $gLoadThumbs[0].checked,
 				loadWikitext: $gLoadWikitext[0].checked,
 				startDate: $gStartAt.val(),
@@ -431,18 +444,23 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			if (!mwDateRx.test(si.startDate)) si.startDate = '';
 			
 			var lc = vfc.lastContinues,
-				qp = vfc.queryParams = {
-					target: si.target
-				};
+				qp = vfc.queryParams = {};
 			
-			if (si.modeUser) {
+			if (si.modeCat) {
+				si.target = vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val().replace(/_/g, ' '));
+			} else if (si.modeUser) {
 				qp.lestart = si.startDate;
-				qp.target = qp.target.replace(rxUser, ''); // WARNING: INPUT IS UNCHECKED
+				si.target = vfc.cleanReason($targetInput.val().replace(/_/g, ' '));
 				vfc.lastContinues.setVals = ['lecontinue'];
 			} else if (si.modePage) {
-				qp.target = qp.target.replace(rxPage, '');
+				si.target = vfc.cleanReason($targetInput.val().replace(/_/g, ' '));
 				vfc.lastContinues.setVals = ['imcontinue'];
+			} else if (si.modeSearch) {
+				si.target = $targetInput.val();
+				vfc.lastContinues.setVals = ['sroffset'];
 			}
+			
+			qp.target = si.target;
 			
 			vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
 			
@@ -565,7 +583,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		$targetSelect = $('<select>').attr({ size: 1, id: 'mdTargetSelect' }).append(
 			$('<option>', { text: nsLocalCat, value: nsCat }),
 			$('<option>', { text: nsLocalPage, value: nsPage }),
-			$('<option>', { text: nsLocalUser, selected: 'selected', value: nsUser })
+			$('<option>', { text: nsLocalUser, selected: 'selected', value: nsUser }),
+			$('<option>', { text: spLocalSearch, value: spSearch })
 		).change(function() {				
 			switch ($(this).val()) {
 				case nsPage:
@@ -580,6 +599,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					$gSortDate.removeAttr('disabled');
 					$gSortAlphabet.attr('disabled', 'disabled');
 					if ($gSortBy.find('option:selected').is($gSortAlphabet)) $gSortBy.val('default');
+					break;
+				case spSearch:
+					$gSortAlphabet.attr('disabled', 'disabled');
+					$gSortDate.attr('disabled', 'disabled');
 			}
 			$gSortBy.change();
 			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
@@ -637,6 +660,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				case nsPage:
 					$.extend( query, queryP );
 					break;
+				case spSearch:
+					return;
 			}
 			lastXHR = $.getJSON( mw.util.wikiScript('api'), query, function(r) { didXHR(r, pCallback); });
 		};
@@ -786,7 +811,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					methodFile = 'none';
 					methodDate = 'inline-block';
 				}
-				if (nsPage === $targetSelect.val()) {
+				if ($.inArray($targetSelect.val(), [nsPage, spSearch]) >= 0) {
 					methodFile = 'none';
 					methodDate = 'none';
 				}
@@ -850,6 +875,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			} else if (rxUser.test(thisVal) && (nsPage !== $targetSelect.val())) {
 				$(this).val(thisVal = thisVal.replace(rxUser, ''));
 				$targetSelect.val(nsUser);
+				$targetSelect.change();
+			} else if (rxSearch.test(thisVal)) {
+				$(this).val(thisVal = thisVal.replace(rxSearch, ''));
+				$targetSelect.val(spSearch);
 				$targetSelect.change();
 			}
 			if (thisVal.length < minlen) {
@@ -1510,6 +1539,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		filesIn: "Files in",
 		filesBy: "Initially uploaded files by",
 		filesOn: "Files on page",
+		filesWith: "Files found with search",
 		
 		browsertitle: "VisualFileChange: Welcome, %USER%!",
 		
@@ -1643,6 +1673,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			'14':   "Category name"
 		},
 		
+		specials: {
+			'search': "Search query"
+		},
+
 		tasks: "Tasks:",
 		task: {
 			start: 'Starting and gathering information.',
