@@ -588,7 +588,8 @@ $.extend(window.VisualFileChange,
 			title: page.title,
 			requestid: page.title,
 			editType: page.editType,
-			text: page.text
+			text: page.text,
+			tags: vfc.mdChangeTag
 		};
 		if (!page.create) edit.nocreate = true;
 		if (page.redirect) edit.redirect = true;
@@ -654,7 +655,8 @@ $.extend(window.VisualFileChange,
 				}
 			},
 			title: page,
-			reason: summary
+			reason: summary,
+			tags: vfc.mdChangeTag
 		});
 	}
 });
