@@ -1478,6 +1478,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
+	mdChangeTag: 'VisualFileChange',
 	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[2] + ':',
 	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[3] + ':',
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
