@@ -1448,8 +1448,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
  
 	mdLicenseRecognization: [
 		// RegExp for the tag			note to add to the thumb-page
-		[/Category:CC[\- _]BY-SA.*/i,	'CC-By-SA'],
-		[/Category:CC[\- _]BY.*/i,		'CC-By'],
+		[/Category:CC[\- _]BY-SA.*/i,	'CC-BY-SA'],
+		[/Category:CC[\- _]BY.*/i,		'CC-BY'],
 		[/Category:CC[\- _]Zero.*/i,	'CC0'],
 		[/Category:GFDL.*/i,			'GFDL'],
 		[/Category:PD[\- _]Old.*/i,		'PD-old'],
