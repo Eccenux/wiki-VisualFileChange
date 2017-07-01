@@ -1865,7 +1865,7 @@ function ProgressBox(width, o) {
 		.html('Icons by Everaldo Coelho -LGPL- and <br/>the jQuery UI team -GPL-<br/>'
 			+ ( o.i18n.mdTranslator
 			? 'Translation provided by ' + o.i18n.mdTranslator
-			: 'Thanks to all supporters, especially Saibo and LX for testing.' )
+			: 'Coded by Rillke and others. Thanks to all supporters, especially Saibo and LX for testing.' )
 		);
 		
 	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
