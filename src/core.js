@@ -1484,7 +1484,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[-1] + ':Contributions/',
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	mdErrorsReportPath: mw.util.getUrl('User talk:Rillke'),
+	mdErrorsReportPath: mw.util.getUrl('MediaWiki talk:VisualFileChange.js'),
 	mdHelpNode: '<a href="' + mw.util.getUrl('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
@@ -1840,7 +1840,7 @@ function ProgressBox(width, o) {
 	this.$subheading = $('<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.scriptRevision
-	}).append($('<br>'), 'Report bugs and ideas to <a href="' + o.mdErrorsReportPath + '" target="_blank">Rillke</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
+	}).append($('<br>'), 'Report bugs and ideas <a href="' + o.mdErrorsReportPath + '" target="_blank">here</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
 	this.$tasklist = $('<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: o.i18n.tasks
