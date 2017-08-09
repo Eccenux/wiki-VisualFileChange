@@ -589,21 +589,21 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		).change(function() {				
 			switch ($(this).val()) {
 				case nsPage:
-					$gSortAlphabet.removeAttr('disabled');
-					$gSortDate.attr('disabled', 'disabled');
+					$gSortAlphabet.prop('disabled', false);
+					$gSortDate.prop('disabled', true);
 					if ($gSortBy.find('option:selected').is($gSortDate)) $gSortBy.val('default');
 					break;
 				case nsCat:
-					$gSortAlphabet.add($gSortDate).removeAttr('disabled');
+					$gSortAlphabet.add($gSortDate).prop('disabled', false);
 					break;
 				case nsUser:
-					$gSortDate.removeAttr('disabled');
-					$gSortAlphabet.attr('disabled', 'disabled');
+					$gSortDate.prop('disabled', false);
+					$gSortAlphabet.prop('disabled', true);
 					if ($gSortBy.find('option:selected').is($gSortAlphabet)) $gSortBy.val('default');
 					break;
 				case spSearch:
-					$gSortAlphabet.attr('disabled', 'disabled');
-					$gSortDate.attr('disabled', 'disabled');
+					$gSortAlphabet.prop('disabled', true);
+					$gSortDate.prop('disabled', true);
 			}
 			$gSortBy.change();
 			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
