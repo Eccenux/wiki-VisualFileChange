@@ -508,10 +508,10 @@ $.extend(window.VisualFileChange,
 					$replace.css('background', '#FEB');
 				}
 			};
-			$text.bind('input keyup change', testConditions);
-			$text.bind('input keyup change', testEmptyReplace);
+			$text.on('input keyup change', testConditions);
+			$text.on('input keyup change', testEmptyReplace);
 			$cb.change(testConditions);
-			$replace.bind('input keyup change', testEmptyReplace);
+			$replace.on('input keyup change', testEmptyReplace);
 		};
 		var $newRow = function() {
 			rowCount++;
@@ -548,7 +548,7 @@ $.extend(window.VisualFileChange,
 			return $el;
 		};
 		var $newMatchArea = function() {
-			return resizeHandler($('<textarea></textarea>').attr({ id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%', placeholder: "text or pattern to be replaced" }).bind('input.resize keyup.resize change.resize', function(e) {
+			return resizeHandler($('<textarea></textarea>').attr({ id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%', placeholder: "text or pattern to be replaced" }).on('input.resize keyup.resize change.resize', function(e) {
 				var $el = $(this);
 				if (!$el.val()) return;
 				$el.unbind('input.resize keyup.resize change.resize');
@@ -915,8 +915,8 @@ $.extend(window.VisualFileChange,
 				}
 			}
 		};
-		vfc.$ctrs.deleteReason.bind( 'input keyup change autocompleteselect', _handleCriticalKey );
-		vfc.$ctrs.editSummary.bind( 'input keyup change autocompleteselect', _handleCriticalKey );
+		vfc.$ctrs.deleteReason.on( 'input keyup change autocompleteselect', _handleCriticalKey );
+		vfc.$ctrs.editSummary.on( 'input keyup change autocompleteselect', _handleCriticalKey );
 		
 		// Binding enter-key event.
 		var __submitOnEnter = function(e) {
@@ -1073,8 +1073,8 @@ $.extend(window.VisualFileChange,
 		});
 		vfc.$ctrs.ajaxMdType.val(vfc.mdSettings.defaultAction);
 		vfc.$ctrs.ajaxMdType.change();
-		vfc.$ctrs.ajaxMdType.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
-		vfc.$ctrs.ajaxMdIa.bind('click mousedown mouseup', function(e) { e.stopPropagation(); });
+		vfc.$ctrs.ajaxMdType.on('click mousedown mouseup', function(e) { e.stopPropagation(); });
+		vfc.$ctrs.ajaxMdIa.on('click mousedown mouseup', function(e) { e.stopPropagation(); });
 		vfc.$ctrs.deleteReason.keyup();
  
 		// cute-selection dialog
@@ -1713,7 +1713,7 @@ $.extend(window.VisualFileChange,
 				}
 			};
 			vfc.dlg.unbind('scroll', __onScroll);
-			vfc.dlg.bind('scroll', __onScroll);
+			vfc.dlg.on('scroll', __onScroll);
 		}
 		if (!vfc.mdNoMoreFiles) { // silently run the next upload-list-query in background
 			vfc.secureCall('mdCreateList');
