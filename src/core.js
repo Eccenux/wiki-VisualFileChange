@@ -207,7 +207,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			if (cb) $doc.on('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
 				if (script) { if ('VisualFileChange' === script && add) {
 					if (alias === add) {
-						$doc.unbind('scriptLoaded.vFCListener' + alias);
+						$doc.off('scriptLoaded.vFCListener' + alias);
 						executeCB();
 					}
 				}}
@@ -2013,7 +2013,7 @@ mw.loader.using([
 'ext.gadget.libJQuery',
 'ext.gadget.jquery.in-view'
 ], function () {
-	$doc.unbind('vFC.debuglistener');
+	$doc.off('vFC.debuglistener');
 	$doc.on('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug) vfc.log('VisualFileChange> ' + p1 );
 	});
