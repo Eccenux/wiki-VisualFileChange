@@ -551,7 +551,7 @@ $.extend(window.VisualFileChange,
 			return resizeHandler($('<textarea></textarea>').attr({ id: 'mdMatchText'+rowCount, rows: 1, cols: 50, style: 'width:95%', placeholder: "text or pattern to be replaced" }).on('input.resize keyup.resize change.resize', function(e) {
 				var $el = $(this);
 				if (!$el.val()) return;
-				$el.unbind('input.resize keyup.resize change.resize');
+				$el.off('input.resize keyup.resize change.resize');
 				$newRow();
 			})).focus(function() {
 				var $el = $(this),
@@ -1014,7 +1014,7 @@ $.extend(window.VisualFileChange,
 			// byte limit
 			// PlugIn has a bug: It attaches multiple handlers
 			// So start unbinding them.
-			vfc.$ctrs.editSummary.unbind('keypress');
+			vfc.$ctrs.editSummary.off('keypress');
 			vfc.$ctrs.editSummary.byteLimit(opt.bLimit);
 			var summary = vfc.$ctrs.editSummary.val();
 			while ($.byteLength(summary) > opt.bLimit) {
@@ -1411,7 +1411,7 @@ $.extend(window.VisualFileChange,
 		gu.tipsyGravity = 'se';
 		gu.query(vfc.gbu).done(function() { 
 			$.each(vfc.gbu, function(i, $el) {
-				$el.unbind('click');
+				$el.off('click');
 			});
 			vfc.gbu = {};
 		});
@@ -1712,7 +1712,7 @@ $.extend(window.VisualFileChange,
 					vfc.secureCall('mdQueryMore');
 				}
 			};
-			vfc.dlg.unbind('scroll', __onScroll);
+			vfc.dlg.off('scroll', __onScroll);
 			vfc.dlg.on('scroll', __onScroll);
 		}
 		if (!vfc.mdNoMoreFiles) { // silently run the next upload-list-query in background
