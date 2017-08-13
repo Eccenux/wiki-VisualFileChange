@@ -32,7 +32,7 @@
 	Parameter3: optional, depends on context
 
 	Example for listening to the events:
-	$doc.bind('vFC', function(e, p1, p2, p3) {
+	$doc.on('vFC', function(e, p1, p2, p3) {
 		console.log('VisualFileChange> ' + p1);
 	});
 ***************************************************/
@@ -204,7 +204,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			executeCB();
 			return;
 		} else {
-			if (cb) $doc.bind('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
+			if (cb) $doc.on('scriptLoaded.vFCListener' + alias, function(evt, script, add) {
 				if (script) { if ('VisualFileChange' === script && add) {
 					if (alias === add) {
 						$doc.unbind('scriptLoaded.vFCListener' + alias);
@@ -867,7 +867,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			,$gNotifyArea.hide()
 		);
 		$targetSelect.change();
-		$targetInput.bind('input keyup change', function(e) {
+		$targetInput.on('input keyup change', function(e) {
 			var thisVal = $(this).val();
 			if (rxCat.test(thisVal)) {
 				$(this).val(thisVal = thisVal.replace(rxCat, ''));
@@ -2014,7 +2014,7 @@ mw.loader.using([
 'ext.gadget.jquery.in-view'
 ], function () {
 	$doc.unbind('vFC.debuglistener');
-	$doc.bind('vFC.debuglistener', function(e, p1, p2, p3) {
+	$doc.on('vFC.debuglistener', function(e, p1, p2, p3) {
 		if (window.VisualFileChangeDebug) vfc.log('VisualFileChange> ' + p1 );
 	});
 	vfc.install();
