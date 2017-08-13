@@ -133,7 +133,7 @@ $.extend(window.VisualFileChange,
 		opt.save($doc, 'vFC_S').done(function() {
 			// ...
 			
-			$doc.unbind('vFC_S');
+			$doc.off('vFC_S');
 		});
 	},
 	
@@ -189,7 +189,7 @@ $.extend(window.VisualFileChange,
 		if (!window[profileVar]) window[profileVar] = {};
 		window[profileVar][saveName] = vfc.getNewConfigItem(objProfile);
 		
-		$doc.unbind('vFC_S');
+		$doc.off('vFC_S');
 		$doc.on('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, i18n.jsProfileSaved, i18n.jsProfileSavedText);
@@ -243,7 +243,7 @@ $.extend(window.VisualFileChange,
 		});
 		window[profileVar] = newConfig;
 		
-		$doc.unbind('vFC_S');
+		$doc.off('vFC_S');
 		$doc.on('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, i18n.jsProfileRm, i18n.jsProfileRmText);
@@ -440,8 +440,8 @@ $.extend(window.VisualFileChange,
 						vfc.loadModule('ui.js', 'nextTask');
 						$doc.on('vFC.autoContinue', function(e, what) {
 							if ('initial uploads dialog' === what) {
-								$doc.unbind('vFC_Startup_target');
-								$doc.unbind('vFC.autoContinue');
+								$doc.off('vFC_Startup_target');
+								$doc.off('vFC.autoContinue');
 								vfc.mdApplyProfile('last executed (auto-saved)', 'client');
 							}
 						});
