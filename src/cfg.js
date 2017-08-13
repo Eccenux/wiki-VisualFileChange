@@ -63,7 +63,7 @@ $.extend(window.VisualFileChange,
 					});
 					$dlg.dialog('option', 'buttons', {});
 					
-					$doc.bind('vFC_S', function(e, text, status, obj) {
+					$doc.on('vFC_S', function(e, text, status, obj) {
 						var icon = 'info';
 						switch (status) {
 							case -1:
@@ -190,7 +190,7 @@ $.extend(window.VisualFileChange,
 		window[profileVar][saveName] = vfc.getNewConfigItem(objProfile);
 		
 		$doc.unbind('vFC_S');
-		$doc.bind('vFC_S', function(e, text, status, obj) {
+		$doc.on('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, i18n.jsProfileSaved, i18n.jsProfileSavedText);
 		});
@@ -244,7 +244,7 @@ $.extend(window.VisualFileChange,
 		window[profileVar] = newConfig;
 		
 		$doc.unbind('vFC_S');
-		$doc.bind('vFC_S', function(e, text, status, obj) {
+		$doc.on('vFC_S', function(e, text, status, obj) {
 			$doc.triggerHandler('vFC', ['Profile>' + text, vfc]);
 			progressCB(status, text, i18n.jsProfileRm, i18n.jsProfileRmText);
 		});
@@ -421,7 +421,7 @@ $.extend(window.VisualFileChange,
 		
 		var keyTimeout = 0;
 
-		$doc.bind('vFC_Startup_target', function(e, text) {
+		$doc.on('vFC_Startup_target', function(e, text) {
 			clearTimeout(keyTimeout);
 			keyTimeout = setTimeout(function() {
 				if ($.trim(text.replace(/_/, 'g')) === lookFor) {
@@ -438,7 +438,7 @@ $.extend(window.VisualFileChange,
 						vfc.lastContinues.setVals = autoExecProfile.proceedAt.setVals;
 						vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
 						vfc.loadModule('ui.js', 'nextTask');
-						$doc.bind('vFC.autoContinue', function(e, what) {
+						$doc.on('vFC.autoContinue', function(e, what) {
 							if ('initial uploads dialog' === what) {
 								$doc.unbind('vFC_Startup_target');
 								$doc.unbind('vFC.autoContinue');
