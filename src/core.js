@@ -730,8 +730,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					return vfc.i18n.optStartAtHowTo;
 				} })
 			.attr('placeholder', 'YYYY-MM-DD')
-			.appendTo($gStartWrap)
-			.placeholder();
+			.appendTo($gStartWrap);
 		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) {
 			moreOptionsVisible = true;
 			setTimeout(function() { 
@@ -2003,7 +2002,6 @@ mw.loader.using([
 'jquery.ui.datepicker',
 'jquery.ui.autocomplete',
 'jquery.tipsy',
-'jquery.placeholder',
 'mediawiki.user',
 'mediawiki.util',
 'mediawiki.jqueryMsg',
