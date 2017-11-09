@@ -363,7 +363,7 @@ $.extend(window.VisualFileChange,
 		});
 		$descSave = $('<div>', { text: i18n.profileSelectLocation });
 		$addNameL = $('<label>', { text: i18n.profileName }).attr({ 'for': 'mdProfileName' });
-		$addName = $('<input>').attr({ id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' }).placeholder();
+		$addName = $('<input>').attr({ id: 'mdProfileName', type: 'text', size: 40, placeholder: 'Profile name', style: 'display:block; margin-left:0.4em' });
 		$addButtonClient = $('<button>', { text: i18n.locationBrowser })
 			.button({ icons: { primary: 'ui-icon-disk' } })
 			.click(saveToClient);
@@ -475,7 +475,6 @@ mw.loader.using([
 	'jquery.ui.slider', 
 	'jquery.ui.button', 
 	'jquery.cookie', 
-	'jquery.placeholder', 
 	'jquery.jStorage',
 	'mediawiki.user',
 	'ext.gadget.libJQuery',
