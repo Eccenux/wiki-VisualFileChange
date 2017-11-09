@@ -367,7 +367,7 @@ $.extend(window.VisualFileChange,
 			});
 			return rl;
 		};
-		$examineInput = $('<input>').attr({ type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: "file number" }).placeholder();
+		$examineInput = $('<input>').attr({ type: 'text', 'class': 'numbersOnly', maxlength: 4, size: 11, placeholder: "file number" });
 		$examineButton = $('<button>', { text: 'Compare!' }).click(function() {
 			$examineFirstDiv.text('');
 			$examineSecondDiv.text('');
@@ -481,7 +481,7 @@ $.extend(window.VisualFileChange,
 			$('<option>', { text: 'Do not preserve nowikis and comments.', value: 'none' })
 		);
 		var $alsoPreserveL = vfc.$alsoPreserve = $('<label>', { 'for': 'alsoPreserve', text: 'Also preserve the following areas from being replaced.' });
-		var $alsoPreserve = vfc.$alsoPreserve = $('<input>').attr({ type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' }).placeholder();
+		var $alsoPreserve = vfc.$alsoPreserve = $('<input>').attr({ type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' });
 		var $tbody = $('<tbody>', { id: 'mdRTableBody' }).appendTo($table);
 		var $rn = $('<tr>', { id: 'mdReplaceTextNode' }).append($('<td>').append($desc, $regExpEscapeHelper, $table, $selPreserve, $('<br/>'), $alsoPreserveL, $alsoPreserve, $('<br/>'), vfc.mdCreateExamineNode()));
 		
@@ -1835,7 +1835,6 @@ mw.loader.using([
 	'jquery.ui.dialog', 
 	'jquery.ui.button', 
 	'jquery.tipsy', 
-	'jquery.placeholder', 
 	'jquery.byteLimit',
 	'jquery.byteLength',
 	'jquery.badge',
