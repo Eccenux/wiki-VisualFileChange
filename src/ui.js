@@ -1837,7 +1837,7 @@ mw.loader.using([
 	'jquery.tipsy', 
 	'jquery.byteLimit',
 	'jquery.byteLength',
-	'jquery.badge',
+	'ext.gadget.jquery.badge',
 	'jquery.jStorage',
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
