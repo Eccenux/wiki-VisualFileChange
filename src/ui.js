@@ -61,7 +61,7 @@ var vfc = window.VisualFileChange,
 if ( mw.config.get( 'skin' ) === 'vector' ) {
 	css += '.ui-buttonset .ui-button{margin-left:0!important;margin-right:-.3em!important;}\n\
 	.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
-	.ui-buttonset > label.ui-state-active{background:#F0F0F0 !important;}\n\
+	.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
 	.md-examine-contents{font-size:1.2em;}';
 }
 mw.util.addCSS( css );
@@ -463,7 +463,7 @@ $.extend( window.VisualFileChange, {
 		var $alsoPreserveL = vfc.$alsoPreserve = $( '<label>', { 'for': 'alsoPreserve', text: 'Also preserve the following areas from being replaced.' } );
 		var $alsoPreserve = vfc.$alsoPreserve = $( '<input>' ).attr( { type: 'text', id: 'alsoPreserve', placeholder: 'RegExp without flags enclosed in (): /(toPreserve)/ Example: /(<gallery>(?:.|\\n)*?<\\/gallery>)/', style: 'width:99%' } );
 		var $tbody = $( '<tbody>', { id: 'mdRTableBody' } ).appendTo( $table );
-		var $rn = $( '<tr>', { id: 'mdReplaceTextNode' } ).append( $( '<td>' ).append( $desc, $regExpEscapeHelper, $table, $selPreserve, $( '<br/>' ), $alsoPreserveL, $alsoPreserve, $( '<br/>' ), vfc.mdCreateExamineNode() ) );
+		var $rn = $( '<tr>', { id: 'mdReplaceTextNode' } ).append( $( '<td>' ).append( $desc, $regExpEscapeHelper, $table, $selPreserve, $( '<br>' ), $alsoPreserveL, $alsoPreserve, $( '<br>' ), vfc.mdCreateExamineNode() ) );
 		var $newRow;
 		var regExTester = function ( $text, $cb, $replace ) {
 			var testConditions = function () {
@@ -826,7 +826,7 @@ $.extend( window.VisualFileChange, {
 			$checkedInputs.closest( 'li.gallerybox' ).addClass( 'md-selected' );
 		};
 
-		$( '<a>', { href: '#', text: i18n.mdInvertSelection } ).button().css( 'margin', '0px' ).click( function ( e ) {
+		$( '<a>', { href: '#', text: i18n.mdInvertSelection } ).button().css( 'margin', '0' ).click( function ( e ) {
 			e.preventDefault();
 			var $inputs = $( 'input[name="mdCheckDelete"]' ),
 				$checkedInputs = $inputs.filter( ':checked' ).prop( 'checked', false );
@@ -834,7 +834,7 @@ $.extend( window.VisualFileChange, {
 			updateSelectedCount();
 		} ).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
 
-		$( '<a>', { href: '#', text: i18n.mdCuteSelectLabel } ).button().css( 'margin', '0px' ).click( function ( e ) {
+		$( '<a>', { href: '#', text: i18n.mdCuteSelectLabel } ).button().css( 'margin', '0' ).click( function ( e ) {
 			e.preventDefault();
 			vfc.mdCuteSelectDlg.dialog( 'open' );
 		} ).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
@@ -847,7 +847,7 @@ $.extend( window.VisualFileChange, {
 			.append(
 				subHeading, $( '<a>', { href: targetHref, target: '_blank', text: vfc.queryParams.target } ), '-. ',
 				vfc.$ctrs.taskForUser, ': ',
-				vfc.$ctrs.deleteReason, $( '<br/>' ),
+				vfc.$ctrs.deleteReason, $( '<br>' ),
 				vfc.$ctrs.editSummaryL, ': ',
 				vfc.$ctrs.editSummary,
 				$( '<span>', { id: 'mdReplacePermissionWrapper' } ).append(
@@ -1327,7 +1327,7 @@ $.extend( window.VisualFileChange, {
 				$doc.triggerHandler( 'vFC', [ 'detail-info', vfc, query ] );
 
 				vfc.mdUploadCt++;
-				vfc.queryAPI( query, 'mdQueriedFile' ); // Dont use task queue because this is a loop
+				vfc.queryAPI( query, 'mdQueriedFile', 'failQueriedFile' ); // Dont use task queue because this is a loop
 			};
 
 			$.each( this.iUploads, function ( upload, upli ) {
@@ -1407,7 +1407,7 @@ $.extend( window.VisualFileChange, {
 		if ( asTags )
 			$catsList.addClass( 'j-cat-wrap' );
 		 else
-			$catWrap.html( '<b><i>Categories:</i></b><br/><br/>' );
+			$catWrap.html( '<b><i>Categories:</i></b><br><br>' );
 
 		$catWrap.append( $catsList );
 
@@ -1443,7 +1443,7 @@ $.extend( window.VisualFileChange, {
 		var	id, val,
 			mdata = o.iUploads[ rv ].metadata,
 			fRestr = ( mdata.length > 6 ),
-			stMdat = '<b><i>File-Metadata:</i></b><br/><br/>',
+			stMdat = '<b><i>File-Metadata:</i></b><br><br>',
 			restrArr = [ 'ImageDescription', 'Make', 'Model', 'Copyright', 'DateTime', 'Artist', 'Title', 'Author', 'Creator', 'CreationDate' ];
 
 		$.each( mdata, function ( id, mdatai ) {
@@ -1453,7 +1453,7 @@ $.extend( window.VisualFileChange, {
 			} catch ( ex ) {
 				val = mdatai.value;
 			}
-			stMdat += ( ( fRestr && ( $.inArray( mdatai.name, restrArr ) === -1 ) ) ? '' : '<i>' + mdatai.name + '</i><br/>' + val + '<br/><br/>' );
+			stMdat += ( ( fRestr && ( $.inArray( mdatai.name, restrArr ) === -1 ) ) ? '' : '<i>' + mdatai.name + '</i><br>' + val + '<br><br>' );
 		} );
 		return stMdat;
 	},
@@ -1550,7 +1550,7 @@ $.extend( window.VisualFileChange, {
 				return;
 			}
 
-			if ( !pg.imageinfo ) { // File is corrupt, create dummy [[phab:T187016]]
+			if ( !pg.imageinfo /* || $.isEmptyObject( pg.imageinfo[0] ) */ ) { // No thump image, redirect, create dummy
 				pg.imageinfo = [ {
 					thumburl: '/w/resources/assets/file-type-icons/fileicon.png',
 					size: 0,
@@ -1640,7 +1640,7 @@ $.extend( window.VisualFileChange, {
 						} ).text( 't' ) :
 						''
 					),
-					$( '<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' } ), '<br/>',
+					$( '<a>', { href: loglink, target: '_blank', text: 'log', 'class': 'md-loglink' } ), '<br>',
 					( vfc.secureCall( 'mdExtractTags', pg.categories ) ), ' ',
 					$( '<a>', { href: ii.descriptionurl, target: '_blank', 'class': 'image jFileTitle' } )
 						.text( dirtyTitle ),
@@ -1762,11 +1762,11 @@ $.extend( window.VisualFileChange, {
 
 		var i18nED = i18n.endDlg,
 			$dlgNode = $( '<div>', { id: 'mdWhereToGoDlg', title: i18nED.heading, text: i18nED.intro } )
-				.append( $( '<br/>' ), $( '<a>', { href: '#', text: i18nED.saveInProfile } ).button().click( function ( e ) {
+				.append( $( '<br>' ), $( '<a>', { href: '#', text: i18nED.saveInProfile } ).button().click( function ( e ) {
 					e.preventDefault();
 					vfc.mdProfile();
 				} ) )
-				.append( $( '<br/>' ), mw.html.escape( i18nED.aboutLastExec ) );
+				.append( $( '<br>' ), mw.html.escape( i18nED.aboutLastExec ) );
 		var $ulNode = $( '<ul>' );
 
 		var addLink = function ( href, text, target ) {
