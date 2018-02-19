@@ -578,7 +578,7 @@ $.extend( window.VisualFileChange, {
 		var __gotResult = function ( r ) {
 			var $r = $( r ),
 				suggestions = [],
-				lastSummaries = mw.storage.get( vfc.summaryChageKey );
+				lastSummaries = $.jStorage.get( vfc.summaryChageKey );
 
 			// Add last used summaries
 			if ( lastSummaries && lastSummaries[ saveKey ] ) {
@@ -649,7 +649,7 @@ $.extend( window.VisualFileChange, {
 		var _callExec = function ( action ) {
 		// Save suggestions:
 			if ( i18n.reasonAutoSuggest[ action ] ) {
-				var s = mw.storage.get( vfc.summaryChageKey ) || {},
+				var s = $.jStorage.get( vfc.summaryChageKey ) || {},
 					ss = s[ action ] || [],
 					nv = vfc.$ctrs.editSummary.val();
 
@@ -657,11 +657,11 @@ $.extend( window.VisualFileChange, {
 					ss.pop();
 
 				if ( nv && $.inArray( nv, ss ) === -1 ) {
-					if ( ss.length === vfc.mdSettings.summaryChacheLen && ss.length !== 0 ) ss.pop();
+					if ( ss.length === vfc.mdSettings.summaryChacheLen && ss.length ) ss.pop();
 					ss.unshift( nv );
 				}
 				s[ action ] = ss;
-				mw.storage.set( vfc.summaryChageKey, s );
+				$.jStorage.set( vfc.summaryChageKey, s );
 			}
 			vfc.secureCall( 'mdExecute' );
 		};
@@ -1820,7 +1820,7 @@ mw.loader.using( [
 	'jquery.byteLimit',
 	'jquery.byteLength',
 	'ext.gadget.jquery.badge',
-	'mediawiki.storage',
+	'jquery.jStorage',
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
