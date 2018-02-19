@@ -73,7 +73,7 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 	VisualFileChange = vfc = window.VisualFileChange = {
 
 		/** REVISION **/ // (x.major.minor.bug)
-		scriptRevision: '0.9.70.0',
+		scriptRevision: '0.9.70.1',
 
 		/**
 		 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -1132,12 +1132,10 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 				},
 				errCb: function (err, q, r) {
 					_always();
-					// console.info("fail", err, typeof err, q, typeof r, r)
 					if (errCallBack)
 						vfc.secureCall(errCallBack, err, q);
 					else
 						vfc.fail(err, q, r, callback);
-
 				}
 			});
 		},
@@ -1241,34 +1239,28 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 		 * @param {Function} callback The callback
 		 */
 		fail: function (err, q, r, callback) {
-			if (r && r.error.code === 'urlparamnormal') {
-				var retry = 0;
+			if (r && r.error.code === 'urlparamnormal') { // [[phab:T187016]]
 				r = r.error;
 				var rFile = 'File:' + r.info.replace(/.*? ([^\s]+)\.$/, '$1').replace(/_/g, ' ');
 				// Get defect image and remove it from query
 				var regFile = new RegExp('\\|?' + mw.RegExp.escape(rFile));
-				this.log('Defect file found ' + rFile);
+				var q2 = $.extend({}, q); // copy query
+				this.log(rFile + ' is defect');
 				regFile = q.titles.replace(regFile, '');
 				// try again
 				if (regFile && q.titles !== regFile) {
 					q.titles = regFile;
-					// Retry
 					vfc.queryAPI(q, callback);
-					retry++;
 				}
-				if (rFile) {
-					// Separate affected files, clone object
-					var q2 = $.extend({}, q);
-					q2.titles = rFile;
-					q2.prop = q2.prop.replace(/\|?imageinfo\|?/, '');
-					delete q2.iiprop;
-					delete q2.iiurlheight;
-					delete q2.iiurlwidth;
-					delete q2.iilimit;
-					vfc.queryAPI(q2, callback);
-					retry++;
-				}
-				if (retry) return;
+				// Separate affected files
+				q2.titles = rFile;
+				// q2.prop = q2.prop.replace(/\|?imageinfo\|?/, '');
+				// delete q2.iiprop;
+				// delete q2.iilimit;
+				delete q2.iiurlheight;
+				delete q2.iiurlwidth;
+				vfc.queryAPI(q2, callback);
+				return;
 			}
 
 			err = err.toString();
