@@ -73,7 +73,7 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 	VisualFileChange = vfc = window.VisualFileChange = {
 
 		/** REVISION **/ // (x.major.minor.bug)
-		scriptRevision: '0.9.69.0',
+		scriptRevision: '0.9.69.1',
 
 		/**
 		 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -1212,7 +1212,7 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 						vfc.secureCall(errCallBack, r, q, t);
 						vfc.api.wasError = true;
 					} else {
-						vfc.fail(t);
+						vfc.fail(t, q, r, callback);
 					}
 				}
 			});
@@ -1239,18 +1239,22 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 		 * @param {Function} callback The callback
 		 */
 		fail: function (err, q, r, callback) {
-			r = r.error;
-			if (r && r.code === 'urlparamnormal') {
+			if (r && r.error.code === 'urlparamnormal') {
+				var retry = 0;
+				r = r.error;
 				var rFile = 'File:' + r.info.replace(/.*? ([^\s]+)\.$/, '$1').replace(/_/g, ' ');
 				// Get defect image and remove it from query
 				var regFile = new RegExp('\\|?' + mw.RegExp.escape(rFile));
-				this.log('Defect file found ', rFile);
+				this.log('Defect file found ' + rFile);
 				regFile = q.titles.replace(regFile, '');
 				// try again
 				if (regFile && q.titles !== regFile) {
 					q.titles = regFile;
 					// Retry
 					vfc.queryAPI(q, callback);
+					retry++;
+				}
+				if (rFile) {
 					// Separate affected files, clone object
 					var q2 = $.extend({}, q);
 					q2.titles = rFile;
@@ -1260,8 +1264,9 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 					delete q2.iiurlwidth;
 					delete q2.iilimit;
 					vfc.queryAPI(q2, callback);
-					return;
+					retry++;
 				}
+				if (retry) return;
 			}
 
 			err = err.toString();
