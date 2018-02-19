@@ -73,7 +73,7 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 	VisualFileChange = vfc = window.VisualFileChange = {
 
 		/** REVISION **/ // (x.major.minor.bug)
-		scriptRevision: '0.9.69.1',
+		scriptRevision: '0.9.70.0',
 
 		/**
 		 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -657,12 +657,13 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 					text: spLocalSearch,
 					value: spSearch
 				})).change(function () {
-				switch ($(this).val()) {
+				switch (this.value) {
 					case nsPage:
 						$gSortAlphabet.prop('disabled', false);
 						$gSortDate.prop('disabled', true);
 						if ($gSortBy.find('option:selected').is($gSortDate))
 							$gSortBy.val('default');
+						$targetInput.val(mw.config.get('wgPageName'));
 						break;
 					case nsCat:
 						$gSortAlphabet.add($gSortDate).prop('disabled', false);
@@ -672,6 +673,7 @@ $.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
 						$gSortAlphabet.prop('disabled', true);
 						if ($gSortBy.find('option:selected').is($gSortAlphabet))
 							$gSortBy.val('default');
+						$targetInput.val(prefill);
 						break;
 					case spSearch:
 						$gSortAlphabet.prop('disabled', true);
