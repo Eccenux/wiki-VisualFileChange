@@ -578,7 +578,7 @@ $.extend( window.VisualFileChange, {
 		var __gotResult = function ( r ) {
 			var $r = $( r ),
 				suggestions = [],
-				lastSummaries = $.jStorage.get( vfc.summaryChageKey );
+				lastSummaries = JSON.parse( mw.storage.get( vfc.summaryChageKey ) );
 
 			// Add last used summaries
 			if ( lastSummaries && lastSummaries[ saveKey ] ) {
@@ -649,7 +649,7 @@ $.extend( window.VisualFileChange, {
 		var _callExec = function ( action ) {
 		// Save suggestions:
 			if ( i18n.reasonAutoSuggest[ action ] ) {
-				var s = $.jStorage.get( vfc.summaryChageKey ) || {},
+				var s = JSON.parse( mw.storage.get( vfc.summaryChageKey ) ) || {},
 					ss = s[ action ] || [],
 					nv = vfc.$ctrs.editSummary.val();
 
@@ -661,7 +661,7 @@ $.extend( window.VisualFileChange, {
 					ss.unshift( nv );
 				}
 				s[ action ] = ss;
-				$.jStorage.set( vfc.summaryChageKey, s );
+				mw.storage.set( vfc.summaryChageKey, JSON.stringify(s) );
 			}
 			vfc.secureCall( 'mdExecute' );
 		};
@@ -1820,7 +1820,7 @@ mw.loader.using( [
 	'jquery.byteLimit',
 	'jquery.byteLength',
 	'ext.gadget.jquery.badge',
-	'jquery.jStorage',
+	'mediawiki.storage',
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
