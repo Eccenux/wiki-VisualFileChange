@@ -71,7 +71,7 @@ mw.util.addCSS(
 VisualFileChange = vfc = window.VisualFileChange = {
 
 	/** REVISION **/ // (x.major.minor.bug)
-	scriptRevision: '0.9.70.2',
+	scriptRevision: '0.9.71.0',
 
 	/**
 	 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -278,7 +278,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					vfc.queryParams.target = mw.libs.commons.guessUser() || '';
 				}
 				break;
-			case 14: // categories
+			case 0: // Gallery
+			case 14: // Category
 				vfc.queryParams.target = pageName;
 				break;
 		}
@@ -632,6 +633,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}
 		});
 		vfc.pb.setZIndex(Number($('.ui-widget-overlay').css('z-index')) + 1);
+		
+		var nsNr = mw.config.get('wgNamespaceNumber');
 
 		$targetSelect = $('<select>').attr({
 			size: 1,
@@ -639,28 +642,30 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		}).append(
 			$('<option>', {
 				text: nsLocalCat,
+				selected: nsNr === -14 ? 'selected' : null,
 				value: nsCat
 			}),
 			$('<option>', {
 				text: nsLocalPage,
+				selected: nsNr ? null : 'selected',
 				value: nsPage
 			}),
 			$('<option>', {
 				text: nsLocalUser,
-				selected: 'selected',
+				selected: [0, 14].indexOf(nsNr) === -1 ? 'selected' : null,
 				value: nsUser
 			}),
 			$('<option>', {
 				text: spLocalSearch,
 				value: spSearch
-			})).change(function () {
+			})).on('change', function () {
 			switch (this.value) {
 				case nsPage:
 					$gSortAlphabet.prop('disabled', false);
 					$gSortDate.prop('disabled', true);
 					if ($gSortBy.find('option:selected').is($gSortDate))
 						$gSortBy.val('default');
-					$targetInput.val(mw.config.get('wgPageName'));
+					$targetInput.val(vfc.pageName);
 					break;
 				case nsCat:
 					$gSortAlphabet.add($gSortDate).prop('disabled', false);
@@ -2302,7 +2307,7 @@ function ProgressBox(width, o) {
 		'.md-done {padding-left:16px;background:url(\'' + o.icons.done + '\') no-repeat left} ' +
 		'.md-failed {padding-left:16px;background:url(\'' + o.icons.failed + '\') no-repeat left} ' +
 		'.md-attention {padding-left:16px;background:url(\'' + o.icons.attention + '\') no-repeat left}\n');
-};
+}
 ProgressBox.fn = ProgressBox.prototype = {
 	constructor: ProgressBox,
 	show: function () {
