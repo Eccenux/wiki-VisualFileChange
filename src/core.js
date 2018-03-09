@@ -38,126 +38,125 @@ console.log('VisualFileChange> ' + p1);
 // Invoke automated jsHint-validation on save: A feature on WikimediaCommons
 // Interested? See [[:commons:MediaWiki:JSValidator.js]].
 /* global jQuery:false, mediaWiki:false, Geo:false */
-/* eslint one-var:0, vars-on-top:0, indent:0, no-underscore-dangle:0, no-unused-vars:0,
-valid-jsdoc:0, no-bitwise:0, camelcase:0, curly:0, space-in-parens:0 */
+/* eslint one-var:0, vars-on-top:0, indent:0, no-underscore-dangle:0, no-unused-vars:0, valid-jsdoc:0, no-bitwise:0, camelcase:0, curly:0 */
 /* jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
 
-(function ($, mw) {
+( function ( $, mw ) {
 'use strict';
-if (window.VisualFileChange) return;
-$.when(mw.loader.using('mediawiki.RegExp'), $.ready).then(function () {
+if ( window.VisualFileChange ) return;
+$.when( mw.loader.using( 'mediawiki.RegExp' ), $.ready ).then( function () {
 
 var VisualFileChange,
 	vfc,
-	isSysop = ($.inArray('sysop', mw.config.get('wgUserGroups')) !== -1),
-	isBot = ($.inArray('bot', mw.config.get('wgUserGroups')) !== -1),
+	isSysop = ( $.inArray( 'sysop', mw.config.get( 'wgUserGroups' ) ) !== -1 ),
+	isBot = ( $.inArray( 'bot', mw.config.get( 'wgUserGroups' ) ) !== -1 ),
 	portletText = 'VFC: Translation…',
-	$doc = $(document),
-	$win = $(window);
+	$doc = $( document ),
+	$win = $( window );
 
 // Adding Style-definitions
 mw.util.addCSS(
-	'.md-collapsible {padding:3px;padding-top:0;padding-left:0;margin-top:2px;display:inline-block;}\n' +
-	'.md-optioncontainer {padding:3px;margin:5px 0;}\n' +
-	'.md-option-space-v {padding:5px 0}' +
-	'.md-option-space-v>input,select {margin:0 3px}');
+	'.md-collapsible {padding:3px;padding-top:0;padding-left:0;margin-top:2px;display:inline-block}\n' +
+	'.md-optioncontainer {padding:3px;margin:5px 0}\n' +
+	'.md-option-space-v {padding:5px 0}\n' +
+	'.md-option-space-v>input,select {margin:0 3px}' );
 
 /**
- * Create a new VisualFileChange-Object-literal.
- * Crockford calls it "Singleton"
- *
- * @context {window}
- */
+* Create a new VisualFileChange-Object-literal.
+* Crockford calls it "Singleton"
+*
+* @context {window}
+*/
 VisualFileChange = vfc = window.VisualFileChange = {
 
-	/** REVISION **/ // (x.major.minor.bug)
-	scriptRevision: '0.9.71.0',
+/** REVISION **/ // (x.major.minor.bug)
+	scriptRevision: '0.9.71.1',
 
-	/**
-	 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
-	 **/
+/**
+** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
+**/
 	install: function () {
-		// Initialize the settings
-		if (!window.vFCSettings)
+// Initialize the settings
+		if ( !window.vFCSettings )
 			window.vFCSettings = {};
 
-		$.each(vfc.mdDefaults, function (i, el) {
+		$.each( vfc.mdDefaults, function ( i, el ) {
 			vfc.mdSettings[ el.name ] = el.default;
-			if (typeof el.select === 'string')
+			if ( typeof el.select === 'string' )
 				el.select = vfc[ el.select ];
 
-		});
-		// Merge the user's settings
-		$.extend(vfc.mdSettings, window.vFCSettings);
-		$.each(vfc.mdDefaults, function (i, el) {
-			if (typeof el.default === 'number')
-				vfc.mdSettings[ el.name ] = Number(vfc.mdSettings[ el.name ]);
-		});
+		} );
+// Merge the user's settings
+		$.extend( vfc.mdSettings, window.vFCSettings );
+		$.each( vfc.mdDefaults, function ( i, el ) {
+			if ( typeof el.default === 'number' )
+				vfc.mdSettings[ el.name ] = Number( vfc.mdSettings[ el.name ] );
+		} );
 
-		// Get the username
+// Get the username
 		vfc.username = mw.user.getName() || Geo.IP || 'anonymous';
 
 		var $nestedA,
 			autostart = false,
-			$portlet = $('#t-AjaxQuickDeleteOnDemand');
+			$portlet = $( '#t-AjaxQuickDeleteOnDemand' );
 
-		if ($portlet.length === 1) {
-			// User is using the load on demand feature.
-			// alter the link later but start now
-			$nestedA = $portlet.find('a');
-			if ($nestedA.length)
+		if ( $portlet.length === 1 ) {
+// User is using the load on demand feature.
+// alter the link later but start now
+			$nestedA = $portlet.find( 'a' );
+			if ( $nestedA.length )
 				$portlet = $nestedA;
 
-			// Immediately start Md
+// Immediately start Md
 			autostart = true;
 		} else {
-			if (mw.util.getParamValue('withJS') === 'MediaWiki:VisualFileChange.js') {
-				// Load immediately and add no link
+			if ( mw.util.getParamValue( 'withJS' ) === 'MediaWiki:VisualFileChange.js' ) {
+// Load immediately and add no link
 				autostart = true;
 			} // else: User wrongly uses VFC with importScript
 
-			// Create a new portlet
-			$portlet = $(mw.util.addPortletLink('p-tb', '#', 'VFC'));
+// Create a new portlet
+			$portlet = $( mw.util.addPortletLink( 'p-tb', '#', 'VFC' ) );
 		}
-		if ($portlet.length === 1) {
-			$nestedA = $portlet.find('a');
-			if ($nestedA.length)
+		if ( $portlet.length === 1 ) {
+			$nestedA = $portlet.find( 'a' );
+			if ( $nestedA.length )
 				$portlet = $nestedA;
-			$portlet.text(vfc.i18n.mdButtonLabel).attr({
+			$portlet.text( vfc.i18n.mdButtonLabel ).attr( {
 				href: '#!start_VisualFileChange',
 				title: 'Launch VisualFileChange',
 				id: 't-AjaxQuickDeletx2'
-			}).click(function (e) {
+			} ).click( function ( e ) {
 				e.preventDefault();
-				$portlet.text(portletText);
+				$portlet.text( portletText );
 				vfc.start();
-			});
+			} );
 			vfc.$portlet = $portlet;
 		}
-		if (location.hash === '#!start_VisualFileChange')
+		if ( location.hash === '#!start_VisualFileChange' )
 			autostart = true;
 
-		$doc.triggerHandler('vFC', [ 'installed', vfc ]);
-		if (autostart)
+		$doc.triggerHandler( 'vFC', [ 'installed', vfc ] );
+		if ( autostart )
 			$portlet.click();
 	},
 
-	/**
-	 *  @description
-	 *    A little ResourceLoader :-)
-	 *
-	 *  @param m {String} Module to be loaded
-	 *  @param cb {Function} Function to be executed when loaded
-	 **/
-	loadModule: function (m, cb) {
+/**
+*  @description
+*    A little ResourceLoader :-)
+*
+*  @param m {String} Module to be loaded
+*  @param cb {Function} Function to be executed when loaded
+**/
+	loadModule: function ( m, cb ) {
 		var alias = '';
 		var executeCB = function () {
-			if ($.isFunction(cb))
-				cb.apply(vfc, []);
-			if (typeof cb === 'string')
-				vfc[ cb ](vfc, []);
+			if ( $.isFunction( cb ) )
+				cb.apply( vfc, [] );
+			if ( typeof cb === 'string' )
+				vfc[ cb ]( vfc, [] );
 		};
-		switch (m) {
+		switch ( m ) {
 			case 'exec.js':
 				alias = 'editComponents';
 				break;
@@ -168,33 +167,33 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				alias = 'configManager';
 				break;
 			case 'diff':
-				if (!mw.libs.schnark_diff) {
-					if (cb) {
-						mw.hook('userjs.load-script.diff-core').add(function () {
-							mw.libs.schnarkDiff.style.set('ins', 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #ABE; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;');
-							mw.libs.schnarkDiff.style.set('del', 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FD9; -moz-text-decoration-color:#744;');
-							mw.util.addCSS(mw.libs.schnarkDiff.getCSS());
-							mw.libs.schnarkDiff.config.set('minMovedLength', 20);
-							mw.libs.schnarkDiff.config.set('tooShort', 3);
+				if ( !mw.libs.schnark_diff ) {
+					if ( cb ) {
+						mw.hook( 'userjs.load-script.diff-core' ).add( function () {
+							mw.libs.schnarkDiff.style.set( 'ins', 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #ABE; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;' );
+							mw.libs.schnarkDiff.style.set( 'del', 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FD9; -moz-text-decoration-color:#744;' );
+							mw.util.addCSS( mw.libs.schnarkDiff.getCSS() );
+							mw.libs.schnarkDiff.config.set( 'minMovedLength', 20 );
+							mw.libs.schnarkDiff.config.set( 'tooShort', 3 );
 							executeCB();
-						});
+						} );
 					}
-					mw.loader.load('//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript');
+					mw.loader.load( '//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript' );
 				} else {
 					executeCB();
 				}
 				return;
 			case 'i18n':
-				if (vfc.i18n.mdTranslator)
+				if ( vfc.i18n.mdTranslator )
 					return executeCB();
-				$.ajax({
+				$.ajax( {
 					url: mw.util.wikiScript(),
 					dataType: 'script',
 					data: {
-						title: 'MediaWiki:VisualFileChange.js/i18n/' + mw.config.get('wgUserLanguage').split('-')[ 0 ] + '.js',
+						title: 'MediaWiki:VisualFileChange.js/i18n/' + mw.config.get( 'wgUserLanguage' ).split( '-' )[ 0 ] + '.js',
 						action: 'raw',
 						ctype: 'text/javascript',
-					// Allow caching for 28 days
+// Allow caching for 28 days
 						maxage: 2419200,
 						smaxage: 2419200,
 						dummy: vfc.scriptRevision
@@ -202,26 +201,26 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					cache: true,
 					success: executeCB,
 					error: executeCB
-				});
+				} );
 				return;
 		}
-		if (this[ alias ]) {
+		if ( this[ alias ] ) {
 			executeCB();
 			return;
 		} else {
-			if (cb) {
-				$doc.on('scriptLoaded.vFCListener' + alias, function (evt, script, add) {
-					if (script) {
-						if (script === 'VisualFileChange' && add) {
-							if (alias === add) {
-								$doc.off('scriptLoaded.vFCListener' + alias);
+			if ( cb ) {
+				$doc.on( 'scriptLoaded.vFCListener' + alias, function ( evt, script, add ) {
+					if ( script ) {
+						if ( script === 'VisualFileChange' && add ) {
+							if ( alias === add ) {
+								$doc.off( 'scriptLoaded.vFCListener' + alias );
 								executeCB();
 							}
 						}
 					}
-				});
+				} );
 			}
-			mw.loader.load(mw.config.get('wgServer') + mw.config.get('wgScript') + '?title=' + mw.util.wikiUrlencode('MediaWiki:VisualFileChange.js/' + m) + '&action=raw&ctype=text/javascript&dummy=' + vfc.scriptRevision);
+			mw.loader.load( mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode( 'MediaWiki:VisualFileChange.js/' + m ) + '&action=raw&ctype=text/javascript&dummy=' + vfc.scriptRevision );
 		}
 	},
 
@@ -235,24 +234,24 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.mdBusy = false; // indicate that any dialog can be closed
 		vfc.tasks = []; // reset task list in case an earlier error left it non-empty
 
-		vfc.addTask('_start');
-		vfc.loadModule('i18n', 'nextTask');
+		vfc.addTask( '_start' );
+		vfc.loadModule( 'i18n', 'nextTask' );
 	},
 
 	_start: function () {
-		var pageName = mw.config.get('wgPageName'),
+		var pageName = mw.config.get( 'wgPageName' ),
 			doPrettify = true,
 			pb;
 
-		$doc.triggerHandler('vFC', [ 'starting procedure', vfc ]);
-		vfc.$portlet.text(vfc.i18n.mdButtonLabel);
+		$doc.triggerHandler( 'vFC', [ 'starting procedure', vfc ] );
+		vfc.$portlet.text( vfc.i18n.mdButtonLabel );
 
-		pb = vfc.pb = new ProgressBox(undefined, vfc);
-		pb.addTask('start');
-		pb.addTask('target');
-		pb.addTask('list');
-		pb.addTask('datails');
-		pb.setTaskState('start', 'md-doing');
+		pb = vfc.pb = new ProgressBox( undefined, vfc );
+		pb.addTask( 'start' );
+		pb.addTask( 'target' );
+		pb.addTask( 'list' );
+		pb.addTask( 'datails' );
+		pb.setTaskState( 'start', 'md-doing' );
 		pb.show();
 
 		vfc.oldDocTitle = document.title;
@@ -263,16 +262,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		};
 		vfc.mdListUploadsPending = 0;
 
-		switch (mw.config.get('wgNamespaceNumber')) {
+		switch ( mw.config.get( 'wgNamespaceNumber' ) ) {
 			case 6: // File
-				vfc.addTask('findOriginalUploader');
+				vfc.addTask( 'findOriginalUploader' );
 				break;
 			case 3: // User_talk
 			case 2: // User
 			case -1: // Special pages
-				if (mw.config.get('wgCanonicalSpecialPageName') === 'Search') {
-				// FIXME: Find a better way to auto-select search query
-					vfc.queryParams.target = 'Special:Search/' + $('input[name="search"]').val();
+				if ( mw.config.get( 'wgCanonicalSpecialPageName' ) === 'Search' ) {
+// FIXME: Find a better way to auto-select search query
+					vfc.queryParams.target = 'Special:Search/' + $( 'input[name="search"]' ).val();
 					doPrettify = false;
 				} else {
 					vfc.queryParams.target = mw.libs.commons.guessUser() || '';
@@ -284,17 +283,17 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				break;
 		}
 
-		if (doPrettify) {
-			// Prettify the title (normalizing)
-			vfc.queryParams.target = vfc.queryParams.target.replace(/_/g, ' ');
+		if ( doPrettify ) {
+// Prettify the title (normalizing)
+			vfc.queryParams.target = vfc.queryParams.target.replace( /_/g, ' ' );
 		}
 
-		$doc.triggerHandler('vFC', [ 'prepared', vfc ]);
+		$doc.triggerHandler( 'vFC', [ 'prepared', vfc ] );
 
-		// Load the Execute/ Edit components
-		vfc.loadModule('exec.js');
+// Load the Execute/ Edit components
+		vfc.loadModule( 'exec.js' );
 
-		vfc.addTask('reinit');
+		vfc.addTask( 'reinit' );
 		vfc.nextTask();
 	},
 
@@ -308,18 +307,18 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			titles: vfc.pageName
 		};
 
-		$doc.triggerHandler('vFC', [ 'seeking uploader', vfc ]);
+		$doc.triggerHandler( 'vFC', [ 'seeking uploader', vfc ] );
 
-		vfc.queryAPI(query, 'findOriginalUploaderCB', 'failQueriedFile');
+		vfc.queryAPI( query, 'findOriginalUploaderCB', 'failQueriedFile' );
 	},
 
-	findOriginalUploaderCB: function (result) {
+	findOriginalUploaderCB: function ( result ) {
 		var pages = result.query.pages,
 			info,
 			content,
 			i;
-		for (var id in pages) { // there should be only one, but we don't know its ID
-			if (pages.hasOwnProperty(id)) {
+		for ( var id in pages ) { // there should be only one, but we don't know its ID
+			if ( pages.hasOwnProperty( id ) ) {
 				content = pages[ id ].revisions[ 0 ][ '*' ];
 				info = pages[ id ].imageinfo;
 				i = info.length - 1;
@@ -330,17 +329,17 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
 
 	reinit: function () {
-		$doc.triggerHandler('vFC', [ 'preparing to ask for target', this ]);
+		$doc.triggerHandler( 'vFC', [ 'preparing to ask for target', this ] );
 		this.pb.setCurrentTaskDone();
-		this.pb.setTaskState('target', 'md-doing');
-		this.pb.setHelp(this.i18n.mdPerformOnWhichTarget);
+		this.pb.setTaskState( 'target', 'md-doing' );
+		this.pb.setHelp( this.i18n.mdPerformOnWhichTarget );
 
-		/* Shedule next tasks */
-		this.addTask('mdCreateList');
-		this.addTask('mdGenIGallery');
-		this.addTask('mdQueryFileDone');
+/* Shedule next tasks */
+		this.addTask( 'mdCreateList' );
+		this.addTask( 'mdGenIGallery' );
+		this.addTask( 'mdQueryFileDone' );
 
-		/* Setting up variables needed later */
+/* Setting up variables needed later */
 		var pefilledUser = '';
 		this.iUploads = {}; // i-initial file list
 		this.iiUploads = 0; // Number of initially uploaded files in the list
@@ -352,12 +351,12 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.mdNoMoreFiles = false; // set to true, when API response did not contain a new Lestart
 		this.mdFirstRun = true; // determining whether it is the first query-cycle
 		this.mdNumberOfExecs = 0; // Is Execute called already?
-		$.extend(this.api, {
+		$.extend( this.api, {
 			eFirst: this.mdSettings.firstTest - 1,
 			eBatch: 0,
 			wasError: false,
 			ratelimited: mw.user.isAnon()
-		});
+		} );
 		this.lastContinues = {
 			vals: [],
 			setVals: ''
@@ -365,44 +364,45 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.infoTextToEndDlg = [];
 
 		pefilledUser = this.queryParams.target || this.username;
-		$doc.triggerHandler('vFC', [ 'asking for target', this ]);
-		this.promptForTarget(pefilledUser, 1);
+		$doc.triggerHandler( 'vFC', [ 'asking for target', this ] );
+		this.promptForTarget( pefilledUser, 1 );
 	},
 
-	$createToggler: function (text, $content) {
+	$createToggler: function ( text, $content ) {
 		var ie = 'ui-icon-carat-1-e',
 			is = 'ui-icon-carat-1-s';
-		return $('<div>').append(
-			$('<a>', {
+		return $( '<div>' ).append(
+			$( '<a>', {
 				text: text,
 				href: '#show_or_hide',
 				'class': 'md-collapsible ui-state-default'
-			}).prepend(
-				$.createIcon(ie)).click(function (e) {
+			} ).prepend(
+				$.createIcon( ie ) ).on( 'click', function ( e ) {
 				e.preventDefault();
 				var x,
-					$el = $(this);
+					$el = $( this );
 
-				$el.next().slideToggle('fast');
-				$el.find('span.ui-icon').removeClass(ie).addClass(is);
+				$el.next().slideToggle( 'fast' );
+				$el.find( 'span.ui-icon' ).removeClass( ie ).addClass( is );
 				x = is;
 				is = ie;
 				ie = x;
-			}).hover(function () {
-				$(this).addClass('ui-state-hover');
-			}, function () {
-				$(this).removeClass('ui-state-hover');
-			}),
-			$content.addClass('ui-widget-content').hide());
+			} ).on( 'mouseenter', function () {
+				$( this ).addClass( 'ui-state-hover' );
+			} ).on( 'mouseleave', function () {
+				$( this ).removeClass( 'ui-state-hover' );
+			} ), // hover
+			$content.addClass( 'ui-widget-content' ).hide()
+		);
 	},
 
-	/**
-	 ** Pseudo-Modal JS windows.
-	 ** Needs to be converted into a class
-	 ** URL-params:
-	 **  vfcStartAt: <sortkey or date>, vfcSorting: <of|on|ca|cd>
-	 **/
-	promptForTarget: function (prefill, minlen) {
+/**
+** Pseudo-Modal JS windows.
+** Needs to be converted into a class
+** URL-params:
+**  vfcStartAt: <sortkey or date>, vfcSorting: <of|on|ca|cd>
+**/
+	promptForTarget: function ( prefill, minlen ) {
 		var dlgButtons = {},
 			confirmed = false,
 			dlgWidth = 0,
@@ -438,8 +438,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			moreOptionsVisible,
 			mwDateRx = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
-		var namespaceIds = mw.config.get('wgNamespaceIds'),
-			formattedNamespaces = mw.config.get('wgFormattedNamespaces'),
+		var namespaceIds = mw.config.get( 'wgNamespaceIds' ),
+			formattedNamespaces = mw.config.get( 'wgFormattedNamespaces' ),
 			nsCat = formattedNamespaces[ 14 ],
 			nsUser = formattedNamespaces[ 2 ],
 			nsSpecial = formattedNamespaces[ -1 ],
@@ -449,36 +449,36 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			nsLocalUser = vfc.i18n.namespace[ '2' ] || nsUser,
 			nsLocalPage = vfc.i18n.namespace.page || nsPage, // Virtual helper namespace
 			spLocalSearch = vfc.i18n.specials.search || spSearch,
-			rxCat = new RegExp('^' + nsCat + ':', 'i'),
-			rxUser = new RegExp('^' + nsUser + ':', 'i'),
-			rxSearch = new RegExp('^' + nsSpecial + ':' + spSearch + '(/|$)', 'i'),
+			rxCat = new RegExp( '^' + nsCat + ':', 'i' ),
+			rxUser = new RegExp( '^' + nsUser + ':', 'i' ),
+			rxSearch = new RegExp( '^' + nsSpecial + ':' + spSearch + '(/|$)', 'i' ),
 			lastXHR = 0,
 			pLastCB = 0,
 			delayXHR = 500;
 
-		var getMwDate = function (dateX) {
-			if (typeof dateX !== 'string')
+		var getMwDate = function ( dateX ) {
+			if ( typeof dateX !== 'string' )
 				return dateX;
-			if (dateX === '')
+			if ( dateX === '' )
 				return '';
-			if (mwDateRx.test(dateX))
+			if ( mwDateRx.test( dateX ) )
 				return dateX;
-			var m1 = dateX.match(/(\d{4}).(\d{2}).(\d{2})\D*(\d{2}:\d{2}:\d{2})?/);
-			if (m1)
-				return (m1[ 1 ] + '-' + m1[ 2 ] + '-' + m1[ 3 ] + 'T' + (m1[ 4 ] ? m1[ 4 ] : '12:00:00') + 'Z');
-			m1 = dateX.match(/(\d{2}).(\d{2}).(\d{4})\D*(\d{2}:\d{2}:\d{2})?/);
-			if (m1)
-				return (m1[ 3 ] + '-' + m1[ 2 ] + '-' + m1[ 1 ] + 'T' + (m1[ 4 ] ? m1[ 4 ] : '12:00:00') + 'Z');
+			var m1 = dateX.match( /(\d{4}).(\d{2}).(\d{2})\D*(\d{2}:\d{2}:\d{2})?/ );
+			if ( m1 )
+				return ( m1[ 1 ] + '-' + m1[ 2 ] + '-' + m1[ 3 ] + 'T' + ( m1[ 4 ] ? m1[ 4 ] : '12:00:00' ) + 'Z' );
+			m1 = dateX.match( /(\d{2}).(\d{2}).(\d{4})\D*(\d{2}:\d{2}:\d{2})?/ );
+			if ( m1 )
+				return ( m1[ 3 ] + '-' + m1[ 2 ] + '-' + m1[ 1 ] + 'T' + ( m1[ 4 ] ? m1[ 4 ] : '12:00:00' ) + 'Z' );
 			else
 				return dateX;
 		};
 
 		dlgButtons[ vfc.i18n.proceedButtonLabel ] = function () {
-			if (confirmed)
+			if ( confirmed )
 				return;
 			confirmed = true;
 
-			// Reading input
+// Reading input
 			var si = vfc.startInput = {
 				mode: $targetSelect.val(),
 				modeCat: $targetSelect.val() === nsCat,
@@ -489,90 +489,90 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				loadThumbs: $gLoadThumbs[ 0 ].checked,
 				loadWikitext: $gLoadWikitext[ 0 ].checked,
 				startDate: $gStartAt.val(),
-				startFile: $gStartFile.val().replace(/^File:/, '')
+				startFile: $gStartFile.val().replace( /^File:/, '' )
 			};
-			if (!mwDateRx.test(si.startDate))
+			if ( !mwDateRx.test( si.startDate ) )
 				si.startDate = '';
 
 			var lc = vfc.lastContinues,
 				qp = vfc.queryParams = {};
 
-			if (si.modeCat) {
-				si.target = vfc.cleanReason($targetSelect.val() + ':' + $targetInput.val().replace(/_/g, ' '));
-			} else if (si.modeUser) {
+			if ( si.modeCat ) {
+				si.target = vfc.cleanReason( $targetSelect.val() + ':' + $targetInput.val().replace( /_/g, ' ' ) );
+			} else if ( si.modeUser ) {
 				qp.lestart = si.startDate;
-				si.target = vfc.cleanReason($targetInput.val().replace(/_/g, ' '));
+				si.target = vfc.cleanReason( $targetInput.val().replace( /_/g, ' ' ) );
 				vfc.lastContinues.setVals = [ 'lecontinue' ];
-			} else if (si.modePage) {
-				si.target = vfc.cleanReason($targetInput.val().replace(/_/g, ' '));
+			} else if ( si.modePage ) {
+				si.target = vfc.cleanReason( $targetInput.val().replace( /_/g, ' ' ) );
 				vfc.lastContinues.setVals = [ 'imcontinue' ];
-			} else if (si.modeSearch) {
+			} else if ( si.modeSearch ) {
 				si.target = $targetInput.val();
 				vfc.lastContinues.setVals = [ 'sroffset' ];
 			}
 
 			qp.target = si.target;
 
-			vfc.$AjaxMdContainer.text(vfc.i18n.mdPleaseWait);
+			vfc.$AjaxMdContainer.text( vfc.i18n.mdPleaseWait );
 
-			switch ($gSortBy.val()) {
+			switch ( $gSortBy.val() ) {
 				case 'of': // oldest first
-					if (si.modeCat) {
+					if ( si.modeCat ) {
 						qp.cmdir = 'asc';
 						qp.cmsort = 'timestamp';
 						qp.cmstart = si.startDate;
 						lc.setVals = [ 'cmstart' ];
-					} else if (si.modeUser) {
+					} else if ( si.modeUser ) {
 						qp.ledir = 'newer';
 					}
 					break;
 				case 'nf': // newest first
-					if (si.modeCat) {
+					if ( si.modeCat ) {
 						qp.cmdir = 'desc';
 						qp.cmsort = 'timestamp';
 						qp.cmstart = si.startDate;
 						lc.setVals = [ 'cmstart' ];
-					} else if (si.modeUser) {
+					} else if ( si.modeUser ) {
 						qp.ledir = 'older';
 					}
 					break;
 				case 'ca': // cat asc
-					if (si.modeCat) {
+					if ( si.modeCat ) {
 						qp.cmdir = 'asc';
 						qp.cmsort = 'sortkey';
 						qp.cmstartsortkey = si.startFile;
 						lc.setVals = [ 'cmcontinue' ];
-					} else if (si.modePage) {
+					} else if ( si.modePage ) {
 						qp.imdir = 'ascending';
 					}
 					break;
 				case 'cd': // cat desc
-					if (si.modeCat) {
+					if ( si.modeCat ) {
 						qp.cmdir = 'desc';
 						qp.cmsort = 'sortkey';
 						qp.cmstartsortkey = si.startFile;
 						lc.setVals = [ 'cmcontinue' ];
-					} else if (si.modePage) {
+					} else if ( si.modePage ) {
 						qp.imdir = 'descending';
 					}
 					break;
 				case 'default':
-				// Default
-					if (si.modeCat) {
+// Default
+					if ( si.modeCat ) {
 						qp.cmdir = 'asc';
 						qp.cmsort = 'sortkey';
 						qp.cmstartsortkey = si.startFile;
 						lc.setVals = [ 'cmcontinue' ];
-					} else if (si.modeUser) {
+					} else if ( si.modeUser ) {
 						qp.ledir = 'older';
-					} else if (si.modePage) {
+					} else if ( si.modePage ) {
 						qp.imdir = 'ascending';
 					}
 					break;
 			}
 
-			var $dlg = $(this);
-			$dlg.dialog('option', 'buttons', {}).dialog('widget').animate({
+			var $dlg = $( this );
+			$dlg.dialog( 'option', 'buttons', {} ).dialog( 'widget' ).animate( {
 				left: $win.scrollLeft() + 250,
 				top: $win.scrollTop(),
 				width: $win.width() - 250,
@@ -580,144 +580,144 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			}, {
 				duration: 800,
 				complete: function () {
-					vfc.$AjaxMdContainer.text('').hide();
-					vfc.$AjaxMdContainer.$banner = $('<div>').css({
+					vfc.$AjaxMdContainer.text( '' ).hide();
+					vfc.$AjaxMdContainer.$banner = $( '<div>' ).css( {
 						font: 'small-caps 3em sans-serif',
 						'text-align': 'center',
 						'margin-top': '-1.5em',
 						top: '50%',
 						position: 'absolute',
 						width: '98%'
-					}).text('VisualFileChange').hide().appendTo($dlg).fadeIn();
+					} ).text( 'VisualFileChange' ).hide().appendTo( $dlg ).fadeIn();
 				}
-			});
+			} );
 
-			vfc.loadModule('ui.js', 'nextTask');
+			vfc.loadModule( 'ui.js', 'nextTask' );
 
-			// We removed some inputs; maybe a tipsy tooltip was left?
-			$('.tipsy').remove();
+// We removed some inputs; maybe a tipsy tooltip was left?
+			$( '.tipsy' ).remove();
 		};
 		dlgButtons[ vfc.i18n.cancelButtonLabel ] = function () {
-			$(this).dialog('close');
+			$( this ).dialog( 'close' );
 		};
 
-		// Are there Contaminated Sites? Remove them now.
+// Are there Contaminated Sites? Remove them now.
 		vfc.thumbDlgClose();
 
-		// Change the title of the browser tab/window
-		document.title = vfc.i18n.browsertitle.replace('%USER%', vfc.username);
+// Change the title of the browser tab/window
+		document.title = vfc.i18n.browsertitle.replace( '%USER%', vfc.username );
 
-		// Hide overlapping page (avoids scrolling)
-		$('body').css('overflow', 'hidden');
+// Hide overlapping page (avoids scrolling)
+		$( 'body' ).css( 'overflow', 'hidden' );
 
-		dlgWidth = Math.min(600, $win.width() - 250);
+		dlgWidth = Math.min( 600, $win.width() - 250 );
 
-		vfc.$AjaxMdContainer = $('<div>', {
+		vfc.$AjaxMdContainer = $( '<div>', {
 			id: 'AjaxMdContainer',
 			style: 'min-height:80px;'
-		});
+		} );
 
-		vfc.dlg = $('<div>').append(vfc.$AjaxMdContainer).dialog({
+		vfc.dlg = $( '<div>' ).append( vfc.$AjaxMdContainer ).dialog( {
 			modal: true,
 			closeOnEscape: false,
-			position: [ ($win.width() - dlgWidth - 250) / 2 + 250, ($win.height() - 200) / 2 ],
+			position: [ ( $win.width() - dlgWidth - 250 ) / 2 + 250, ( $win.height() - 200 ) / 2 ],
 			title: vfc.i18n.mdPerformOnWhichTarget,
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgButtons,
 			close: vfc.cancel,
 			open: function () {
-				var $buttons = $(this).parent().find('.ui-dialog-buttonpane button');
-				$submitButton = $buttons.eq(0).specialButton('proceed');
-				$cancelButton = $buttons.eq(1).specialButton('cancel');
+				var $buttons = $( this ).parent().find( '.ui-dialog-buttonpane button' );
+				$submitButton = $buttons.eq( 0 ).specialButton( 'proceed' );
+				$cancelButton = $buttons.eq( 1 ).specialButton( 'cancel' );
 			}
-		});
-		vfc.pb.setZIndex(Number($('.ui-widget-overlay').css('z-index')) + 1);
-		
-		var nsNr = mw.config.get('wgNamespaceNumber');
+		} );
+		vfc.pb.setZIndex( Number( $( '.ui-widget-overlay' ).css( 'z-index' ) ) + 1 );
 
-		$targetSelect = $('<select>').attr({
+		var nsNr = mw.config.get( 'wgNamespaceNumber' );
+
+		$targetSelect = $( '<select>' ).attr( {
 			size: 1,
 			id: 'mdTargetSelect'
-		}).append(
-			$('<option>', {
+		} ).append(
+			$( '<option>', {
 				text: nsLocalCat,
 				selected: nsNr === -14 ? 'selected' : null,
 				value: nsCat
-			}),
-			$('<option>', {
+			} ),
+			$( '<option>', {
 				text: nsLocalPage,
 				selected: nsNr ? null : 'selected',
 				value: nsPage
-			}),
-			$('<option>', {
+			} ),
+			$( '<option>', {
 				text: nsLocalUser,
-				selected: [0, 14].indexOf(nsNr) === -1 ? 'selected' : null,
+				selected: [ 0, 14 ].indexOf( nsNr ) === -1 ? 'selected' : null,
 				value: nsUser
-			}),
-			$('<option>', {
+			} ),
+			$( '<option>', {
 				text: spLocalSearch,
 				value: spSearch
-			})).on('change', function () {
-			switch (this.value) {
+			} ) ).on( 'change', function () {
+			switch ( this.value ) {
 				case nsPage:
-					$gSortAlphabet.prop('disabled', false);
-					$gSortDate.prop('disabled', true);
-					if ($gSortBy.find('option:selected').is($gSortDate))
-						$gSortBy.val('default');
-					$targetInput.val(vfc.pageName);
+					$gSortAlphabet.prop( 'disabled', false );
+					$gSortDate.prop( 'disabled', true );
+					if ( $gSortBy.find( 'option:selected' ).is( $gSortDate ) )
+						$gSortBy.val( 'default' );
+					$targetInput.val( vfc.pageName );
 					break;
 				case nsCat:
-					$gSortAlphabet.add($gSortDate).prop('disabled', false);
+					$gSortAlphabet.add( $gSortDate ).prop( 'disabled', false );
 					break;
 				case nsUser:
-					$gSortDate.prop('disabled', false);
-					$gSortAlphabet.prop('disabled', true);
-					if ($gSortBy.find('option:selected').is($gSortAlphabet))
-						$gSortBy.val('default');
-					$targetInput.val(prefill);
+					$gSortDate.prop( 'disabled', false );
+					$gSortAlphabet.prop( 'disabled', true );
+					if ( $gSortBy.find( 'option:selected' ).is( $gSortAlphabet ) )
+						$gSortBy.val( 'default' );
+					$targetInput.val( prefill );
 					break;
 				case spSearch:
-					$gSortAlphabet.prop('disabled', true);
-					$gSortDate.prop('disabled', true);
+					$gSortAlphabet.prop( 'disabled', true );
+					$gSortDate.prop( 'disabled', true );
 			}
 			$gSortBy.change();
-			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ]);
-		});
-		var didXHR = function (result, pCallback) {
+			$doc.triggerHandler( 'vFC_Startup_target', [ $targetSelect.val() + ':' + $targetInput.val() ] );
+		} );
+		var didXHR = function ( result, pCallback ) {
 			var searchTerms = [];
-			if (!result) {
-				if ($.isFunction(pCallback))
-					pCallback(searchTerms);
+			if ( !result ) {
+				if ( $.isFunction( pCallback ) )
+					pCallback( searchTerms );
 				return;
 			}
 			result = result.query.allusers || result.query.allcategories || result.query.allpages;
-			$.each(result, function (id, it) {
-				searchTerms.push({
-					value: (it.name || it[ '*' ] || it.title)
-				});
-			});
-			if ($.isFunction(pCallback))
-				pCallback(searchTerms);
+			$.each( result, function ( id, it ) {
+				searchTerms.push( {
+					value: ( it.name || it[ '*' ] || it.title )
+				} );
+			} );
+			if ( $.isFunction( pCallback ) )
+				pCallback( searchTerms );
 			pLastCB = 0;
 		};
-		var doXHR = function (request, pCallback) {
+		var doXHR = function ( request, pCallback ) {
 			var query = {
 				action: 'query',
 				format: 'json'
 			};
 			var queryU = {
 				list: 'allusers',
-				auprefix: request.term.replace(rxUser, '')
+				auprefix: request.term.replace( rxUser, '' )
 			};
-			var rxNs = request.term.match(/^(\w+):.+/),
+			var rxNs = request.term.match( /^(\w+):.+/ ),
 				nsId;
-			if (rxNs && rxNs[ 1 ]) {
-				nsId = rxNs[ 1 ].replace(/ /g, '_').toLowerCase();
+			if ( rxNs && rxNs[ 1 ] ) {
+				nsId = rxNs[ 1 ].replace( / /g, '_' ).toLowerCase();
 				nsId = namespaceIds[ nsId ];
-				if (nsId) {
-					rxNs = new RegExp('^' + mw.RegExp.escape(rxNs[ 1 ]) + '\\:', 'i');
-					request.term = request.term.replace(rxNs, '');
+				if ( nsId ) {
+					rxNs = new RegExp( '^' + mw.RegExp.escape( rxNs[ 1 ] ) + '\\:', 'i' );
+					request.term = request.term.replace( rxNs, '' );
 				} else {
 					nsId = undefined;
 				}
@@ -729,311 +729,311 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			};
 			var queryC = {
 				list: 'allcategories',
-				acprefix: request.term.replace(rxCat, '')
+				acprefix: request.term.replace( rxCat, '' )
 			};
-			switch ($targetSelect.val()) {
+			switch ( $targetSelect.val() ) {
 				case nsUser:
-					$.extend(query, queryU);
+					$.extend( query, queryU );
 					break;
 				case nsCat:
-					$.extend(query, queryC);
+					$.extend( query, queryC );
 					break;
 				case nsPage:
-					$.extend(query, queryP);
+					$.extend( query, queryP );
 					break;
 				case spSearch:
 					return;
 			}
-			lastXHR = $.getJSON(mw.util.wikiScript('api'), query, function (r) {
-				didXHR(r, pCallback);
-			});
+			lastXHR = $.getJSON( mw.util.wikiScript( 'api' ), query, function ( r ) {
+				didXHR( r, pCallback );
+			} );
 		};
-		var onEnter = function (/* params */) {
-			$.each(arguments, function (i, $arg) {
-				$arg.keyup(function (e) {
-					if (Number(e.which) === 13) {
-						$gStartAt.val(getMwDate($(this).val()));
+		var onEnter = function ( /* params */ ) {
+			$.each( arguments, function ( i, $arg ) {
+				$arg.keyup( function ( e ) {
+					if ( Number( e.which ) === 13 ) {
+						$gStartAt.val( getMwDate( $( this ).val() ) );
 						$submitButton.click();
 					}
-				});
-			});
+				} );
+			} );
 		};
 
-		vfc.$targetInput = $targetInput = $('<input>', {
+		vfc.$targetInput = $targetInput = $( '<input>', {
 			type: 'text',
 			id: 'mdTargetInput',
 			style: 'width: 70%;',
 			value: prefill
-		}).autocomplete({
+		} ).autocomplete( {
 			minLength: 1,
 			delay: delayXHR,
-			select: function (/* event, ui */) {
+			select: function ( /* event, ui */ ) {
 				var ts = this;
-				setTimeout(function () {
-					$(ts).triggerHandler('change');
-				}, 10);
+				setTimeout( function () {
+					$( ts ).triggerHandler( 'change' );
+				}, 10 );
 			},
-			source: function (request, callback) {
-				if (pLastCB)
-					pLastCB([]);
+			source: function ( request, callback ) {
+				if ( pLastCB )
+					pLastCB( [] );
 				pLastCB = callback;
-				if (lastXHR)
+				if ( lastXHR )
 					lastXHR.abort();
 				delayXHR += 100;
-				doXHR(request, callback);
+				doXHR( request, callback );
 			}
-		});
+		} );
 
-		// Start date
-		gStartAtURLVal = mw.util.getParamValue('vfcStartAt');
-		$.datepicker.setDefaults($.datepicker.regional[ mw.config.get('wgUserLanguage') ]);
-		$gStartWrap = $('<div>').attr('class', 'md-option-space-v');
+// Start date
+		gStartAtURLVal = mw.util.getParamValue( 'vfcStartAt' );
+		$.datepicker.setDefaults( $.datepicker.regional[ mw.config.get( 'wgUserLanguage' ) ] );
+		$gStartWrap = $( '<div>' ).attr( 'class', 'md-option-space-v' );
 
-		$gStartAtL = $('<label>', {
+		$gStartAtL = $( '<label>', {
 			'for': 'gStartAt',
 			title: vfc.i18n.optStartAt,
 			text: vfc.i18n.startAt
-		})
-			.appendTo($gStartWrap);
+		} )
+			.appendTo( $gStartWrap );
 
-		$gStartAt = vfc.$gStartAt = $('<input>', {
+		$gStartAt = vfc.$gStartAt = $( '<input>', {
 			id: 'gStartAt',
 			type: 'text',
 			title: vfc.i18n.optStartAt,
 			value: vfc.queryParams.lecontinue
-		})
-			.datepicker({
+		} )
+			.datepicker( {
 				changeYear: true,
 				dateFormat: 'yy-mm-ddT12:00:00Z',
 				showWeek: true,
 				firstDay: 1
-			})
-			.blur(function (/* e */) {
-				$(this).val(getMwDate($(this).val()));
-			})
-			.tipsy({
+			} )
+			.blur( function ( /* e */ ) {
+				$( this ).val( getMwDate( $( this ).val() ) );
+			} )
+			.tipsy( {
 				trigger: 'focus',
 				gravity: 's',
 				html: true,
 				title: function () {
 					return vfc.i18n.optStartAtHowTo;
 				}
-			})
-			.attr('placeholder', 'YYYY-MM-DD')
-			.appendTo($gStartWrap);
-		if (gStartAtURLVal && mwDateRx.test(gStartAtURLVal)) {
+			} )
+			.attr( 'placeholder', 'YYYY-MM-DD' )
+			.appendTo( $gStartWrap );
+		if ( gStartAtURLVal && mwDateRx.test( gStartAtURLVal ) ) {
 			moreOptionsVisible = true;
-			setTimeout(function () {
-				$gStartAt.val(gStartAtURLVal).keyup();
-			}, 50);
+			setTimeout( function () {
+				$gStartAt.val( gStartAtURLVal ).keyup();
+			}, 50 );
 		}
 
-		// Start file
-		$gStartFileL = $('<label>', {
+// Start file
+		$gStartFileL = $( '<label>', {
 			'for': 'gStartFile',
 			title: vfc.i18n.optStartAtFile,
 			text: vfc.i18n.startAt
-		})
-			.appendTo($gStartWrap)
+		} )
+			.appendTo( $gStartWrap )
 			.hide();
 
-		$gStartFile = $('<input>', {
+		$gStartFile = $( '<input>', {
 			id: 'gStartFile',
 			type: 'text',
 			title: vfc.i18n.optStartAtFile
-		})
-			.tipsy({
+		} )
+			.tipsy( {
 				trigger: 'focus',
 				gravity: 's',
 				html: false,
 				title: function () {
 					return vfc.i18n.optStartFileHowTo;
 				}
-			})
-			.attr('placeholder', 'Start file (sortkey)')
-			.appendTo($gStartWrap)
+			} )
+			.attr( 'placeholder', 'Start file (sortkey)' )
+			.appendTo( $gStartWrap )
 			.hide();
-		if (gStartAtURLVal && !mwDateRx.test(gStartAtURLVal)) {
+		if ( gStartAtURLVal && !mwDateRx.test( gStartAtURLVal ) ) {
 			moreOptionsVisible = true;
-			setTimeout(function () {
-				$gStartFile.val(gStartAtURLVal).keyup();
-			}, 50);
+			setTimeout( function () {
+				$gStartFile.val( gStartAtURLVal ).keyup();
+			}, 50 );
 		}
 
-		// TODO: Convert to array or object?
-		$gSortNf = $('<option>', {
+// TODO: Convert to array or object?
+		$gSortNf = $( '<option>', {
 			value: 'nf'
-		}).text(vfc.i18n.optNewToOld);
-		$gSortOf = $('<option>', {
+		} ).text( vfc.i18n.optNewToOld );
+		$gSortOf = $( '<option>', {
 			value: 'of'
-		}).text(vfc.i18n.optOldToNew);
-		$gSortDefault = $('<option>', {
+		} ).text( vfc.i18n.optOldToNew );
+		$gSortDefault = $( '<option>', {
 			value: 'default'
-		}).text(vfc.i18n.optDefault);
-		$gSortAsc = $('<option>', {
+		} ).text( vfc.i18n.optDefault );
+		$gSortAsc = $( '<option>', {
 			value: 'ca'
-		}).text(vfc.i18n.optAsc);
-		$gSortDesc = $('<option>', {
+		} ).text( vfc.i18n.optAsc );
+		$gSortDesc = $( '<option>', {
 			value: 'cd'
-		}).text(vfc.i18n.optDesc);
-		$gSortAlphabet = $gSortAsc.add($gSortDesc);
-		$gSortDate = $gSortNf.add($gSortOf);
+		} ).text( vfc.i18n.optDesc );
+		$gSortAlphabet = $gSortAsc.add( $gSortDesc );
+		$gSortDate = $gSortNf.add( $gSortOf );
 
-		$gSortByWrap = $('<div>').attr('class', 'md-option-space-v');
+		$gSortByWrap = $( '<div>' ).attr( 'class', 'md-option-space-v' );
 
-		gSortByURLVal = mw.util.getParamValue('vfcSorting');
-		$gSortByL = $('<label>', {
+		gSortByURLVal = mw.util.getParamValue( 'vfcSorting' );
+		$gSortByL = $( '<label>', {
 			'for': 'gSortBy',
 			title: vfc.i18n.sorting,
 			text: vfc.i18n.sorting
-		})
-			.appendTo($gSortByWrap);
+		} )
+			.appendTo( $gSortByWrap );
 
-		$gSortBy = $('<select>', {
+		$gSortBy = $( '<select>', {
 			id: 'gSortBy'
-		})
-			.append($gSortDefault, $gSortOf, $gSortNf, $gSortAsc, $gSortDesc)
-			.appendTo($gSortByWrap)
-			.change(function () {
-				var $sel = $gSortBy.find('option:selected'),
+		} )
+			.append( $gSortDefault, $gSortOf, $gSortNf, $gSortAsc, $gSortDesc )
+			.appendTo( $gSortByWrap )
+			.change( function () {
+				var $sel = $gSortBy.find( 'option:selected' ),
 					methodDate,
 					methodFile;
 
-				if ($sel.is($gSortAlphabet) ||
-					($sel.is($gSortDefault) && nsCat === $targetSelect.val())) {
+				if ( $sel.is( $gSortAlphabet ) ||
+( $sel.is( $gSortDefault ) && nsCat === $targetSelect.val() ) ) {
 					methodDate = 'none';
 					methodFile = 'inline-block';
 				} else {
 					methodFile = 'none';
 					methodDate = 'inline-block';
 				}
-				if ($.inArray($targetSelect.val(), [ nsPage, spSearch ]) >= 0) {
+				if ( $.inArray( $targetSelect.val(), [ nsPage, spSearch ] ) >= 0 ) {
 					methodFile = 'none';
 					methodDate = 'none';
 				}
-				$gStartAtL.css('display', methodDate);
-				$gStartAt.css('display', methodDate);
-				$gStartFileL.css('display', methodFile);
-				$gStartFile.css('display', methodFile);
-			});
-		if (gSortByURLVal && /of|nf|ca|cd/i.test(gSortByURLVal)) {
+				$gStartAtL.css( 'display', methodDate );
+				$gStartAt.css( 'display', methodDate );
+				$gStartFileL.css( 'display', methodFile );
+				$gStartFile.css( 'display', methodFile );
+			} );
+		if ( gSortByURLVal && /of|nf|ca|cd/i.test( gSortByURLVal ) ) {
 			moreOptionsVisible = true;
-			setTimeout(function () {
-				$gSortBy.val(gSortByURLVal.toLowerCase());
+			setTimeout( function () {
+				$gSortBy.val( gSortByURLVal.toLowerCase() );
 				$targetSelect.change();
-			}, 50);
+			}, 50 );
 		}
 
-		$gLoadThumbs = $('<input type="checkbox" ' + (vfc.mdSettings.loadThumbs ? 'checked="checked" ' : '') + 'id="gLoadThumbs">');
-		$gLoadThumbsL = $('<label>', {
+		$gLoadThumbs = $( '<input type="checkbox" ' + ( vfc.mdSettings.loadThumbs ? 'checked="checked" ' : '' ) + 'id="gLoadThumbs">' );
+		$gLoadThumbsL = $( '<label>', {
 			'for': 'gLoadThumbs',
 			text: vfc.i18n.mdLoadThumbs
-		});
-		$gLoadWikitext = $('<input type="checkbox" ' + (vfc.mdSettings.loadWikitext ? 'checked="checked" ' : '') + 'id="gLoadWikitext">');
-		$gLoadWikitextL = $('<label>', {
+		} );
+		$gLoadWikitext = $( '<input type="checkbox" ' + ( vfc.mdSettings.loadWikitext ? 'checked="checked" ' : '' ) + 'id="gLoadWikitext">' );
+		$gLoadWikitextL = $( '<label>', {
 			'for': 'gLoadWikitext',
 			text: vfc.i18n.mdLoadWikitext
-		});
+		} );
 
-		$gMoreOptions = $('<div>').append(
-			$('<div>').addClass('md-optioncontainer').append(
-				$gStartWrap, $gSortByWrap), $('<div>').addClass('md-optioncontainer').append(
-				$gLoadThumbs, $gLoadThumbsL, ' ', $gLoadWikitext, $gLoadWikitextL)).hide();
-		$gMoreOptionsToggler = vfc.$createToggler(vfc.i18n.optMore, $gMoreOptions);
-		$gNotifyText = vfc.$gNotifyText = $('<span>', {
+		$gMoreOptions = $( '<div>' ).append(
+			$( '<div>' ).addClass( 'md-optioncontainer' ).append(
+				$gStartWrap, $gSortByWrap ), $( '<div>' ).addClass( 'md-optioncontainer' ).append(
+				$gLoadThumbs, $gLoadThumbsL, ' ', $gLoadWikitext, $gLoadWikitextL ) ).hide();
+		$gMoreOptionsToggler = vfc.$createToggler( vfc.i18n.optMore, $gMoreOptions );
+		$gNotifyText = vfc.$gNotifyText = $( '<span>', {
 			id: 'gNotifyText'
-		});
-		$gNotifyArea = vfc.$gNotifyArea = $.createNotifyArea($gNotifyText, 'ui-icon-info', 'ui-state-highlight');
+		} );
+		$gNotifyArea = vfc.$gNotifyArea = $.createNotifyArea( $gNotifyText, 'ui-icon-info', 'ui-state-highlight' );
 
 		vfc.$AjaxMdContainer.append(
-			$('<label>', {
+			$( '<label>', {
 				'for': 'mdTargetInput',
 				text: vfc.i18n.mdTargetInput
-			}), $('<br>'), $targetSelect, ' ', $targetInput, $('<br>'), $gMoreOptionsToggler, $gNotifyArea.hide());
+			} ), $( '<br>' ), $targetSelect, ' ', $targetInput, $( '<br>' ), $gMoreOptionsToggler, $gNotifyArea.hide() );
 		$targetSelect.change();
-		$targetInput.on('input keyup change', function (/* e */) {
-			var thisVal = $(this).val();
-			if (rxCat.test(thisVal)) {
-				$(this).val(thisVal = thisVal.replace(rxCat, ''));
-				$targetSelect.val(nsCat);
+		$targetInput.on( 'input keyup change', function ( /* e */ ) {
+			var thisVal = $( this ).val();
+			if ( rxCat.test( thisVal ) ) {
+				$( this ).val( thisVal = thisVal.replace( rxCat, '' ) );
+				$targetSelect.val( nsCat );
 				$targetSelect.change();
-			} else if (rxUser.test(thisVal) && (nsPage !== $targetSelect.val())) {
-				$(this).val(thisVal = thisVal.replace(rxUser, ''));
-				$targetSelect.val(nsUser);
+			} else if ( rxUser.test( thisVal ) && ( nsPage !== $targetSelect.val() ) ) {
+				$( this ).val( thisVal = thisVal.replace( rxUser, '' ) );
+				$targetSelect.val( nsUser );
 				$targetSelect.change();
-			} else if (rxSearch.test(thisVal)) {
-				$(this).val(thisVal = thisVal.replace(rxSearch, ''));
-				$targetSelect.val(spSearch);
+			} else if ( rxSearch.test( thisVal ) ) {
+				$( this ).val( thisVal = thisVal.replace( rxSearch, '' ) );
+				$targetSelect.val( spSearch );
 				$targetSelect.change();
 			}
-			if (thisVal.length < minlen)
-				$submitButton.button('option', 'disabled', true);
+			if ( thisVal.length < minlen )
+				$submitButton.button( 'option', 'disabled', true );
 			else
-				$submitButton.button('option', 'disabled', false);
+				$submitButton.button( 'option', 'disabled', false );
 
-			$doc.triggerHandler('vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ]);
-		}).keyup().focus();
-		if (moreOptionsVisible)
-			$gMoreOptionsToggler.find('a.md-collapsible:first').click();
+			$doc.triggerHandler( 'vFC_Startup_target', [ $targetSelect.val() + ':' + thisVal ] );
+		} ).keyup().focus();
+		if ( moreOptionsVisible )
+			$gMoreOptionsToggler.find( 'a.md-collapsible:first' ).click();
 
-		// Bind enter events to our controls
-		onEnter(vfc.$AjaxMdContainer.find('select,input'));
+// Bind enter events to our controls
+		onEnter( vfc.$AjaxMdContainer.find( 'select,input' ) );
 
-		// Load the configuration module
-		vfc.loadModule('cfg.js', 'mdConfigInstall');
-		// The following modules are not crucial for execution because there are fallbacks
-		if (!$.fx.off)
-			mw.loader.load([ 'jquery.effects.highlight' ]);
+// Load the configuration module
+		vfc.loadModule( 'cfg.js', 'mdConfigInstall' );
+// The following modules are not crucial for execution because there are fallbacks
+		if ( !$.fx.off )
+			mw.loader.load( [ 'jquery.effects.highlight' ] );
 	},
 
-	cleanReason: function (uncleanReason) {
-		// trim whitespace
-		uncleanReason = uncleanReason.replace(/^\s*(.+)\s*$/, '$1');
-		// remove signature
-		uncleanReason = uncleanReason.replace(/(?:--|–|—)? ?~{3,5}$/, '');
+	cleanReason: function ( uncleanReason ) {
+// trim whitespace
+		uncleanReason = uncleanReason.replace( /^\s*(.+)\s*$/, '$1' );
+// remove signature
+		uncleanReason = uncleanReason.replace( /(?:--|–|—)? ?~{3,5}$/, '' );
 		return uncleanReason;
 	},
 
-	/**
-	 ** Method to securely close (you may call it "nuke") the dialogs,
-	 ** even if there were errors; called on button cancel and by several methods
-	 **/
+/**
+** Method to securely close (you may call it "nuke") the dialogs,
+** even if there were errors; called on button cancel and by several methods
+**/
 	thumbDlgClose: function () {
-		$doc.triggerHandler('vFC', [ 'closing dialog', vfc, vfc.dlg ]);
+		$doc.triggerHandler( 'vFC', [ 'closing dialog', vfc, vfc.dlg ] );
 
-		if (vfc.mdBusy) { // Call myself later if script is busy
-			setTimeout(vfc.thumbDlgClose, 20);
+		if ( vfc.mdBusy ) { // Call myself later if script is busy
+			setTimeout( vfc.thumbDlgClose, 20 );
 			return true;
 		}
 
-		// Re-desplay the page's content
-		$('body').css('overflow', 'visible');
-		// and restore title
+// Re-desplay the page's content
+		$( 'body' ).css( 'overflow', 'visible' );
+// and restore title
 		document.title = this.oldDocTitle;
 
-		if (typeof vfc.dlg === 'object') {
-			vfc.dlg.dialog('destroy');
+		if ( typeof vfc.dlg === 'object' ) {
+			vfc.dlg.dialog( 'destroy' );
 			vfc.dlg.remove();
 			document.body.style.cursor = 'auto';
 			vfc.internalState = 'done';
 			try {
 				delete vfc.dlg;
-			} catch (ex) {
+			} catch ( ex ) {
 				vfc.dlg = 0;
 			}
-		} else if ($(this).children('div').eq(0).attr('id') === 'AjaxMdContainer') {
-			this.dialog('destroy');
+		} else if ( $( this ).children( 'div' ).eq( 0 ).attr( 'id' ) === 'AjaxMdContainer' ) {
+			this.dialog( 'destroy' );
 			this.parent.remove();
 			document.body.style.cursor = 'auto';
 			vfc.internalState = 'done';
 		}
-		$.each(vfc.$dialogsToClose, function (i, $el) {
+		$.each( vfc.$dialogsToClose, function ( i, $el ) {
 			try {
-				$el.dialog('close');
-				// $el.dialog('destroy');
+				$el.dialog( 'close' );
+// $el.dialog('destroy');
 				$el.remove();
-			} catch (ex) {}
-		});
+			} catch ( ex ) {}
+		} );
 	},
 
 	closeAndContinue: function () {
@@ -1041,34 +1041,34 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.nextTask();
 	},
 
-	editCountDialog: function (reason) {
+	editCountDialog: function ( reason ) {
 		var dlgButtons = {};
 
 		dlgButtons[ vfc.i18n.proceedButtonLabel ] = function () {
-			vfc.api.$countDlg.dialog('close');
+			vfc.api.$countDlg.dialog( 'close' );
 			vfc.api.eBatch = 0;
 			vfc.api.eFirst--;
-			var i = Math.min(vfc.mdSettings.maxSimultaneousReq - vfc.api.eRunning, vfc.api.eQueue.length);
-			for (; i > 0; i--)
-				vfc.editAPI.apply(vfc, vfc.api.eQueue.shift());
+			var i = Math.min( vfc.mdSettings.maxSimultaneousReq - vfc.api.eRunning, vfc.api.eQueue.length );
+			for ( ; i > 0; i-- )
+				vfc.editAPI.apply( vfc, vfc.api.eQueue.shift() );
 
 		};
 		dlgButtons[ vfc.i18n.abortButtonLabel ] = function () {
-			vfc.api.$countDlg.dialog('close');
+			vfc.api.$countDlg.dialog( 'close' );
 		};
 
-		vfc.api.$countDlg = $('<div>', {
+		vfc.api.$countDlg = $( '<div>', {
 			text: reason
-		}).append($('<br>'), $('<a>', {
+		} ).append( $( '<br>' ), $( '<a>', {
 			style: 'height:5em; font-size:2em; line-height:1.8em',
-			href: mw.util.getUrl('Special:MyContributions'),
+			href: mw.util.getUrl( 'Special:MyContributions' ),
 			target: 'contribswindow',
 			text: 'My Contributions'
-		}).click(function (e) {
+		} ).click( function ( e ) {
 			e.preventDefault();
-			window.open($(this).attr('href'), 'contribswindow', 'resizable=yes,scrollbars=yes');
-		}));
-		vfc.api.$countDlg.dialog({
+			window.open( $( this ).attr( 'href' ), 'contribswindow', 'resizable=yes,scrollbars=yes' );
+		} ) );
+		vfc.api.$countDlg.dialog( {
 			title: 'Would you like to proceed?',
 			buttons: dlgButtons,
 			show: {
@@ -1080,19 +1080,19 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				vfc.api.$countDlg = 0;
 			},
 			open: function () {
-				var $dlg = $(this).parent();
-				var $buttons = $dlg.find('.ui-dialog-buttonpane button');
-				$buttons.eq(0).specialButton('proceed').focus();
-				$buttons.eq(1).specialButton('cancel');
-				$('.ui-dialog-titlebar-close', $dlg).hide();
+				var $dlg = $( this ).parent();
+				var $buttons = $dlg.find( '.ui-dialog-buttonpane button' );
+				$buttons.eq( 0 ).specialButton( 'proceed' ).focus();
+				$buttons.eq( 1 ).specialButton( 'cancel' );
+				$( '.ui-dialog-titlebar-close', $dlg ).hide();
 			}
-		});
+		} );
 	},
 
-	/**
-	 ** Does a MediaWiki API request and passes the result to the supplied callback (method name).
-	 ** Uses POST requests for everything for simplicity.
-	 **/
+/**
+** Does a MediaWiki API request and passes the result to the supplied callback (method name).
+** Uses POST requests for everything for simplicity.
+**/
 	api: {
 		$countDlg: null,
 		ratelimited: false,
@@ -1106,165 +1106,168 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		done: 0,
 		wasError: false
 	},
-	// For queries only.
-	queryAPI: function (params, callback, errCallBack) {
+// For queries only.
+	queryAPI: function ( params, callback, errCallBack ) {
 		var setting = vfc.mdSettings,
 			api = vfc.api,
 			queue = vfc.api.qQueue;
 
-		if (setting.maxSimultaneousReq > 0 && (api.qRunning >= setting.maxSimultaneousReq)) {
-			queue.push([ params, callback, errCallBack ]);
+		if ( setting.maxSimultaneousReq > 0 && ( api.qRunning >= setting.maxSimultaneousReq ) ) {
+			queue.push( [ params, callback, errCallBack ] );
 			return;
 		}
 		var _always = function () {
 			api.qRunning--;
-			var i = Math.min(setting.maxSimultaneousReq - api.qRunning, queue.length);
-			for (; i > 0; i--) {
+			var i = Math.min( setting.maxSimultaneousReq - api.qRunning, queue.length );
+			for ( ; i > 0; i-- ) {
 				var args = queue.shift();
-				vfc.queryAPI.apply(vfc, args);
+				vfc.queryAPI.apply( vfc, args );
 			}
 		};
 		api.qRunning++;
-		mw.libs.commons.api.query(params, {
+		mw.libs.commons.api.query( params, {
 			method: 'POST',
 			cache: false,
-			cb: function (r, q) {
+			cb: function ( r, q ) {
 				_always();
-				vfc.secureCall(callback, r, q);
+				vfc.secureCall( callback, r, q );
 			},
-			errCb: function (err, q, r) {
+			errCb: function ( err, q, r ) {
 				_always();
-				if (errCallBack)
-					vfc.secureCall(errCallBack, err, q, r, callback);
+				if ( errCallBack )
+					vfc.secureCall( errCallBack, err, q, r, callback );
 				else
-					vfc.fail(err);
+					vfc.fail( err );
 			}
-		});
+		} );
 	},
 
-	// For edits only
-	editAPI: function (params, callback, errCallBack, showProgress) {
+// For edits only
+	editAPI: function ( params, callback, errCallBack, showProgress ) {
 		var setting = vfc.mdSettings,
 			api = vfc.api,
 			queue = vfc.api.eQueue;
 
 		var _firstDlg = function () {
-			if (!api.$countDlg)
-				vfc.editCountDialog(vfc._msg('edit-count-one-time', setting.firstTest));
+			if ( !api.$countDlg )
+				vfc.editCountDialog( vfc._msg( 'edit-count-one-time', setting.firstTest ) );
 
 		};
 		var _batchDlg = function () {
-			if (!api.$countDlg)
-				vfc.editCountDialog(api.ratelimited ? vfc.i18n.mdEditCountThrottle : vfc.i18n.mdEditCountBatch);
+			if ( !api.$countDlg )
+				vfc.editCountDialog( api.ratelimited ? vfc.i18n.mdEditCountThrottle : vfc.i18n.mdEditCountBatch );
 
 		};
 
-		// Prompting each time
-		// Enqueue requests that exceed the specified limit and execute them after prompting
-		// Don't prompt immediately in order to prevent confusion but after the edits were done
-		if (setting.testEdits && (api.eBatch >= setting.testEdits)) {
-			queue.push([ params, callback, errCallBack, showProgress ]);
-			if (!api.eRunning)
+// Prompting each time
+// Enqueue requests that exceed the specified limit and execute them after prompting
+// Don't prompt immediately in order to prevent confusion but after the edits were done
+		if ( setting.testEdits && ( api.eBatch >= setting.testEdits ) ) {
+			queue.push( [ params, callback, errCallBack, showProgress ] );
+			if ( !api.eRunning )
 				_batchDlg();
 			return;
 		}
-		// Edits before prompting one time
-		if (!api.eFirst) {
-			queue.push([ params, callback, errCallBack, showProgress ]);
-			// Did the first edit hit the limit? Then display dialog because otherwise the process interrupts.
-			if (!api.eRunning)
+// Edits before prompting one time
+		if ( !api.eFirst ) {
+			queue.push( [ params, callback, errCallBack, showProgress ] );
+// Did the first edit hit the limit? Then display dialog because otherwise the process interrupts.
+			if ( !api.eRunning )
 				_firstDlg();
 			return;
 		}
 		var _always = function () {
 			api.eRunning--;
 			api.done++;
-			var i = Math.min(setting.maxSimultaneousReq - api.eRunning, queue.length);
+			var i = Math.min( setting.maxSimultaneousReq - api.eRunning, queue.length );
 
-			if (showProgress)
-				vfc.pb.showProgress(api.total + queue.length, api.done, 'edits');
+			if ( showProgress )
+				vfc.pb.showProgress( api.total + queue.length, api.done, 'edits' );
 
-			// Now check whether immediately dequeue or whether to prompt for confirmation
-			// i && api.eRunning < 3 --> Only prompt if there are remaining edits in the queue AND if there are less than 3 running edits
-			if (setting.testEdits && !(vfc.api.done % setting.testEdits) && i && api.eRunning < 3) {
+// Now check whether immediately dequeue or whether to prompt for confirmation
+// i && api.eRunning < 3 --> Only prompt if there are remaining edits in the queue AND if there are less than 3 running edits
+			if ( setting.testEdits && vfc.api.done % setting.testEdits === 0 && i && api.eRunning < 3 ) {
 				_batchDlg();
 				return;
 			}
-			if (!api.eFirst && i && api.eRunning < 3) {
+			if ( !api.eFirst && i && api.eRunning < 3 ) {
 				_firstDlg();
 				return;
 			}
-			if (api.$countDlg)
+			if ( api.$countDlg )
 				return;
 
-			for (; i > 0; i--) {
+			for ( ; i > 0; i-- ) {
 				var args = queue.shift();
-				vfc.editAPI.apply(vfc, args);
+				vfc.editAPI.apply( vfc, args );
 			}
 		};
 
-		$.extend(params, {
-			cb: function (r, q) {
+		$.extend( params, {
+			cb: function ( r, q ) {
 				_always();
-				vfc.secureCall(callback, r, q);
+				vfc.secureCall( callback, r, q );
 			},
-			errCb: function (t, r, q) {
+			errCb: function ( t, r, q ) {
 				_always();
-				if (errCallBack) {
-					vfc.secureCall(errCallBack, r, q, t);
+				if ( errCallBack ) {
+					vfc.secureCall( errCallBack, r, q, t );
 					vfc.api.wasError = true;
 				} else {
-					vfc.fail(t);
+					vfc.fail( t );
 				}
 			}
-		});
+		} );
 
-		// Update statistics and counters
+// Update statistics and counters
 		api.eBatch++;
 		api.eRunning++;
 		api.total++;
 		api.eFirst--;
-		if (showProgress)
-			vfc.pb.showProgress(api.total + queue.length, api.done, 'edits');
+		if ( showProgress )
+			vfc.pb.showProgress( api.total + queue.length, api.done, 'edits' );
 
-		// Send the request
+// Send the request
 		mw.libs.commons.api.config.maxSimultaneousReq = setting.maxSimultaneousReq;
-		mw.libs.commons.api.editPage(params);
+		mw.libs.commons.api.editPage( params );
 	},
 
-	/**
-	 * { error failback handler for thumbs }
-	 *
-	 * @param {string}  err  The error
-	 * @param {json}   q     The query
-	 * @param {json}   r     The result
-	 * @param {Function} callback The callback
-	 */
-	failQueriedFile: function (err, q, r, callback) {
+/**
+* { error failback handler for thumbs }
+*
+* @param {string}  err  The error
+* @param {json}    q    The query
+* @param {json}    r    The result
+* @param {Function} callback The callback
+*/
+	failQueriedFile: function ( err, q, r, callback ) {
 		r = r ? r.error : 0;
-		if (r && r.code === 'urlparamnormal') { // [[phab:T187016]]
-			var rFile = 'File:' + r.info.replace(/.*? ([^\s]+)\.$/, '$1').replace(/_/g, ' ');
-			// Get defect image and remove it from query
-			var regFile = new RegExp('\\|?' + mw.RegExp.escape(rFile));
-			var q2 = $.extend({}, q); // copy query
-			this.log(rFile + ' is defect');
-			regFile = q.titles.replace(regFile, '');
-			// try again
-			if (regFile && q.titles !== regFile) {
+		if ( r && r.code === 'urlparamnormal' ) { // [[phab:T187016]]
+			var rFile = 'File:' + r.info.replace( /.*? ([^\s]+)\.$/, '$1' ).replace( /_/g, ' ' );
+// Get defect image and remove it from query
+			var regFile = new RegExp( '\\|?' + mw.RegExp.escape( rFile ) );
+			var q2 = $.extend( {}, q ); // copy query
+			this.log( rFile + ' is defect' );
+			regFile = q.titles.replace( regFile, '' );
+// try again
+			if ( regFile && q.titles !== regFile ) {
 				q.titles = regFile;
-				vfc.queryAPI(q, callback);
+				vfc.queryAPI( q, callback );
 			}
-			// Separate affected files
+// Separate affected files
 			q2.titles = rFile;
-			// q2.prop = q2.prop.replace(/\|?imageinfo\|?/, '');
-			// delete q2.iiprop;
-			// delete q2.iilimit;
-			delete q2.iiurlheight;
-			delete q2.iiurlwidth;
-			vfc.queryAPI(q2, callback);
+			if ( q2.iiurlheight ) {
+				delete q2.iiurlheight;
+				delete q2.iiurlwidth;
+			} else {
+				q2.prop = q2.prop.replace( /\|?imageinfo\|?/, '' );
+				delete q2.iiprop;
+				delete q2.iilimit;
+			}
+			vfc.queryAPI( q2, callback );
 			return;
 		}
-		vfc.fail(err);
+		vfc.fail( err );
 	},
 
 /**
@@ -1272,82 +1275,82 @@ VisualFileChange = vfc = window.VisualFileChange = {
 *
 * @param {string}  err  The error
 **/
-	fail: function (err) {
+	fail: function ( err ) {
 		err = err.toString();
 		document.body.style.cursor = 'auto';
-		this.log('Error: ' + err);
-		var msg = this.i18n.taskFailure[ this.currentTask ] || ('-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --');
+		this.log( 'Error: ' + err );
+		var msg = this.i18n.taskFailure[ this.currentTask ] || ( '-- NO TASK DESCR. FOR ' + this.currentTask + ' PLEASE ADD IT --' );
 
 		var reportPage = '';
 		this.mdBusy = false; // Prevents that thumbDlgClose will be refused
 
-		this.pb.setCurrentTaskState('md-failed');
+		this.pb.setCurrentTaskState( 'md-failed' );
 
-		if (({
+		if ( ( {
 			md: 1,
 			revert: 1,
 			done: 1
-		})[ this.internalState ]) {
+		} )[ this.internalState ] ) {
 			reportPage = this.mdErrReportPath;
 
 			this.internalState = 'err';
 		}
-		if (this.pb)
-			this.pb.setError(msg + ' ##### ' + err);
+		if ( this.pb )
+			this.pb.setError( msg + ' ##### ' + err );
 	},
-	log: function (toLog) {
-		if (window.console && $.isFunction(window.console.warn))
-			window.console.warn(toLog);
-		else mw.log.warn(toLog);
+	log: function ( toLog ) {
+		if ( window.console && $.isFunction( window.console.warn ) )
+			window.console.warn( toLog );
+		else mw.log.warn( toLog );
 	},
 
-	/**
-	 ** Method to catch errors and report where they occurred
-	 **/
-	secureCall: function (fn) {
+/**
+** Method to catch errors and report where they occurred
+**/
+	secureCall: function ( fn ) {
 		var o = vfc;
 		try {
 			o.currentTask = arguments[ 0 ];
-			if ($.isFunction(fn))
-				return fn.apply(o, Array.prototype.slice.call(arguments, 1)); // arguments is not of type array so we can't just write arguments.slice
-			else if (typeof fn === 'string')
-				return o[ fn ].apply(o, Array.prototype.slice.call(arguments, 1));
+			if ( $.isFunction( fn ) )
+				return fn.apply( o, Array.prototype.slice.call( arguments, 1 ) ); // arguments is not of type array so we can't just write arguments.slice
+			else if ( typeof fn === 'string' )
+				return o[ fn ].apply( o, Array.prototype.slice.call( arguments, 1 ) );
 			else
-				o.fail('This is not a function!');
+				o.fail( 'This is not a function!' );
 
-		} catch (ex) {
-			o.fail(ex);
+		} catch ( ex ) {
+			o.fail( ex );
 		}
 	},
 
 	$dialogsToClose: [],
 
-	/**
-	 ** Simple task queue. addTask() adds a new task to the queue, nextTask() executes
-	 ** the next scheduled task. Tasks are specified as method names to call.
-	 **/
+/**
+** Simple task queue. addTask() adds a new task to the queue, nextTask() executes
+** the next scheduled task. Tasks are specified as method names to call.
+**/
 	tasks: [],
-	// list of pending tasks
+// list of pending tasks
 	currentTask: '',
-	// current task, for error reporting
+// current task, for error reporting
 	oldTask: '',
-	// task called before
-	addTask: function (task) {
-		this.tasks.push(task);
+// task called before
+	addTask: function ( task ) {
+		this.tasks.push( task );
 	},
 	nextTask: function () {
 		var task = this.currentTask = this.tasks.shift();
-		return ($.isArray(task) ? this.secureCall.apply(this, task) : this.secureCall(task)); // Ja da guckste ...
+		return ( $.isArray( task ) ? this.secureCall.apply( this, task ) : this.secureCall( task ) ); // Ja da guckste ...
 	},
 	lastTask: function () {
 		var task = this.currentTask = this.tasks[ this.tasks.length - 1 ];
 		this.tasks = [];
-		return ($.isArray(task) ? this.secureCall.apply(this, task) : this.secureCall(task));
+		return ( $.isArray( task ) ? this.secureCall.apply( this, task ) : this.secureCall( task ) );
 	},
 
-	/**                          **
-	 *************** SETTINGS / CONFIGURATION ****************
-	 **                          **/
+/**                          **
+*************** SETTINGS / CONFIGURATION ****************
+**                          **/
 	mdUserTags: {
 		c_replace: {},
 		prepend: {},
@@ -1471,7 +1474,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		}
 	},
 	mdOpt: {
-		// minLenReq - Minimum length of reason / text to insert; bLimit - Limit of additional summary length
+// minLenReq - Minimum length of reason / text to insert; bLimit - Limit of additional summary length
 		c_replace: {
 			minLenReq: 0,
 			bLimit: 150,
@@ -1728,10 +1731,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		min: 0,
 		max: 50
 	}, {
-			// Ratelimits may restrict this
+// Ratelimits may restrict this
 		name: 'testEdits',
 		label: 'Ask for confirmation after each … edits (deletions not affected)',
-		'default': (mw.user.isAnon() ? 7 : 0),
+		'default': ( mw.user.isAnon() ? 7 : 0 ),
 		min: 0,
 		max: 500
 	}, {
@@ -1739,16 +1742,16 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		label: 'Default action to perform',
 		'default': 'del',
 		select: function () {
-			if ($(this.controls).length) {
-				return $(this.controls).clone();
+			if ( $( this.controls ).length ) {
+				return $( this.controls ).clone();
 			} else {
-				var $sel = $('<select size="1"></select>');
-				$.each(vfc.i18n.mdOptions, function (i, el) {
-					$sel.append($('<option>', {
+				var $sel = $( '<select size="1"></select>' );
+				$.each( vfc.i18n.mdOptions, function ( i, el ) {
+					$sel.append( $( '<option>', {
 						text: el,
 						value: i
-					}));
-				});
+					} ) );
+				} );
 				return $sel;
 			}
 		},
@@ -1778,13 +1781,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		label: 'Amount of files to be loaded when clicking on more or when scrolling down',
 		'default': 30,
 		min: 1,
-		max: ((isSysop || isBot) ? 1000 : 100)
+		max: ( ( isSysop || isBot ) ? 1000 : 100 )
 	}, {
 		name: 'maxSimultaneousReq',
 		label: 'Maximum number of requests to send to the API simultaneously',
-		'default': (isSysop ? 10 : (mw.user.isAnon() ? 1 : 5)),
+		'default': ( isSysop ? 10 : ( mw.user.isAnon() ? 1 : 5 ) ),
 		min: 1,
-		max: (isSysop ? 100 : (mw.user.isAnon() ? 2 : 50))
+		max: ( isSysop ? 100 : ( mw.user.isAnon() ? 2 : 50 ) )
 	}, {
 		name: 'summaryChacheLen',
 		label: 'Number of reasons to remember (not fully implemented, yet)',
@@ -1802,7 +1805,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	}
 	],
 
-	// Will be filled while initializing
+// Will be filled while initializing
 	mdSettings: {},
 
 	mdTagRemoval: [
@@ -1824,7 +1827,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	],
 
 	mdTagRecognization: [
-		// RegExp for the tag								note to add to the thumb-page
+// RegExp for the tag								note to add to the thumb-page
 		[ /Deletion requests.*/, 'd' ],
 		[ /Incomplete deletion requests.*/, 'd(incomplete)' ],
 		[ /Media missing permission.*/, '!p' ],
@@ -1843,7 +1846,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	],
 
 	mdLicenseRecognization: [
-		// RegExp for the tag			note to add to the thumb-page
+// RegExp for the tag			note to add to the thumb-page
 		[ /Category:CC[- _]BY-SA.*/i, 'CC-BY-SA' ],
 		[ /Category:CC[- _]BY.*/i, 'CC-BY' ],
 		[ /Category:CC[- _]Zero.*/i, 'CC0' ],
@@ -1870,18 +1873,18 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
-	mdWikipageRegExp: new RegExp(mw.RegExp.escape(mw.config.get('wgArticlePath').replace('$1', '')) + '(.+)'),
+	mdWikipageRegExp: new RegExp( mw.RegExp.escape( mw.config.get( 'wgArticlePath' ).replace( '$1', '' ) ) + '(.+)' ),
 	mdSelfPath: 'MediaWiki:VisualFileChange.js',
 	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdChangeTag: 'VisualFileChange',
-	mdUserPrefix: mw.config.get('wgFormattedNamespaces')[ 2 ] + ':',
-	mdUserTalkPrefix: mw.config.get('wgFormattedNamespaces')[ 3 ] + ':',
-	mdContribPrefix: mw.config.get('wgFormattedNamespaces')[ -1 ] + ':Contributions/',
+	mdUserPrefix: mw.config.get( 'wgFormattedNamespaces' )[ 2 ] + ':',
+	mdUserTalkPrefix: mw.config.get( 'wgFormattedNamespaces' )[ 3 ] + ':',
+	mdContribPrefix: mw.config.get( 'wgFormattedNamespaces' )[ -1 ] + ':Contributions/',
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	mdErrorsReportPath: mw.util.getUrl('MediaWiki talk:VisualFileChange.js'),
-	mdHelpNode: '<a href="' + mw.util.getUrl('Help:VisualFileChange.js') + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
+	mdErrorsReportPath: mw.util.getUrl( 'MediaWiki talk:VisualFileChange.js' ),
+	mdHelpNode: '<a href="' + mw.util.getUrl( 'Help:VisualFileChange.js' ) + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
 		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
@@ -1893,7 +1896,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		attention: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png'
 	},
 
-	// Translatable strings
+// Translatable strings
 	i18n: {
 		mdButtonLabel: 'Perform batch task',
 		mdPerformOnWhichTarget: 'What user or category is this action about?',
@@ -1991,7 +1994,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			saveInProfile: 'But you can save your inputs into a profile.',
 			aboutLastExec: 'The inputs of the last executed requests are automatically saved.',
 			errorDuringTask: 'We regret the the inconvenience: The Server-API returned an error during executing your requested task. ' +
-			'Please check your contributions, whether something went wrong.',
+'Please check your contributions, whether something went wrong.',
 			checkContribs: 'Check your contributions',
 			checkDeletions: 'Check deletion log',
 			goToRequestPage: 'Go to the created request page',
@@ -2139,57 +2142,57 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			mdExecuteReady: 'And error occurred after all scheduled tasks are done.'
 		}
 	},
-	_msg: function (/* params*/) {
-		var args = Array.prototype.slice.call(arguments, 0);
+	_msg: function ( /* params*/ ) {
+		var args = Array.prototype.slice.call( arguments, 0 );
 		args[ 0 ] = 'vfc-' + args[ 0 ];
 		args[ args.length ] = 'VisualFileChange';
 		args[ args.length + 1 ] = vfc.version;
-		return mw.msg.apply(this, args);
+		return mw.msg.apply( this, args );
 	},
-	_msg_parsed: function (/* params*/) {
-		var args = Array.prototype.slice.call(arguments, 0);
+	_msg_parsed: function ( /* params*/ ) {
+		var args = Array.prototype.slice.call( arguments, 0 );
 		args[ 0 ] = 'vfc-' + args[ 0 ];
 		args[ args.length ] = 'VisualFileChange';
 		args[ args.length + 1 ] = vfc.version;
-		return mw.message.apply(this, args).parse();
+		return mw.message.apply( this, args ).parse();
 	}
 };
 
 /**                                                     **
- ******************* PLUGINS / LOAD **********************
- **                                                     **/
+******************* PLUGINS / LOAD **********************
+**                                                     **/
 /**
- * Create a progress-box object.
- * @constructor
- *
- * @example
- *   new ProgressBox( 150, this );
- *
- * @param width {Number} The initial width of the panel.
- * @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like this.icons.current
- */
-function ProgressBox(width, o) {
-	/* jshint validthis:true*/
-	this.w = (width || 250);
+* Create a progress-box object.
+* @constructor
+*
+* @example
+*   new ProgressBox( 150, this );
+*
+* @param width {Number} The initial width of the panel.
+* @param o {Object} Parent object storing i18n-information in .i18n.task = {} and icon URIs like this.icons.current
+*/
+function ProgressBox( width, o ) {
+/* jshint validthis:true*/
+	this.w = ( width || 250 );
 	this.t = {};
 	this.ct = 0;
 	this.usingObj = o;
 
 	var _this = this;
-	this.$cont = $('<div>', {
+	this.$cont = $( '<div>', {
 		style: 'display:none;overflow:hidden;left:0;width:' + this.w + 'px;height:100%;z-index:1000;top:0pt;position:fixed;font:15px sans-serif;background-color:#cde;background-image:background-image:-webkit-linear-gradient(top,#cde,#eee 100px,#eee);background-image:linear-gradient(to bottom,#cde,#eee 100px,#eee);'
-	}).dblclick(function () {
+	} ).dblclick( function () {
 		_this.$cmd.focus();
-	});
-	this.$cmd = $('<input>', {
+	} );
+	this.$cmd = $( '<input>', {
 		id: 'mdCMD',
 		type: 'text',
 		maxlength: '2',
 		style: 'position:absolute; top:-100px;'
-	}).keydown(function (e) {
-		var tVal = ($(this).val() || '');
-		if (e.which === 13) {
-			switch (tVal) {
+	} ).keydown( function ( e ) {
+		var tVal = ( $( this ).val() || '' );
+		if ( e.which === 13 ) {
+			switch ( tVal ) {
 				case 'd':
 					window.VisualFileChangeDebug = true;
 					_this.mock();
@@ -2199,73 +2202,73 @@ function ProgressBox(width, o) {
 					_this.clearMock();
 					break;
 				default:
-					_this.setError('Unknown command. d-Debug mode; e-Disable debug mode.');
+					_this.setError( 'Unknown command. d-Debug mode; e-Disable debug mode.' );
 			}
-			$(this).val('');
+			$( this ).val( '' );
 		}
-		if (tVal.length > 1)
-			$(this).val($(tVal.substr(tVal.length - 1)));
+		if ( tVal.length > 1 )
+			$( this ).val( $( tVal.substr( tVal.length - 1 ) ) );
 
-	});
-	this.$x = $('<a>', {
+	} );
+	this.$x = $( '<a>', {
 		href: '#',
 		'class': 'ui-dialog-titlebar-close ui-corner-all',
 		role: 'button',
 		style: 'position:absolute;',
 		title: 'close this panel'
-	}).append($('<span>', {
+	} ).append( $( '<span>', {
 		'class': 'ui-icon ui-icon-closethick',
 		text: 'close'
-	})).click(function () {
-		_this.$cont.hide(400, function () {
-			if (o.dlg) {
-				o.dlg.dialog('option', 'width', $win.width());
-				o.dlg.dialog('option', 'position', 'center');
+	} ) ).click( function () {
+		_this.$cont.hide( 400, function () {
+			if ( o.dlg ) {
+				o.dlg.dialog( 'option', 'width', $win.width() );
+				o.dlg.dialog( 'option', 'position', 'center' );
 			}
-		});
+		} );
 		return false; // Prevent default and stop propagation
-	});
-	this.$capt = $('<div>', {
+	} );
+	this.$capt = $( '<div>', {
 		style: 'font:small-caps 1.5em sans-serif;text-align:center;padding:10px;margin-top:10px;',
 		text: 'VisualFileChange.js'
-	});
-	this.$cfg = $('<a>', {
+	} );
+	this.$cfg = $( '<a>', {
 		href: '#advanced_config',
 		text: ' ' + vfc.i18n.cfg.startConfigManager,
 		style: 'visibility:hidden;',
 		'class': 'vFCConfigRequired'
-	})
-		.prepend($.createIcon('ui-icon-gear'));
-	this.$profile = $('<a>', {
+	} )
+		.prepend( $.createIcon( 'ui-icon-gear' ) );
+	this.$profile = $( '<a>', {
 		href: '#profiles',
 		text: ' ' + vfc.i18n.cfg.startProfileManager,
 		style: 'visibility:hidden;',
 		'class': 'vFCConfigRequired ui-state-disabled'
-	})
-		.prepend($.createIcon('ui-icon-person'));
-	this.$subheading = $('<span>', {
+	} )
+		.prepend( $.createIcon( 'ui-icon-person' ) );
+	this.$subheading = $( '<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.scriptRevision
-	}).append($('<br>'), 'Report bugs and ideas <a href="' + o.mdErrorsReportPath + '" target="_blank">here</a>.', $('<br>'), $('<br>'), this.$cfg, $('<br>'), this.$profile);
-	this.$tasklist = $('<div>', {
+	} ).append( $( '<br>' ), 'Report bugs and ideas <a href="' + o.mdErrorsReportPath + '" target="_blank">here</a>.', $( '<br>' ), $( '<br>' ), this.$cfg, $( '<br>' ), this.$profile );
+	this.$tasklist = $( '<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: o.i18n.tasks
-	});
-	this.$progressWrap = $('<div>', {
+	} );
+	this.$progressWrap = $( '<div>', {
 		css: {
 			position: 'relative',
 			padding: '10px',
 			height: '25px',
 			display: 'none'
 		}
-	});
-	this.$progressBar = $('<div>', {
+	} );
+	this.$progressBar = $( '<div>', {
 		css: {
 			width: '100%',
 			height: '100%'
 		}
-	}).appendTo(this.$progressWrap);
-	this.$progressText = $('<div>', {
+	} ).appendTo( this.$progressWrap );
+	this.$progressText = $( '<div>', {
 		css: {
 			width: '100%',
 			height: '100%',
@@ -2274,39 +2277,39 @@ function ProgressBox(width, o) {
 			left: '0px',
 			'text-align': 'center'
 		}
-	}).appendTo(this.$progressWrap);
-	this.$aHelpHead = $('<div>');
-	this.$aHelpCont = $('<div>', {
-		style: ('font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min($win.height() / 3, 500) + 'px;')
-	});
-	this.$aHelpCont2 = $('<div>', {
+	} ).appendTo( this.$progressWrap );
+	this.$aHelpHead = $( '<div>' );
+	this.$aHelpCont = $( '<div>', {
+		style: ( 'font-size:0.8em; word-wrap:break-word; overflow:auto; max-height:' + Math.min( $win.height() / 3, 500 ) + 'px;' )
+	} );
+	this.$aHelpCont2 = $( '<div>', {
 		style: 'font-weight:bold; word-wrap:break-word;'
-	});
-	this.$aHelp = $('<div>', {
+	} );
+	this.$aHelp = $( '<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: 'Notes:'
-	}).append(this.$aHelpHead, this.$aHelpCont, this.$aHelpCont2);
-	this.$error = $('<div>');
-	this.$errorCont = $('<div>', {
+	} ).append( this.$aHelpHead, this.$aHelpCont, this.$aHelpCont2 );
+	this.$error = $( '<div>' );
+	this.$errorCont = $( '<div>', {
 		style: 'margin-top: 50px; padding: 10px; display:none',
 		'class': 'error',
 		text: 'Error:'
-	}).append(this.$error);
-	this.$credits = $('<div>', {
+	} ).append( this.$error );
+	this.$credits = $( '<div>', {
 		id: 'mdCredits',
 		style: 'position:absolute;bottom:0;font:small-caps 0.7em sans-serif;margin:4px;color:#BBB'
-	})
-		.html('Icons by Everaldo Coelho -LGPL- and <br>the jQuery UI team -GPL-<br>' +
-			(o.i18n.mdTranslator ?
-				'Translation provided by ' + o.i18n.mdTranslator :
-				'Coded by Rillke and others. Thanks to all supporters, especially Saibo and LX for testing.'));
+	} )
+		.html( 'Icons by Everaldo Coelho -LGPL- and <br>the jQuery UI team -GPL-<br>' +
+( o.i18n.mdTranslator ?
+'Translation provided by ' + o.i18n.mdTranslator :
+'Coded by Rillke and others. Thanks to all supporters, especially Saibo and LX for testing.' ) );
 
-	this.$cont.append(this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits);
-	$('body').append(this.$cont);
-	mw.util.addCSS('.md-doing {padding-left:16px;background:url(\'' + o.icons.current + '\') no-repeat left;font-weight:bold} ' +
-		'.md-done {padding-left:16px;background:url(\'' + o.icons.done + '\') no-repeat left} ' +
-		'.md-failed {padding-left:16px;background:url(\'' + o.icons.failed + '\') no-repeat left} ' +
-		'.md-attention {padding-left:16px;background:url(\'' + o.icons.attention + '\') no-repeat left}\n');
+	this.$cont.append( this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits );
+	$( 'body' ).append( this.$cont );
+	mw.util.addCSS( '.md-doing {padding-left:16px;background:url(\'' + o.icons.current + '\') no-repeat left;font-weight:bold} ' +
+'.md-done {padding-left:16px;background:url(\'' + o.icons.done + '\') no-repeat left} ' +
+'.md-failed {padding-left:16px;background:url(\'' + o.icons.failed + '\') no-repeat left} ' +
+'.md-attention {padding-left:16px;background:url(\'' + o.icons.attention + '\') no-repeat left}\n' );
 }
 ProgressBox.fn = ProgressBox.prototype = {
 	constructor: ProgressBox,
@@ -2319,95 +2322,95 @@ ProgressBox.fn = ProgressBox.prototype = {
 	remove: function () {
 		this.$cont.remove();
 	},
-	addTask: function (task) {
-		var n = $('<div>', {
+	addTask: function ( task ) {
+		var n = $( '<div>', {
 			text: this.usingObj.i18n.task[ task ],
 			'class': 'md-notdone'
-		});
+		} );
 		this.t[ task ] = n;
-		this.$tasklist.append(n);
+		this.$tasklist.append( n );
 	},
-	setCurrentTaskState: function (state) {
-		if (this.ct)
-			this.ct.removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+	setCurrentTaskState: function ( state ) {
+		if ( this.ct )
+			this.ct.removeClass( 'md-notdone md-doing md-done md-attention' ).addClass( state );
 	},
 	setCurrentTaskDone: function () {
-		if (this.ct && this.ct.hasClass('md-doing'))
-			this.ct.removeClass('md-doing').addClass('md-done');
+		if ( this.ct && this.ct.hasClass( 'md-doing' ) )
+			this.ct.removeClass( 'md-doing' ).addClass( 'md-done' );
 	},
-	setTaskState: function (taskname, state) {
-		this.t[ taskname ].removeClass('md-notdone md-doing md-done md-attention').addClass(state);
+	setTaskState: function ( taskname, state ) {
+		this.t[ taskname ].removeClass( 'md-notdone md-doing md-done md-attention' ).addClass( state );
 		this.ct = this.t[ taskname ];
 	},
-	setHelp: function (help) {
-		this.$aHelpHead.text(help);
+	setHelp: function ( help ) {
+		this.$aHelpHead.text( help );
 	},
-	setHelp2: function (help, text) {
-		if (text)
-			this.$aHelpCont.text(help);
+	setHelp2: function ( help, text ) {
+		if ( text )
+			this.$aHelpCont.text( help );
 		else
-			this.$aHelpCont.html(help);
+			this.$aHelpCont.html( help );
 
 	},
-	setHelp3: function (help) {
-		this.$aHelpCont2.text(help);
+	setHelp3: function ( help ) {
+		this.$aHelpCont2.text( help );
 	},
-	setError: function (err) {
-		this.$error.text(err);
+	setError: function ( err ) {
+		this.$error.text( err );
 		this.$errorCont.show();
 	},
-	setZIndex: function (zIndex) {
-		this.$cont.css('z-index', zIndex);
+	setZIndex: function ( zIndex ) {
+		this.$cont.css( 'z-index', zIndex );
 	},
 	isHidden: function () {
-		return (this.$cont.css('display') === 'none');
+		return ( this.$cont.css( 'display' ) === 'none' );
 	},
-	showProgress: function (total, done, type) {
+	showProgress: function ( total, done, type ) {
 		var _this = this;
-		if (_this.progressTimeout)
-			clearTimeout(_this.progressTimeout);
-		_this.progressTimeout = setTimeout(function () {
-			mw.loader.using('jquery.ui.progressbar', function () {
-				_this.$progressBar.progressbar({
-					value: (done) / (total) * 100
-				});
-				_this.$progressText.text('remaining ' + (total - done) + ' ' + type);
-				if (total === done)
+		if ( _this.progressTimeout )
+			clearTimeout( _this.progressTimeout );
+		_this.progressTimeout = setTimeout( function () {
+			mw.loader.using( 'jquery.ui.progressbar', function () {
+				_this.$progressBar.progressbar( {
+					value: ( done ) / ( total ) * 100
+				} );
+				_this.$progressText.text( 'remaining ' + ( total - done ) + ' ' + type );
+				if ( total === done )
 					_this.$progressWrap.stop().fadeOut();
 				else
-					_this.$progressWrap.stop().fadeTo(0, 1);
+					_this.$progressWrap.stop().fadeTo( 0, 1 );
 
-			});
-		}, 10);
+			} );
+		}, 10 );
 	},
-	mock: function (throwErr) {
+	mock: function ( throwErr ) {
 		var _this = this;
-		_this.debugInfo('Waiting for mock');
-		mw.loader.using('jquery.mockjax', function () {
-			_this.editMock = _this._mock(throwErr, 'edit');
-			_this.deleteMock = _this._mock(throwErr, 'delete');
-			_this.debugInfo('Mocking enabled. Open a real JavaScript console for retrieving results.');
-		});
+		_this.debugInfo( 'Waiting for mock' );
+		mw.loader.using( 'jquery.mockjax', function () {
+			_this.editMock = _this._mock( throwErr, 'edit' );
+			_this.deleteMock = _this._mock( throwErr, 'delete' );
+			_this.debugInfo( 'Mocking enabled. Open a real JavaScript console for retrieving results.' );
+		} );
 	},
-	_mock: function (throwErr, action) {
+	_mock: function ( throwErr, action ) {
 		var _this = this;
-		return $.mockjax({
-			url: mw.util.wikiScript('api'),
+		return $.mockjax( {
+			url: mw.util.wikiScript( 'api' ),
 			data: {
 				action: action
 			},
 			dataType: 'json',
 			contentType: 'text/json',
-			response: function (p) {
+			response: function ( p ) {
 				var query = p.data,
 					response = {};
 
-				_this.usingObj.log(action + '> ' + (query.summary || query.reason));
-				_this.usingObj.log(query);
-				if (query.requestid)
+				_this.usingObj.log( action + '> ' + ( query.summary || query.reason ) );
+				_this.usingObj.log( query );
+				if ( query.requestid )
 					response.requestid = query.requestid;
 
-				if (throwErr) {
+				if ( throwErr ) {
 					response.error = {
 						info: throwErr.info || 'Mockjax test error',
 						code: 'testerr'
@@ -2420,33 +2423,33 @@ ProgressBox.fn = ProgressBox.prototype = {
 				}
 				this.responseText = response;
 			}
-		});
+		} );
 	},
 	clearMock: function () {
-		$.mockjaxClear(this.editMock);
-		$.mockjaxClear(this.deleteMock);
-		this.debugInfo('Mock disabled. Requests are sent to the server.');
+		$.mockjaxClear( this.editMock );
+		$.mockjaxClear( this.deleteMock );
+		this.debugInfo( 'Mock disabled. Requests are sent to the server.' );
 	},
-	debugInfo: function (txt) {
-		this.setError(txt);
+	debugInfo: function ( txt ) {
+		this.setError( txt );
 	}
 };
 
 // Translation II (more sophisticated stuff)
-mw.messages.set({
+mw.messages.set( {
 	'vfc-query-progress': 'Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current file: $3',
 	'vfc-selected-count': '$1 {{PLURAL:$1|file|files}} selected to perform the action on.',
 	'vfc-enter-reason': 'Please specify a reason with at least $1 {{PLURAL:$1|letter|letters}}.',
 	'vfc-edit-count-one-time': 'Would you like to do edit number $1?',
 	'vfc-anon-info': '$1 is a powerful tool. To use its full set of features, please create a user account and [[Special:UserLogin|sign-in]].',
 	'vfc-anon-info-heading': 'Please sign-in for a full feature-set'
-});
+} );
 
-mw.loader.using([
-	'jquery.ui.dialog',
-	'jquery.ui.datepicker',
-	'jquery.ui.autocomplete',
-	'jquery.tipsy',
+mw.loader.using( [
+	'jquery.ui.dialog', // deprecated
+	'jquery.ui.datepicker', // deprecated
+	'jquery.ui.autocomplete', // deprecated
+	'jquery.tipsy', // deprecated
 	'mediawiki.user',
 	'mediawiki.util',
 	'mediawiki.jqueryMsg',
@@ -2456,14 +2459,14 @@ mw.loader.using([
 	'ext.gadget.libJQuery',
 	'ext.gadget.jquery.in-view'
 ], function () {
-	$doc.off('vFC.debuglistener');
-	$doc.on('vFC.debuglistener', function (e, p1 /* , p2, p3 */) {
-		if (window.VisualFileChangeDebug)
-			vfc.log('VisualFileChange> ' + p1);
-	});
+	$doc.off( 'vFC.debuglistener' )
+		.on( 'vFC.debuglistener', function ( e, p1 /* , p2, p3 */ ) {
+		if ( window.VisualFileChangeDebug )
+			vfc.log( 'VisualFileChange> ' + p1 );
+	} );
 	vfc.install();
-});
+} );
 
-});
-}(jQuery, mediaWiki));
+} );
+}( jQuery, mediaWiki ) );
 // </nowiki>
