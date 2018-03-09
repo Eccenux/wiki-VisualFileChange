@@ -4,9 +4,8 @@
 
 // Invoke jsHint-validation
 
-/* global jQuery:false, mediaWiki:false, alert:false*/
-/* eslint one-var:0, vars-on-top:0, indent:0, no-underscore-dangle:0, no-multi-str:0, no-unused-vars:0,
-valid-jsdoc:0, no-bitwise:0, camelcase:0, no-alert:0 */
+/* global jQuery:false, mediaWiki:false*/
+/* eslint one-var:0, vars-on-top:0, indent:0, no-underscore-dangle:0, no-multi-str:0, no-unused-vars:0, valid-jsdoc:0, no-bitwise:0, camelcase:0, no-alert:0 */
 /* jshint curly:false, maxerr:200, laxbreak:true, bitwise:false, multistr:true*/
 ( function ( $, mw ) {
 'use strict';
@@ -21,48 +20,48 @@ var vfc = window.VisualFileChange,
 	$doc = $( document ),
 	$win = $( window ),
 	css =
-	'.rgallery{background-color:#FFF !important;}\n\
-	#AjaxMdContainer{position:relative;}\n\
-	.md-toggle-pane{position:absolute;}\n\
-	.md-nav-button{display:inline-block;background-color:white;border:2px solid #f3f3f3;border-radius:10px}\
-	.md-nav-button:hover,.md-nav-button:focus{background-color:#EEF;}\
-	.md-nav-button:active{border-color:#ccc }\
-	.md-nav-button-container{position:absolute;top:3em;right:1.5em;max-width:18px }\n\
-	.md-nav-button-wrap{display:inline-block;background:none!important;border:none!important;}\n\
-	.numbersOnly{text-align:right;}\n\
-	.md-deleted-uploads{width:99%;display:none;background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;}\n\
-	a:link.md-loglink{color:#BB6!important;display:inline-block;}\n\
-	a.md-talklink{color:#888!important;border-bottom:1px dotted #555;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;text-decoration:none!important;}\n\
-	.tipsycategory{border-bottom:1px dotted #888;font-style:italic;margin-right:4px;display:inline-block;cursor:help }\n\
-	.tipsymetadata{color:#68B;border-bottom:1px dotted #57B;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;cursor:help }\n\
-	.jFileTitle{display:block;text-align:center;padding-right:0 !important;background:#EEE !important;margin-top:3px;border-radius:5px;}\n\
-	.jFileTime{color:gray;font-size:0.9em;line-height:1.1em;}\n\
-	.jFileSize{color:green;font-size:0.9em;}\n\
-	li.rgallerybox{width:155px;background:#f8f8f8;border:#FFF 2px solid;}\n\
-	li.md-selected{background-color:#BBE;}\n\
-	li.md-selected div.thumb{background-color:#DDE;border:#FFF 1px solid;}\n\
-	div.jImage{position:relative }\n\
-	div.jProgress{position:absolute;top:0;left:0;height:16px;width:16px }\n\
-	div.jImage.progress-doing div.jProgress{background:url(\'' + vfc.icons.current + '\') no-repeat center;}\n\
-	div.jImage.progress-done div.jProgress{background:url(\'' + vfc.icons.done + '\') no-repeat center;}\n\
-	div.jImage.progress-failed div.jProgress{background:url(\'' + vfc.icons.failed + '\') no-repeat center;}\n\
-	div.jImage.progress-nochange div.jProgress{background:url(\'' + vfc.icons.nochange + '\') no-repeat center;}\n\
-	div.jGU{position:absolute;right:0;bottom:0;height:0;width:0;overflow:visible;cursor:pointer }\n\
-	li.rgallerybox div.jImage.progress-done{border:2px solid #393;}\n\
-	li.rgallerybox div.jImage.progress-failed{background-color:#ebb;border:2px solid #933;}\n\
-	li.rgallerybox div.jImage.progress-nochange{background-color:#eeb;border:2px solid #993;}\n\
-	.md-re-escape-helper{position:absolute;z-index:1002;color:#FFF;cursor:pointer;padding:3px;\
-	border-top-left-radius:8px;border-bottom-left-radius:8px;background:rgb(97,196,25);background:\
-	-webkit-gradient(radial,center center,0,center center,100%,color-stop(0%,rgb(97,196,25)),color-stop(100%,rgb(180,227,145)));\
-	background:radial-gradient(center,ellipse cover,rgb(97,196,25),rgb(180,227,145));}\n\
-	.md-examine-contents{display:inline-block;width:49%;white-space:pre-wrap;font-family:monospace;border:1px solid #333;text-align:left;word-wrap:break-word;}\n\
-	li#mdLastSelected{border:#447 2px solid;}\n';
+		'.rgallery{background-color:#FFF !important;}\n\
+		#AjaxMdContainer{position:relative;}\n\
+		.md-toggle-pane{position:absolute;}\n\
+		.md-nav-button{display:inline-block;background-color:white;border:2px solid #f3f3f3;border-radius:10px}\
+		.md-nav-button:hover,.md-nav-button:focus{background-color:#EEF;}\
+		.md-nav-button:active{border-color:#ccc }\
+		.md-nav-button-container{position:absolute;top:3em;right:1.5em;max-width:18px }\n\
+		.md-nav-button-wrap{display:inline-block;background:none!important;border:none!important;}\n\
+		.numbersOnly{text-align:right;}\n\
+		.md-deleted-uploads{width:99%;display:none;background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;}\n\
+		a:link.md-loglink{color:#BB6!important;display:inline-block;}\n\
+		a.md-talklink{color:#888!important;border-bottom:1px dotted #555;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;text-decoration:none!important;}\n\
+		.tipsycategory{border-bottom:1px dotted #888;font-style:italic;margin-right:4px;display:inline-block;cursor:help }\n\
+		.tipsymetadata{color:#68B;border-bottom:1px dotted #57B;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;cursor:help }\n\
+		.jFileTitle{display:block;text-align:center;padding-right:0 !important;background:#EEE !important;margin-top:3px;border-radius:5px;}\n\
+		.jFileTime{color:gray;font-size:0.9em;line-height:1.1em;}\n\
+		.jFileSize{color:green;font-size:0.9em;}\n\
+		li.rgallerybox{width:155px;background:#f8f8f8;border:#FFF 2px solid;}\n\
+		li.md-selected{background-color:#BBE;}\n\
+		li.md-selected div.thumb{background-color:#DDE;border:#FFF 1px solid;}\n\
+		div.jImage{position:relative }\n\
+		div.jProgress{position:absolute;top:0;left:0;height:16px;width:16px }\n\
+		div.jImage.progress-doing div.jProgress{background:url(\'' + vfc.icons.current + '\') no-repeat center;}\n\
+		div.jImage.progress-done div.jProgress{background:url(\'' + vfc.icons.done + '\') no-repeat center;}\n\
+		div.jImage.progress-failed div.jProgress{background:url(\'' + vfc.icons.failed + '\') no-repeat center;}\n\
+		div.jImage.progress-nochange div.jProgress{background:url(\'' + vfc.icons.nochange + '\') no-repeat center;}\n\
+		div.jGU{position:absolute;right:0;bottom:0;height:0;width:0;overflow:visible;cursor:pointer }\n\
+		li.rgallerybox div.jImage.progress-done{border:2px solid #393;}\n\
+		li.rgallerybox div.jImage.progress-failed{background-color:#ebb;border:2px solid #933;}\n\
+		li.rgallerybox div.jImage.progress-nochange{background-color:#eeb;border:2px solid #993;}\n\
+		.md-re-escape-helper{position:absolute;z-index:1002;color:#FFF;cursor:pointer;padding:3px;\
+		border-top-left-radius:8px;border-bottom-left-radius:8px;background:rgb(97,196,25);background:\
+		-webkit-gradient(radial,center center,0,center center,100%,color-stop(0%,rgb(97,196,25)),color-stop(100%,rgb(180,227,145)));\
+		background:radial-gradient(center,ellipse cover,rgb(97,196,25),rgb(180,227,145));}\n\
+		.md-examine-contents{display:inline-block;width:49%;white-space:pre-wrap;font-family:monospace;border:1px solid #333;text-align:left;word-wrap:break-word;}\n\
+		li#mdLastSelected{border:#447 2px solid;}\n';
 // Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
 if ( mw.config.get( 'skin' ) === 'vector' ) {
 	css += '.ui-buttonset .ui-button{margin-left:0!important;margin-right:-.3em!important;}\n\
-	.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
-	.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
-	.md-examine-contents{font-size:1.2em;}';
+.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
+.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
+.md-examine-contents{font-size:1.2em;}';
 }
 mw.util.addCSS( css );
 
@@ -113,7 +112,7 @@ $.extend( window.VisualFileChange, {
 			action: 'query',
 			list: 'logevents',
 			rawcontinue: 1,
-			leprop: 'title|type|timestamp',
+			leprop: 'title|timestamp|type',
 			leaction: 'upload/upload',
 			leuser: qp.target,
 			lelimit: vfc.mdSettings.loadBatchSize,
@@ -133,22 +132,25 @@ $.extend( window.VisualFileChange, {
 			qp = vfc.queryParams;
 
 		$.each( allFileChanges, function ( id, fc ) { // loop through all filechanges (upload-events) (array)
-		// This file was initially uploaded by the user.
+// This file was initially uploaded by the user.
 			if ( fc.action === 'upload' ) {
-			// Do not mess-up numbers when a file was deleted and re-uploaded
+// Do not mess-up numbers when a file was deleted and re-uploaded
 				if ( fc.title in vfc.iUploads ) return;
-				vfc.iUploads[ fc.title ] = { uploader: [] };
-				vfc.iUploads[ fc.title ].iId = vfc.iiUploads;
-				vfc.iUploads[ fc.title ].time = fc.timestamp;
+				vfc.iUploads[ fc.title ] = {
+					uploader: [],
+					iId: vfc.iiUploads,
+					time: fc.timestamp
+				};
+
 				vfc.iiUploads++;
-				// User overwrote file.
+// User overwrote file.
 			} else if ( fc.action === 'overwrite' ) {
-				vfc.oUploads[ fc.title ] = {};
-				vfc.oUploads[ fc.title ].iId = vfc.ioUploads;
-				vfc.oUploads[ fc.title ].time = fc.timestamp;
+				vfc.oUploads[ fc.title ] = {
+					iId: vfc.ioUploads,
+					time: fc.timestamp
+				};
 				vfc.ioUploads++;
 			}
-
 		} );
 
 		if ( !result[ 'query-continue' ] )
@@ -159,7 +161,7 @@ $.extend( window.VisualFileChange, {
 			qp.lestart = result[ 'query-continue' ].logevents.lestart;
 			vfc.mdSaveContinueKey( qp.lecontinue );
 		}
-		if ( vfc.mdFirstRun ) {			// Call nextTask the first time only
+		if ( vfc.mdFirstRun ) { // Call nextTask the first time only
 			vfc.mdFirstRun = false;
 			vfc.nextTask();
 		} else {
@@ -179,9 +181,9 @@ $.extend( window.VisualFileChange, {
 			cmdir: qp.cmdir,
 			cmsort: qp.cmsort
 		};
-		// "[cmtype is] Ignored when cmsort=timestamp is set"
+// "[cmtype is] Ignored when cmsort=timestamp is set"
 		if ( qp.cmsort === 'timestamp' ) query.cmnamespace = 6;
-		// Prevent passing empty params
+// Prevent passing empty params
 		if ( qp.cmcontinue ) query.cmcontinue = qp.cmcontinue;
 		if ( qp.cmstart ) query.cmstart = qp.cmstart;
 		if ( qp.cmstartsortkey ) query.cmstartsortkey = qp.cmstartsortkey;
@@ -196,11 +198,14 @@ $.extend( window.VisualFileChange, {
 
 		var qp = vfc.queryParams;
 
-		// loop through all category-members (object)
+// loop through all category-members (object)
 		$.each( result.query.categorymembers, function ( id, fc ) {
-			vfc.iUploads[ fc.title ] = { uploader: [], comments: [] };
-			vfc.iUploads[ fc.title ].iId = vfc.iiUploads;
-			vfc.iUploads[ fc.title ].time = fc.timestamp;
+			vfc.iUploads[ fc.title ] = {
+				uploader: [],
+				comments: [],
+				iId: vfc.iiUploads,
+				time: fc.timestamp
+			};
 			vfc.iiUploads++;
 		} );
 		if ( !result[ 'query-continue' ] )
@@ -227,7 +232,7 @@ $.extend( window.VisualFileChange, {
 			imlimit: vfc.mdSettings.loadBatchSize,
 			imdir: qp.imdir
 		};
-		// Prevent passing empty params
+// Prevent passing empty params
 		if ( qp.imcontinue ) query.imcontinue = qp.imcontinue;
 		$doc.triggerHandler( 'vFC', [ 'imagesonpage', vfc, query ] );
 
@@ -240,14 +245,19 @@ $.extend( window.VisualFileChange, {
 
 		var qp = vfc.queryParams;
 
-		// loop through all pages-members (there should be only one)
+// loop through all pages-members (there should be only one)
 		$.each( result.query.pages, function ( pgId, pg ) {
-			if ( !pg.images && pg.missing !== undefined ) throw new Error( 'Page does not exist. Enter full page name!' );
-			if ( !pg.images && pg.invalid ) throw new Error( 'Invalid page name specified.' );
-			if ( !pg.images ) pg.images = {};
+			if ( !pg.images ) {
+				if ( pg.missing !== undefined ) throw new Error( 'Page does not exist. Enter full page name!' );
+				if ( pg.invalid ) throw new Error( 'Invalid page name specified.' );
+				pg.images = {};
+			}
 			$.each( pg.images, function ( imNr, im ) {
-				vfc.iUploads[ im.title ] = { uploader: [], comments: [] };
-				vfc.iUploads[ im.title ].iId = vfc.iiUploads;
+				vfc.iUploads[ im.title ] = {
+					uploader: [],
+					comments: [],
+					iId: vfc.iiUploads
+				};
 				vfc.iiUploads++;
 			} );
 		} );
@@ -258,7 +268,7 @@ $.extend( window.VisualFileChange, {
 			qp.imcontinue = result[ 'query-continue' ].images.imcontinue;
 			vfc.mdSaveContinueKey( qp.imcontinue );
 		}
-		if ( vfc.mdFirstRun ) {			// Call nextTask the first time only
+		if ( vfc.mdFirstRun ) { // Call nextTask the first time only
 			vfc.mdFirstRun = false;
 			vfc.nextTask();
 		}
@@ -274,7 +284,7 @@ $.extend( window.VisualFileChange, {
 			srlimit: vfc.mdSettings.loadBatchSize,
 			srnamespace: 6
 		};
-		// Prevent passing empty params
+// Prevent passing empty params
 		if ( qp.sroffset ) query.sroffset = qp.sroffset;
 		$doc.triggerHandler( 'vFC', [ 'imagesonpage', vfc, query ] );
 
@@ -287,11 +297,14 @@ $.extend( window.VisualFileChange, {
 
 		var qp = vfc.queryParams;
 
-		// loop through all search results (array)
+// loop through all search results (array)
 		$.each( result.query.search, function ( id, sr ) {
-			vfc.iUploads[ sr.title ] = { uploader: [], comments: [] };
-			vfc.iUploads[ sr.title ].iId = vfc.iiUploads;
-			vfc.iUploads[ sr.title ].time = sr.timestamp;
+			vfc.iUploads[ sr.title ] = {
+				uploader: [],
+				comments: [],
+				iId: vfc.iiUploads,
+				time: sr.timestamp
+			};
 			vfc.iiUploads++;
 		} );
 		if ( !result[ 'query-continue' ] )
@@ -310,7 +323,7 @@ $.extend( window.VisualFileChange, {
 		var match, m = st.match( vfc.mdRegExpPattern );
 		if ( m && m[ 0 ] && m[ 1 ] )
 			match = new RegExp( m[ 1 ], m[ 2 ] );
-		 else
+		else
 			match = '';
 
 		return match;
@@ -339,7 +352,7 @@ $.extend( window.VisualFileChange, {
 
 			var _gotParsedText = function ( t ) {
 				$blockContent.html( t );
-				// Block again in order to vertically center text
+// Block again in order to vertically center text
 				$node.block( { css: blockCSS, message: $blockNode } );
 			};
 			rl = $( '<a>', { href: '#render', text: 'Render preview', style: 'display:inline-block; float:right; font-family:sans-serif;' } ).button().click( function ( e ) {
@@ -395,12 +408,12 @@ $.extend( window.VisualFileChange, {
 
 				newText = replaceContainer.doCleanUp();
 
-				// Side by side
+// Side by side
 				$examineFirstDiv.text( oldText );
 				$examineSecondDiv.text( newText );
 				$examineSecondDiv.prepend( _getRenderLink( newText, upload, $examineOuterDiv ) );
 
-				// Diff
+// Diff
 				if ( mw.libs.schnarkDiff && mw.libs.schnarkDiff.htmlDiff )
 					$examineDiffDiv.html( '<a target="_blank" href="//de.wikipedia.org/wiki/Benutzer:Schnark/js/diff/core" style="display:inline-block; float:right; font-family:sans-serif;">Powered by SchnarkDiff</a>' + mw.libs.schnarkDiff.htmlDiff( oldText, newText, true ) );
 
@@ -473,12 +486,12 @@ $.extend( window.VisualFileChange, {
 				$text.css( 'background', '' );
 				if ( isRE && !$cb[ 0 ].checked )
 					$cb.parent().css( 'background', '#FCC' );
-				 else if ( !isRE && $cb[ 0 ].checked )
+				else if ( !isRE && $cb[ 0 ].checked )
 					$text.css( 'background', '#FCC' );
 
 				if ( !val || isRE )
 					$regExpEscapeHelper.hide();
-				 else
+				else
 					$regExpEscapeHelper.show();
 
 			};
@@ -569,27 +582,27 @@ $.extend( window.VisualFileChange, {
 	mdMwReasonToAutocomplete: function ( title, $el, saveKey ) {
 		var mwRTAtoken = vfc.mdMwRTAtoken = new Date();
 		if ( !title ) {
-		// Disable autocomplete
+// Disable autocomplete
 			$el.autocomplete( { disabled: true } );
-			// Discard pending query
+// Discard pending query
 			vfc.mdMwRTAtoken = 0;
 			return;
 		}
 		var __gotResult = function ( r ) {
 			var $r = $( r ),
 				suggestions = [],
-				lastSummaries = $.jStorage.get( vfc.summaryChageKey );
+				lastSummaries = JSON.parse( mw.storage.session.get( vfc.summaryChageKey ) );
 
-			// Add last used summaries
+// Add last used summaries
 			if ( lastSummaries && lastSummaries[ saveKey ] ) {
 				suggestions = $.map( lastSummaries[ saveKey ], function ( txt, i ) {
 					return { value: txt };
 				} );
 			}
 
-			// There is http://jqueryui.com/demos/autocomplete/#categories
-			// But since there are only two groups, is seems to be unnecessary
-			// to group the result
+// There is http://jqueryui.com/demos/autocomplete/#categories
+// But since there are only two groups, is seems to be unnecessary
+// to group the result
 			$r.find( 'li > ul > li' ).each( function ( i, li ) {
 				var $li = $( li ),
 					wikitext = '';
@@ -607,20 +620,20 @@ $.extend( window.VisualFileChange, {
 				} );
 				suggestions.push( { label: $li.text(), value: wikitext } );
 			} );
-			// Add to cache
+// Add to cache
 			vfc.mdMwRTACache[ title ] = suggestions;
-			// Upadate if the token matches
+// Upadate if the token matches
 			if ( mwRTAtoken === vfc.mdMwRTAtoken ) $el.autocomplete( { disabled: false, source: suggestions } );
 		};
 		if ( title in vfc.mdMwRTACache ) {
-		// If a query for this page is pending, return
+// If a query for this page is pending, return
 			var rtaItem = vfc.mdMwRTACache[ title ];
 			if ( rtaItem instanceof Date ) {
-			// Allows updating on callback (__gotResult)
+// Allows updating on callback (__gotResult)
 				vfc.mdMwRTAtoken = rtaItem;
 				return;
 			}
-			// Use the cached value
+// Use the cached value
 			$el.autocomplete( { disabled: false, source: rtaItem } );
 		} else {
 			vfc.mdMwRTACache[ title ] = mwRTAtoken;
@@ -641,15 +654,16 @@ $.extend( window.VisualFileChange, {
 		vfc.mdDateOldestDataFetched = new Date();
 		vfc.$ctrs = {};
 
-		// Tipsy-tooltips for metadata and categories
+// Tipsy-tooltips for metadata and categories
 		$( '.tipsymetadata' ).off();
 		$( '.tipsycategory' ).off();
 
-		/*  The UI  */
+/*  The UI  */
 		var _callExec = function ( action ) {
-		// Save suggestions:
+// Save suggestions:
 			if ( i18n.reasonAutoSuggest[ action ] ) {
-				var s = $.jStorage.get( vfc.summaryChageKey ) || {},
+		// FIXME: JSON.stringify/parse is not working here, so we can't use mw.storage
+				var s = JSON.parse( mw.storage.session.get( vfc.summaryChageKey ) ) || {},
 					ss = s[ action ] || [],
 					nv = vfc.$ctrs.editSummary.val();
 
@@ -661,7 +675,7 @@ $.extend( window.VisualFileChange, {
 					ss.unshift( nv );
 				}
 				s[ action ] = ss;
-				$.jStorage.set( vfc.summaryChageKey, s );
+				mw.storage.session.set( vfc.summaryChageKey, JSON.stringify( s ) );
 			}
 			vfc.secureCall( 'mdExecute' );
 		};
@@ -709,7 +723,7 @@ $.extend( window.VisualFileChange, {
 
 		var getSelect = function () {
 			var sel = '<select size="1" id="AjaxMdType">';
-			$.each( vfc.mdOpt, function ( id, opt ) {
+			$.each( vfc.mdOpt, function ( id/* , opt*/ ) {
 				var ugs = vfc.mdCommandsExec[ id ].userGroups,
 					disabled = '';
 				if ( $.isArray( ugs ) ) {
@@ -734,11 +748,13 @@ $.extend( window.VisualFileChange, {
 			title: vfc.mdHelpNode +
 			' ' + i18n.action + ':&nbsp;' +
 			getSelect() +
-			'<label for="AjaxMdIa">' + i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
+			'<label for="AjaxMdIa">' +
+			i18n.mdDisselectAll +
+			'</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
 			width: $win.width() - 250,
 			height: $win.height(),
 			buttons: dlgButtons,
-			resizeStop: function ( event, ui ) {
+			resizeStop: function ( /* evt, ui*/ ) {
 				clearTimeout( dlgResizeTimeout );
 				dlgResizeTimeout = setTimeout( function () {
 					$( '.ui-dialog > .ui-dialog-content' ).eq( 0 ).scroll();
@@ -767,7 +783,7 @@ $.extend( window.VisualFileChange, {
 			subHeading = i18n.filesBy + ' -';
 			targetHref = vfc.mdUserTalkPrefix + targetHref;
 			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] ' +
-			'([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
+		'([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
 		}
 		if ( si.modePage ) {
 			subHeading = i18n.filesOn + ' -';
@@ -779,8 +795,8 @@ $.extend( window.VisualFileChange, {
 		}
 		targetHref = mw.util.getUrl( targetHref );
 
-		// Build the input-ui
-		// Save the controls into a var that's reference we need later
+// Build the input-ui
+// Save the controls into a var that's reference we need later
 		$.extend( vfc.$ctrs, {
 			ajaxMdType: $( '#AjaxMdType' ),
 			ajaxMdIa: $( '#AjaxMdIa' ),
@@ -806,15 +822,17 @@ $.extend( window.VisualFileChange, {
 			__onOut = function () { $( this ).removeClass( 'ui-state-hover' ); },
 			__onDown = function () { var $i = $( this ); $( this ).addClass( 'ui-state-active' ); $doc.one( 'mouseup', function () { $i.removeClass( 'ui-state-active' ); } ); };
 
-		$toTop.hover( __onHover, __onOut ).focus( __onHover ).blur( __onOut ).mousedown( __onDown ).click( function ( e ) {
-			e.preventDefault();
-			vfc.dlg.scrollTop( 0 );
-		} );
-		$toBottom.hover( __onHover, __onOut ).focus( __onHover ).blur( __onOut ).mousedown( __onDown ).click( function ( e ) {
-			e.preventDefault();
-			vfc.dlg.scrollTop( $AjaxMdContainer.height() );
-			vfc.dlg.triggerHandler( 'scroll' );
-		} );
+		$toTop.on( 'mouseenter', __onHover ).on( 'mouseleave', __onOut )
+			.focus( __onHover ).blur( __onOut ).mousedown( __onDown ).click( function ( e ) {
+				e.preventDefault();
+				vfc.dlg.scrollTop( 0 );
+			} );
+		$toBottom.on( 'mouseenter', __onHover ).on( 'mouseleave', __onOut )
+			.focus( __onHover ).blur( __onOut ).mousedown( __onDown ).click( function ( e ) {
+				e.preventDefault();
+				vfc.dlg.scrollTop( $AjaxMdContainer.height() );
+				vfc.dlg.triggerHandler( 'scroll' );
+			} );
 
 		if ( !vfc.dlg ) return 0;
 
@@ -839,10 +857,10 @@ $.extend( window.VisualFileChange, {
 			vfc.mdCuteSelectDlg.dialog( 'open' );
 		} ).appendTo( vfc.$ctrs.ajaxMdIa.parent() );
 
-		// Change the title of the browser tab/window
+// Change the title of the browser tab/window
 		document.title = 'VisualFileChange: ' + subHeading + vfc.queryParams.target + '- ';
 
-		// Append controls to the dialog
+// Append controls to the dialog
 		vfc.$ctrs.container
 			.append(
 				subHeading, $( '<a>', { href: targetHref, target: '_blank', text: vfc.queryParams.target } ), '-. ',
@@ -871,15 +889,15 @@ $.extend( window.VisualFileChange, {
 			.append( vfc.$createToggler( i18n.mdDelContribsButtonLabel, vfc.$ctrs.ajaxDeletedUploads ) )
 			.append( vfc.$ctrs.ajaxMdNotReady, vfc.$ctrs.ajaxMdUlContainer );
 
-		// Add label to the button
+// Add label to the button
 		var $buttons = vfc.dlg.parent().find( '.ui-dialog-buttonpane button' ),
 			$submitButton = $buttons.eq( 0 ).specialButton( 'proceed' ).button( {
 				label: $( '<span>', { text: i18n.submitButtonLabel } ).append( vfc.$ctrs.ajaxMdActionConfirm )
-			} ),
-			$cancelButton = $buttons.eq( 1 ).specialButton( 'cancel' );
+			} );
+		$buttons.eq( 1 ).specialButton( 'cancel' ); // $cancelButton = 
 
 		var keyTimout = 0;
-		var __handleCriticalKey = function ( event ) {
+		var __handleCriticalKey = function ( /* event*/ ) {
 			var reason = vfc.$ctrs.deleteReason.val(),
 				summary = vfc.$ctrs.editSummary.val();
 
@@ -903,7 +921,7 @@ $.extend( window.VisualFileChange, {
 		vfc.$ctrs.deleteReason.on( 'input keyup change autocompleteselect', _handleCriticalKey );
 		vfc.$ctrs.editSummary.on( 'input keyup change autocompleteselect', _handleCriticalKey );
 
-		// Binding enter-key event.
+// Binding enter-key event.
 		var __submitOnEnter = function ( e ) {
 			if ( e.which === 13 && ( vfc.$ctrs.deleteReason.val().length >= vfc.minLenReq ) && vfc.$ctrs.editSummary.val().length >= vfc.summaryMinLen )
 				$submitButton.click();
@@ -915,16 +933,16 @@ $.extend( window.VisualFileChange, {
 
 		var timoutID = 0;
 		updateSelectedCount();
-		vfc.$ctrs.ajaxMdIa.change( function ( event ) {
+		vfc.$ctrs.ajaxMdIa.change( function ( /* event*/ ) {
 			var tmpChecked = this.checked;
-			$( 'input[name="mdCheckDelete"]' ).each( function ( index ) {
+			$( 'input[name="mdCheckDelete"]' ).each( function ( /* index*/ ) {
 				this.checked = tmpChecked;
 			} );
 			clearTimeout( timoutID );
 			timoutID = setTimeout( updateSelectedCount, 200 );
 		} );
 		$( document ).off( 'change', 'input[name="mdCheckDelete"]' );
-		$( document ).on( 'change', 'input[name="mdCheckDelete"]', function ( e ) {
+		$( document ).on( 'change', 'input[name="mdCheckDelete"]', function ( /* e*/ ) {
 			clearTimeout( timoutID );
 			timoutID = setTimeout( updateSelectedCount, 200 );
 		} );
@@ -954,9 +972,9 @@ $.extend( window.VisualFileChange, {
 			$this.attr( 'id', 'mdLastSelected' );
 		} );
 
-		//
-		// Event handler for the selection box (task to perform)
-		//
+//
+// Event handler for the selection box (task to perform)
+//
 		vfc.$ctrs.ajaxMdType.click( function () {
 			if ( mw.user.isAnon() ) {
 				var $anonInfo = $( '<div>' );
@@ -972,7 +990,7 @@ $.extend( window.VisualFileChange, {
 				return false;
 			}
 		} );
-		vfc.$ctrs.ajaxMdType.change( function ( event ) {
+		vfc.$ctrs.ajaxMdType.on( 'change', function ( /* event*/ ) {
 			var action = $( this ).val(),
 				opt = vfc.mdOpt[ action ],
 				uTags = vfc.mdUserTags[ action ];
@@ -980,26 +998,27 @@ $.extend( window.VisualFileChange, {
 			if ( !opt ) return;
 			if ( action === 'del' )
 				$( '#mdRequestPageTitle' ).show();
-			 else
+			else
 				$( '#mdRequestPageTitle' ).hide();
 
-			// minLenReq
+// minLenReq
 			vfc.minLenReq = opt.minLenReq || 0;
 			vfc.summaryMinLen = opt.summaryMinLen || 0;
 			vfc.$ctrs.deleteReason.keyup();
 
-			// byte limit
-			// PlugIn has a bug: It attaches multiple handlers
-			// So start unbinding them.
+// byte limit
+// PlugIn has a bug: It attaches multiple handlers
+// So start unbinding them.
 			vfc.$ctrs.editSummary.off( 'keypress' );
 			vfc.$ctrs.editSummary.byteLimit( opt.bLimit );
 			var summary = vfc.$ctrs.editSummary.val();
+	// var mwString = require( 'mediawiki.String' ); // FIXME require??
 			while ( $.byteLength( summary ) > opt.bLimit )
 				summary = $.trim( summary.slice( 0, summary.length - 1 ) );
 
 			vfc.$ctrs.editSummary.val( summary );
 
-			// acceptReason
+// acceptReason
 			if ( opt.reasonText ) {
 				vfc.$ctrs.taskForUser.text( i18n[ opt.reasonText ] );
 				vfc.$ctrs.taskForUser.show();
@@ -1008,44 +1027,44 @@ $.extend( window.VisualFileChange, {
 				vfc.$ctrs.taskForUser.hide();
 				vfc.$ctrs.deleteReason.hide();
 			}
-			// prefill
+// prefill
 			if ( opt.prefill ) {
 				if ( !vfc.$ctrs.deleteReason.val() ) vfc.$ctrs.deleteReason.val( vfc[ opt.prefill ] );
-				// For some reason RegExp.$1 will not work in the following line
+// For some reason RegExp.$1 will not work in the following line
 				if ( /(\d{16})/g.test( vfc.$ctrs.deleteReason.val() ) ) vfc.$ctrs.deleteReason.val( vfc[ opt.prefill ].replace( /%ID/g, /(\d{16})/g.exec( vfc.$ctrs.deleteReason.val() )[ 0 ] ) );
 				if ( vfc.mdURLPattern.test( vfc.$ctrs.deleteReason.val() ) ) vfc.$ctrs.deleteReason.val( vfc.mdOTRSTicketPrefill.replace( /%URL/g, vfc.$ctrs.deleteReason.val() ) );
 			}
-			// confirmation
+// confirmation
 			if ( opt.reasonParse ) {
 				vfc.pb.setHelp( i18n[ opt.reasonParse ] );
 			} else {
 				vfc.pb.setHelp2( '' );
 				vfc.pb.setHelp( '' );
 			}
-			// talk note
+// talk note
 			if ( uTags.summary )
 				$( '#mdTalkNoteNode' ).show();
-			 else
+			else
 				$( '#mdTalkNoteNode' ).hide();
 
-			// replace node
+// replace node
 			if ( opt.replaceNode )
 				$( '#mdReplaceTextNode' ).show();
-			 else
+			else
 				$( '#mdReplaceTextNode' ).hide();
 
-			// OTRS replace node
+// OTRS replace node
 			if ( opt.permissionWrapper )
 				$( '#mdReplacePermissionWrapper' ).show();
-			 else
+			else
 				$( '#mdReplacePermissionWrapper' ).hide();
 
 			vfc.$ctrs.ajaxMdActionConfirm.text( ' (' + i18n.mdOptions[ action ] + ')' );
 
-			// Summary / Reason input
+// Summary / Reason input
 			vfc.$ctrs.editSummaryL.text( i18n[( opt.addSummary || 'mdInsertEditSummary' )] );
 
-			// Reason autocomplete
+// Reason autocomplete
 			vfc.mdMwReasonToAutocomplete( i18n.reasonAutoSuggest[ action ], vfc.$ctrs.editSummary, action );
 		} );
 		vfc.$ctrs.ajaxMdType.val( vfc.mdSettings.defaultAction );
@@ -1054,7 +1073,7 @@ $.extend( window.VisualFileChange, {
 		vfc.$ctrs.ajaxMdIa.on( 'click mousedown mouseup', function ( e ) { e.stopPropagation(); } );
 		vfc.$ctrs.deleteReason.keyup();
 
-		// cute-selection dialog
+// cute-selection dialog
 		var $metaSelect = $( '<select>' ).attr( { style: 'width:10em;', size: 1 } ),
 			$uploaderSelect = $( '<select>' ).attr( { type: 'text', id: 'txtAjaxMdSelectUploader', size: 1, placeholder: i18n.cuteSelect.uploader } );
 
@@ -1094,7 +1113,7 @@ $.extend( window.VisualFileChange, {
 			$.each( vfc.iUploads, function ( upload, curUpld ) {
 				try {
 					var isMatch = {};
-					// yyyy    mm     dd
+	// yyyy    mm     dd
 					/(\d{4})-(\d\d)-(\d\d)T(?:(\d\d):(\d\d):(\d\d))Z/.exec( curUpld.time );
 					var curUpldDate = new Date( RegExp.$1, ( RegExp.$2 - 1 ), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6 );
 					$curThmb = $( 'input[value="' + upload.replace( '"', '\\"' ) + '"]' );
@@ -1235,7 +1254,7 @@ $.extend( window.VisualFileChange, {
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgSelectButtons,
-			open: function ( evt, ui ) {
+			open: function ( /* evt, ui*/ ) {
 				$metaSelect.children().remove();
 				$uploaderSelect.children().remove();
 				$( '<option>', { text: ' ', value: '' } ).appendTo( $metaSelect ).clone().appendTo( $uploaderSelect );
@@ -1265,7 +1284,7 @@ $.extend( window.VisualFileChange, {
 		$( '.dateOnly' ).keyup( function () {
 			this.value = this.value.replace( /[^0-9\-: ]/g, '' );
 		} );
-		// End of cute-selection dialog
+// End of cute-selection dialog
 
 		var $queryMore = $( '<div>', {
 			id: 'mdQueryMore',
@@ -1273,14 +1292,14 @@ $.extend( window.VisualFileChange, {
 		} );
 		vfc.$mdQueryMoreBtn = $( '<button>', { id: 'mdQueryMoreBtn', text: i18n.mdMore } )
 			.button( { disabled: true, icons: { primary: 'ui-icon-arrowthick-1-s', secondary: 'ui-icon-arrowthick-1-s' } } )
-			.click( function ( event ) { vfc.mdQueryMore(); } )
+			.click( function ( /* event*/ ) { vfc.mdQueryMore(); } )
 			.appendTo( $queryMore );
 
 		$AjaxMdContainer.append( $queryMore ).append( '<div style="height:100px">&nbsp;</div>' );
-		/* End of UI */
+/* End of UI */
 
 		$doc.triggerHandler( 'vFC', [ 'initial uploads dialog', vfc, vfc.dlg ] );
-		// Temporary fix
+// Temporary fix
 		$( '.vFCConfigRequired' ).removeClass( 'ui-state-disabled' );
 
 		vfc.iCurrentIId = -1; // Last queried file to continue obtaining detail-info
@@ -1314,7 +1333,8 @@ $.extend( window.VisualFileChange, {
 					iiurlheight: 120,
 					titles: files.join( '|' ),
 					clprop: 'hidden',
-					cllimit: 500
+					cllimit: 500,
+					redirects: 1
 				};
 				if ( si.loadWikitext )
 					query.rvprop += '|content';
@@ -1350,10 +1370,9 @@ $.extend( window.VisualFileChange, {
 		if ( !this.mdUploadCt ) this.nextTask();
 		this.$mdQueryMoreBtn.button( 'option', 'disabled', true );
 	},
-	/* Helper function: Creating a gallery box for gallery view */
+/* Helper function: Creating a gallery box for gallery view */
 	mdCreateGalleryBox: function ( img, txt, height, style, imgTitle, imgH, addGU ) {
-		var id,
-			$ih = $( '<div>', { style: 'margin:' + ( imgH ? ( Math.round( ( height - imgH ) / 2 ) + 'px auto;' ) : '15px auto;' ) } ),
+		var $ih = $( '<div>', { style: 'margin:' + ( imgH ? ( Math.round( ( height - imgH ) / 2 ) + 'px auto;' ) : '15px auto;' ) } ),
 			$th = $( '<div>', { 'class': 'gallerytext', 'tipsy-title': imgTitle } ),
 			$gbProgress = $( '<div>', { 'class': 'jProgress' } ),
 			$gbGU = $( '<div>', { 'class': 'jGU', title: 'GlobalUsage' } ),
@@ -1395,9 +1414,9 @@ $.extend( window.VisualFileChange, {
 			.append( $( '<a>', { href: mw.config.get( 'wgServer' ) + mw.config.get( 'wgArticlePath' ).replace( '$1', 'Special:Undelete/' + img ), target: '_blank' } ).append( ' (undel)' ) );
 	},
 /** Called by Tipsy on hovering. Get a list of cats for a specific file.
-	@param {string} revision-identifier
-	@param {object} reference to JSONListUploads
-	@param {boolean} render as flickr-like tags?
+@param {string} revision-identifier
+@param {object} reference to JSONListUploads
+@param {boolean} render as flickr-like tags?
 **/
 	mdGetCatTable: function ( rv, o, asTags ) {
 		var cats = o.iUploads[ rv ].categories,
@@ -1406,7 +1425,7 @@ $.extend( window.VisualFileChange, {
 
 		if ( asTags )
 			$catsList.addClass( 'j-cat-wrap' );
-		 else
+		else
 			$catWrap.html( '<b><i>Categories:</i></b><br><br>' );
 
 		$catWrap.append( $catsList );
@@ -1423,7 +1442,7 @@ $.extend( window.VisualFileChange, {
 		} );
 		return $catWrap;
 	},
-	/* Helper function: Called by QueryIICB. Get model info from Image-Metadata */
+/* Helper function: Called by QueryIICB. Get model info from Image-Metadata */
 	mdGetCamModel: function ( uItem ) {
 		if ( !uItem || !uItem.metadata ) return '';
 
@@ -1438,9 +1457,9 @@ $.extend( window.VisualFileChange, {
 		} );
 		return model;
 	},
-	/* Called by Tipsy on hovering. Get a list of cats for a specific file */
+/* Called by Tipsy on hovering. Get a list of cats for a specific file */
 	mdGetMetaTable: function ( rv, o ) {
-		var	id, val,
+		var	val,
 			mdata = o.iUploads[ rv ].metadata,
 			fRestr = ( mdata.length > 6 ),
 			stMdat = '<b><i>File-Metadata:</i></b><br><br>',
@@ -1457,7 +1476,7 @@ $.extend( window.VisualFileChange, {
 		} );
 		return stMdat;
 	},
-	/* Helper function: Extract categories from the list of those. */
+/* Helper function: Extract categories from the list of those. */
 	mdExtractTags: function ( mdCats ) {
 		var	thiscat,
 			mdTags = '',
@@ -1467,7 +1486,7 @@ $.extend( window.VisualFileChange, {
 		if ( typeof mdCats !== 'object' ) return mdTags;
 		mdTags += '<i>';
 
-		// First the licenses (hidden):
+// First the licenses (hidden):
 		$.each( mdCats, function ( i, cati ) {
 			if ( typeof cati.hidden === 'string' ) { // it is an empty string if true
 				thiscat = cati.title;
@@ -1483,14 +1502,14 @@ $.extend( window.VisualFileChange, {
 				} );
 				if ( skip ) return;
 
-				// This will be only executed if there was no match
+// This will be only executed if there was no match
 				mdTags += '<abbr title="' + thiscat.replace( 'Category:', '' ) + '">U</abbr> ';
 			}
 		} );
 
 		mdTags += '</i> <span style="background-color:#FC9;">';
 
-		// Then, deletion tags:
+// Then, deletion tags:
 		$.each( mdCats, function ( i, cati ) {
 			thiscat = cati.title;
 			skip = false;
@@ -1510,7 +1529,7 @@ $.extend( window.VisualFileChange, {
 
 		return mdTags;
 	},
-	/* Format a number > 1 (1000 --> 1 000) */
+/* Format a number > 1 (1000 --> 1 000) */
 	mdFormattNumber: function ( iNr ) {
 		iNr = String( iNr );
 		var rx = /(\d+)(\d{3})/;
@@ -1529,7 +1548,8 @@ $.extend( window.VisualFileChange, {
 		$doc.triggerHandler( 'vFC', [ 'got detail-info', vfc, result ] );
 
 		if ( ( { err: 1, done: 1 } )[ vfc.internalState ] ) return; // don't try to add something if there was an error.
-		var pages = result.query.pages,
+		result = result.query;
+		var pages = result.pages,
 			loadThumb = vfc.startInput.loadThumbs;
 
 		vfc.mdBusy = true;
@@ -1539,7 +1559,13 @@ $.extend( window.VisualFileChange, {
 				uItem = vfc.iUploads[ dirtyTitle ],
 				i,
 				ii,
+				redirect,
 				seenHash = {};
+			if ( !uItem && result.redirects ) { // resolve  redirect
+				redirect = result.redirects[ 0 ];
+				uItem = vfc.iUploads[ dirtyTitle ] = vfc.iUploads[ redirect.from ];
+				delete vfc.iUploads[ redirect.from ];
+			}
 
 			vfc.$ctrs.ajaxMdNotReady.text( vfc._msg( 'query-progress', vfc.mdUploadCt, vfc.iiUploads, dirtyTitle ) );
 
@@ -1550,7 +1576,7 @@ $.extend( window.VisualFileChange, {
 				return;
 			}
 
-			if ( !pg.imageinfo /* || $.isEmptyObject( pg.imageinfo[0] ) */ ) { // No thump image, redirect, create dummy
+			if ( !pg.imageinfo /* || $.isEmptyObject( pg.imageinfo[0] ) */ ) { // No thump image, create dummy
 				pg.imageinfo = [ {
 					thumburl: '/w/resources/assets/file-type-icons/fileicon.png',
 					size: 0,
@@ -1562,7 +1588,7 @@ $.extend( window.VisualFileChange, {
 				} ];
 			}
 
-			/*  Adding a thumbnail to the dialog  */
+/*  Adding a thumbnail to the dialog  */
 			vfc.mdActualResultCount++;
 
 			if ( !vfc.startInput.modeUser ) {
@@ -1570,7 +1596,7 @@ $.extend( window.VisualFileChange, {
 					ii = pg.imageinfo[ i ];
 					if ( ii.sha1 && !seenHash[ ii.sha1 ] ) {
 						seenHash[ ii.sha1 ] = true;
-						// Admins can hide usernames. Make sure not pushing undefined.
+		// Admins can hide usernames. Make sure not pushing undefined.
 						if ( ii.user ) {
 							uItem.uploader.push( ii.user );
 							uItem.comments.push( ii.comment || '' );
@@ -1595,7 +1621,7 @@ $.extend( window.VisualFileChange, {
 			uItem.pageId = id;
 			uItem.talkId = pg.talkid;
 
-			// List all Meta-Keys
+// List all Meta-Keys
 			if ( ii.metadata.length ) {
 				$.each( ii.metadata, function ( i, m ) {
 					var tp = typeof m.value;
@@ -1647,9 +1673,9 @@ $.extend( window.VisualFileChange, {
 					$( '<div>', { 'class': 'jFileTime' } ).text( uItem.time.replace( /[T|Z]/g, ' ' ) ),
 					$( '<div>', { 'class': 'jFileSize' } ).html(
 						vfc.secureCall( 'mdFormattNumber', uItem.size ) +
-				'&nbsp;' + i18n.kibibyte + '&nbsp; ' +
-				( vfc.secureCall( 'mdFormattNumber', ii.width ) + '&nbsp;×&nbsp;' + vfc.secureCall( 'mdFormattNumber', ii.height ) ) +
-				'px' )
+'&nbsp;' + i18n.kibibyte + '&nbsp; ' +
+( vfc.secureCall( 'mdFormattNumber', ii.width ) + '&nbsp;×&nbsp;' + vfc.secureCall( 'mdFormattNumber', ii.height ) ) +
+'px' )
 				],
 				150,
 				'',
@@ -1668,7 +1694,7 @@ $.extend( window.VisualFileChange, {
 **  Called when a batch of files has been queried
 **/
 	mdQueryFileDone: function () {
-	// Append all queried files to the screen-container
+// Append all queried files to the screen-container
 		$.each( vfc.iUploads, function ( id, uItem ) {
 			if ( !uItem.gbInUse ) {
 				var $galleryBox = vfc.gbs[ id ];
@@ -1748,12 +1774,12 @@ $.extend( window.VisualFileChange, {
 
 		this.pb.setHelp( 'We are working to re-add the possibility to rollback overwritten files to combat vandalism' );
 
-		// /////////////////////////////////////////
-		//   SKIP THIS - TEMPORARY NOT WORKING   //
-		// /////////////////////////////////////////
+// /////////////////////////////////////////
+//   SKIP THIS - TEMPORARY NOT WORKING   //
+// /////////////////////////////////////////
 		this.nextTask();
 		return;
-	// /////////////////////////////////////////
+// /////////////////////////////////////////
 	},
 
 	mdExecuteReady: function () {
@@ -1788,19 +1814,19 @@ $.extend( window.VisualFileChange, {
 		} );
 		if ( this.mdTaskToPerform === 'aDelete' )
 			addLink( 'Special:Log/delete/' + this.username.replace( / /g, '_' ), i18nED.checkDeletions );
-		 else
+		else
 			addLink( 'Special:MyContributions', i18nED.checkContribs, 'contribswindow' );
 
 		if ( this.mdInsertedTag ) {
-			var encTitle;
+	// var encTitle;
 			if ( this.mdTaskToPerform === 'del' ) {
-			// allow navigating to the new created deletion request
+// allow navigating to the new created deletion request
 				addLink( this.requestPage, i18nED.goToRequestPage );
 			}
 			if ( this.startInput.modeUser && ( $.inArray( this.mdTaskToPerform, [ 'c_replace', 'OTRS', 'other' ] ) === -1 ) ) {
 				addLink( this.mdUserTalkPrefix + vfc.queryParams.target, i18nED.goUserTalk );
 				addLink( this.mdContribPrefix + vfc.queryParams.target, i18nED.goUserContribs );
-			// Revert files overwritten by this user ...
+// Revert files overwritten by this user ...
 			}
 			addLink( mw.config.get( 'wgPageName' ), i18nED.reload, '_self' );
 		}
@@ -1813,18 +1839,18 @@ $.extend( window.VisualFileChange, {
 	}
 } );
 
-mw.loader.using( [
-	'jquery.ui.dialog',
-	'jquery.ui.button',
-	'jquery.tipsy',
-	'jquery.byteLimit',
-	'jquery.byteLength',
-	'ext.gadget.jquery.badge',
-	'jquery.jStorage',
+mw.loader.using( [ // TODO
+	'jquery.ui.dialog', // deprecated
+	'jquery.ui.button', // deprecated
+	'jquery.tipsy', // deprecated
+	'jquery.byteLimit', // deprecated: replacement 'jquery.lengthLimit' not working
+	'mediawiki.storage', // former jquery.jStorage
+	'jquery.byteLength', // deprecated: replacement 'mediawiki.String' not working
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
+	'ext.gadget.jquery.badge',
 	'ext.gadget.jquery.blockUI',
 	'ext.gadget.libWikiDOM'
 ], function () {
