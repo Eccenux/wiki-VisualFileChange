@@ -19,47 +19,47 @@ var vfc = window.VisualFileChange,
 	$doc = $(document),
 	$win = $(window),
 	css = '.rgallery{background-color:#FFF !important;}\n\
-	#AjaxMdContainer{position:relative;}\n\
-	.md-toggle-pane{position:absolute;}\n\
-	.md-nav-button{display:inline-block;background-color:white;border:2px solid #f3f3f3;border-radius:10px}\
-	.md-nav-button:hover,.md-nav-button:focus{background-color:#EEF;}\
-	.md-nav-button:active{border-color:#ccc }\
-	.md-nav-button-container{position:absolute;top:3em;right:1.5em;max-width:18px }\n\
-	.md-nav-button-wrap{display:inline-block;background:none!important;border:none!important;}\n\
-	.numbersOnly{text-align:right;}\n\
-	.md-deleted-uploads{width:99%;display:none;background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;}\n\
-	a:link.md-loglink{color:#BB6!important;display:inline-block;}\n\
-	a.md-talklink{color:#888!important;border-bottom:1px dotted #555;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;text-decoration:none!important;}\n\
-	.tipsycategory{border-bottom:1px dotted #888;font-style:italic;margin-right:4px;display:inline-block;cursor:help }\n\
-	.tipsymetadata{color:#68B;border-bottom:1px dotted #57B;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;cursor:help }\n\
-	.jFileTitle{display:block;text-align:center;padding-right:0 !important;background:#EEE !important;margin-top:3px;border-radius:5px;}\n\
-	.jFileTime{color:gray;font-size:0.9em;line-height:1.1em;}\n\
-	.jFileSize{color:green;font-size:0.9em;}\n\
-	li.rgallerybox{width:155px;background:#f8f8f8;border:#FFF 2px solid;}\n\
-	li.md-selected{background-color:#BBE;}\n\
-	li.md-selected div.thumb{background-color:#DDE;border:#FFF 1px solid;}\n\
-	div.jImage{position:relative }\n\
-	div.jProgress{position:absolute;top:0;left:0;height:16px;width:16px }\n\
-	div.jImage.progress-doing div.jProgress{background:url(\'' + vfc.icons.current + '\') no-repeat center;}\n\
-	div.jImage.progress-done div.jProgress{background:url(\'' + vfc.icons.done + '\') no-repeat center;}\n\
-	div.jImage.progress-failed div.jProgress{background:url(\'' + vfc.icons.failed + '\') no-repeat center;}\n\
-	div.jImage.progress-nochange div.jProgress{background:url(\'' + vfc.icons.nochange + '\') no-repeat center;}\n\
-	div.jGU{position:absolute;right:0;bottom:0;height:0;width:0;overflow:visible;cursor:pointer }\n\
-	li.rgallerybox div.jImage.progress-done{border:2px solid #393;}\n\
-	li.rgallerybox div.jImage.progress-failed{background-color:#ebb;border:2px solid #933;}\n\
-	li.rgallerybox div.jImage.progress-nochange{background-color:#eeb;border:2px solid #993;}\n\
-	.md-re-escape-helper{position:absolute;z-index:1002;color:#FFF;cursor:pointer;padding:3px;\
-	border-top-left-radius:8px;border-bottom-left-radius:8px;background:rgb(97,196,25);background:\
-	-webkit-gradient(radial,center center,0,center center,100%,color-stop(0%,rgb(97,196,25)),color-stop(100%,rgb(180,227,145)));\
-	background:radial-gradient(center,ellipse cover,rgb(97,196,25),rgb(180,227,145));}\n\
-	.md-examine-contents{display:inline-block;width:49%;white-space:pre-wrap;font-family:monospace;border:1px solid #333;text-align:left;word-wrap:break-word;}\n\
-	li#mdLastSelected{border:#447 2px solid;}\n';
-	// Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
+		#AjaxMdContainer{position:relative;}\n\
+		.md-toggle-pane{position:absolute;}\n\
+		.md-nav-button{display:inline-block;background-color:white;border:2px solid #f3f3f3;border-radius:10px}\
+		.md-nav-button:hover,.md-nav-button:focus{background-color:#EEF;}\
+		.md-nav-button:active{border-color:#ccc }\
+		.md-nav-button-container{position:absolute;top:3em;right:1.5em;max-width:18px }\n\
+		.md-nav-button-wrap{display:inline-block;background:none!important;border:none!important;}\n\
+		.numbersOnly{text-align:right;}\n\
+		.md-deleted-uploads{width:99%;display:none;background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;}\n\
+		a:link.md-loglink{color:#BB6!important;display:inline-block;}\n\
+		a.md-talklink{color:#888!important;border-bottom:1px dotted #555;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;text-decoration:none!important;}\n\
+		.tipsycategory{border-bottom:1px dotted #888;font-style:italic;margin-right:4px;display:inline-block;cursor:help }\n\
+		.tipsymetadata{color:#68B;border-bottom:1px dotted #57B;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;cursor:help }\n\
+		.jFileTitle{display:block;text-align:center;padding-right:0 !important;background:#EEE !important;margin-top:3px;border-radius:5px;}\n\
+		.jFileTime{color:gray;font-size:0.9em;line-height:1.1em;}\n\
+		.jFileSize{color:green;font-size:0.9em;}\n\
+		li.rgallerybox{width:155px;background:#f8f8f8;border:#FFF 2px solid;}\n\
+		li.md-selected{background-color:#BBE;}\n\
+		li.md-selected div.thumb{background-color:#DDE;border:#FFF 1px solid;}\n\
+		div.jImage{position:relative }\n\
+		div.jProgress{position:absolute;top:0;left:0;height:16px;width:16px }\n\
+		div.jImage.progress-doing div.jProgress{background:url(\'' + vfc.icons.current + '\') no-repeat center;}\n\
+		div.jImage.progress-done div.jProgress{background:url(\'' + vfc.icons.done + '\') no-repeat center;}\n\
+		div.jImage.progress-failed div.jProgress{background:url(\'' + vfc.icons.failed + '\') no-repeat center;}\n\
+		div.jImage.progress-nochange div.jProgress{background:url(\'' + vfc.icons.nochange + '\') no-repeat center;}\n\
+		div.jGU{position:absolute;right:0;bottom:0;height:0;width:0;overflow:visible;cursor:pointer }\n\
+		li.rgallerybox div.jImage.progress-done{border:2px solid #393;}\n\
+		li.rgallerybox div.jImage.progress-failed{background-color:#ebb;border:2px solid #933;}\n\
+		li.rgallerybox div.jImage.progress-nochange{background-color:#eeb;border:2px solid #993;}\n\
+		.md-re-escape-helper{position:absolute;z-index:1002;color:#FFF;cursor:pointer;padding:3px;\
+		border-top-left-radius:8px;border-bottom-left-radius:8px;background:rgb(97,196,25);background:\
+		-webkit-gradient(radial,center center,0,center center,100%,color-stop(0%,rgb(97,196,25)),color-stop(100%,rgb(180,227,145)));\
+		background:radial-gradient(center,ellipse cover,rgb(97,196,25),rgb(180,227,145));}\n\
+		.md-examine-contents{display:inline-block;width:49%;white-space:pre-wrap;font-family:monospace;border:1px solid #333;text-align:left;word-wrap:break-word;}\n\
+		li#mdLastSelected{border:#447 2px solid;}\n';
+// Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
 if (mw.config.get('skin') === 'vector') {
 	css += '.ui-buttonset .ui-button{margin-left:0!important;margin-right:-.3em!important;}\n\
-	.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
-	.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
-	.md-examine-contents{font-size:1.2em;}';
+		.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
+		.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
+		.md-examine-contents{font-size:1.2em;}';
 }
 mw.util.addCSS(css);
 
@@ -138,9 +138,9 @@ $.extend(window.VisualFileChange, {
 			qp = vfc.queryParams;
 
 		$.each(allFileChanges, function (id, fc) { // loop through all filechanges (upload-events) (array)
-		// This file was initially uploaded by the user.
+			// This file was initially uploaded by the user.
 			if (fc.action === 'upload') {
-			// Do not mess-up numbers when a file was deleted and re-uploaded
+				// Do not mess-up numbers when a file was deleted and re-uploaded
 				if (fc.title in vfc.iUploads)
 					return;
 				vfc.iUploads[fc.title] = {
@@ -150,7 +150,7 @@ $.extend(window.VisualFileChange, {
 				};
 
 				vfc.iiUploads++;
-			// User overwrote file.
+				// User overwrote file.
 			} else if (fc.action === 'overwrite') {
 				vfc.oUploads[fc.title] = {
 					iId: vfc.ioUploads,
@@ -756,7 +756,7 @@ $.extend(window.VisualFileChange, {
 	mdMwReasonToAutocomplete: function (title, $el, saveKey) {
 		var mwRTAtoken = vfc.mdMwRTAtoken = new Date();
 		if (!title) {
-		// Disable autocomplete
+			// Disable autocomplete
 			$el.autocomplete({
 				disabled: true
 			});
@@ -814,10 +814,10 @@ $.extend(window.VisualFileChange, {
 			}
 		};
 		if (title in vfc.mdMwRTACache) {
-		// If a query for this page is pending, return
+			// If a query for this page is pending, return
 			var rtaItem = vfc.mdMwRTACache[title];
 			if (rtaItem instanceof Date) {
-			// Allows updating on callback (__gotResult)
+				// Allows updating on callback (__gotResult)
 				vfc.mdMwRTAtoken = rtaItem;
 				return;
 			}
@@ -851,9 +851,9 @@ $.extend(window.VisualFileChange, {
 
 		/*  The UI  */
 		var _callExec = function (action) {
-		// Save suggestions:
+			// Save suggestions:
 			if (i18n.reasonAutoSuggest[action]) {
-			// FIXME: JSON.stringify/parse seems sometimes not working here
+				// FIXME: JSON.stringify/parse seems sometimes not working here
 				var s = mw.storage.get(vfc.summaryChageKey);
 				if (s) {
 					try {
@@ -957,12 +957,8 @@ $.extend(window.VisualFileChange, {
 		$AjaxMdContainer.fadeIn();
 		vfc.dlg.dialog({
 			modal: false,
-			title: vfc.mdHelpNode +
-' ' + i18n.action + ':&nbsp;' +
-getSelect() +
-'<label for="AjaxMdIa">' +
-i18n.mdDisselectAll +
-'</label><input type="checkbox" id="AjaxMdIa" value="1"/> &nbsp;',
+			title: vfc.mdHelpNode +	' ' + i18n.action + ':&nbsp;' +	getSelect() + '<label for="AjaxMdIa">' +
+				i18n.mdDisselectAll + '</label><input type="checkbox" id="AjaxMdIa" value="1"> &nbsp;',
 			width: $win.width() - 250,
 			height: $win.height(),
 			buttons: dlgButtons,
@@ -995,8 +991,8 @@ i18n.mdDisselectAll +
 		if (si.modeUser) {
 			subHeading = i18n.filesBy + ' -';
 			targetHref = vfc.mdUserTalkPrefix + targetHref;
-			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] ' +
-	'([[' + vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
+			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] ' + '([[' +
+				vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
 		}
 		if (si.modePage) {
 			subHeading = i18n.filesOn + ' -';
@@ -1247,7 +1243,6 @@ i18n.mdDisselectAll +
 		var __submitOnEnter = function (e) {
 			if (e.which === 13 && (vfc.$ctrs.deleteReason.val().length >= vfc.minLenReq) && vfc.$ctrs.editSummary.val().length >= vfc.summaryMinLen)
 				$submitButton.click();
-
 		};
 		vfc.$ctrs.deleteHeading.keyup(__submitOnEnter);
 		vfc.$ctrs.talkNote.keyup(__submitOnEnter);
@@ -2054,12 +2049,19 @@ i18n.mdDisselectAll +
 				uItem = vfc.iUploads[dirtyTitle],
 				i,
 				ii,
-				redirect,
+				redirects = result.redirects,
 				seenHash = {};
-			if (!uItem && result.redirects) { // resolve  redirect
-				redirect = result.redirects[0];
-				uItem = vfc.iUploads[dirtyTitle] = vfc.iUploads[redirect.from];
-				delete vfc.iUploads[redirect.from];
+			if (!uItem && redirects) { // Resolve redirect
+				for (var r = 0; r < redirects.length; r++) {
+					var redirect = redirects[r];
+					if (redirect && dirtyTitle === redirect.to) {
+						uItem = vfc.iUploads[dirtyTitle] = vfc.iUploads[redirect.from];
+						delete vfc.iUploads[redirect.from];
+						delete redirects[r];
+						break;
+					}
+				}
+				uItem = uItem || {}; // should never happen
 			}
 
 			vfc.$ctrs.ajaxMdNotReady.text(vfc._msg('query-progress', vfc.mdUploadCt, vfc.iiUploads, dirtyTitle));
@@ -2080,8 +2082,7 @@ i18n.mdDisselectAll +
 					thumbwidth: 120,
 					thumbheight: 120,
 					descriptionurl: '/wiki/' + dirtyTitle
-				}
-				];
+				}];
 			}
 
 			/*  Adding a thumbnail to the dialog  */
@@ -2202,9 +2203,9 @@ i18n.mdDisselectAll +
 						'class': 'jFileSize'
 					}).html(
 						vfc.secureCall('mdFormattNumber', uItem.size) +
-				'&nbsp;' + i18n.kibibyte + '&nbsp; ' +
-				(vfc.secureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + vfc.secureCall('mdFormattNumber', ii.height)) +
-				'px')
+			'&nbsp;' + i18n.kibibyte + '&nbsp; ' +
+			(vfc.secureCall('mdFormattNumber', ii.width) + '&nbsp;×&nbsp;' + vfc.secureCall('mdFormattNumber', ii.height)) +
+			'px')
 				],
 				150,
 				'',
@@ -2223,7 +2224,7 @@ i18n.mdDisselectAll +
 **  Called when a batch of files has been queried
 **/
 	mdQueryFileDone: function () {
-	// Append all queried files to the screen-container
+		// Append all queried files to the screen-container
 		$.each(vfc.iUploads, function (id, uItem) {
 			if (!uItem.gbInUse) {
 				var $galleryBox = vfc.gbs[id];
@@ -2310,7 +2311,7 @@ i18n.mdDisselectAll +
 		// /////////////////////////////////////////
 		this.nextTask();
 		return;
-		// /////////////////////////////////////////
+	// /////////////////////////////////////////
 	},
 
 	mdExecuteReady: function () {
@@ -2355,15 +2356,15 @@ i18n.mdDisselectAll +
 			addLink('Special:MyContributions', i18nED.checkContribs, 'contribswindow');
 
 		if (this.mdInsertedTag) {
-		// var encTitle;
+			// var encTitle;
 			if (this.mdTaskToPerform === 'del') {
-			// allow navigating to the new created deletion request
+				// allow navigating to the new created deletion request
 				addLink(this.requestPage, i18nED.goToRequestPage);
 			}
 			if (this.startInput.modeUser && ($.inArray(this.mdTaskToPerform, ['c_replace', 'OTRS', 'other']) === -1)) {
 				addLink(this.mdUserTalkPrefix + vfc.queryParams.target, i18nED.goUserTalk);
 				addLink(this.mdContribPrefix + vfc.queryParams.target, i18nED.goUserContribs);
-			// Revert files overwritten by this user ...
+				// Revert files overwritten by this user ...
 			}
 			addLink(mw.config.get('wgPageName'), i18nED.reload, '_self');
 		}
@@ -2384,8 +2385,8 @@ mw.loader.using([// TODO
 	'jquery.ui.button', // deprecated
 	'jquery.tipsy', // deprecated
 	'jquery.byteLimit', // deprecated: replacement 'jquery.lengthLimit' not working
-	'mediawiki.storage', // former jquery.jStorage
 	'jquery.byteLength', // deprecated: replacement 'mediawiki.String' not working
+	'mediawiki.storage', // former jquery.jStorage
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
