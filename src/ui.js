@@ -2049,15 +2049,16 @@ $.extend(window.VisualFileChange, {
 				uItem = vfc.iUploads[dirtyTitle],
 				i,
 				ii,
-				redirects = result.redirects,
+				redirects,
 				seenHash = {};
-			if (!uItem && redirects) { // Resolve redirect
+			if (!uItem && result.redirects) { // Resolve redirect
+				redirects = result.redirects;
 				for (var r = 0; r < redirects.length; r++) {
 					var redirect = redirects[r];
 					if (redirect && dirtyTitle === redirect.to) {
 						uItem = vfc.iUploads[dirtyTitle] = vfc.iUploads[redirect.from];
 						delete vfc.iUploads[redirect.from];
-						delete redirects[r];
+						redirects.splice(r, 1);
 						break;
 					}
 				}
