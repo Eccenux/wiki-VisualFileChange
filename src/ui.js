@@ -998,7 +998,7 @@ $.extend(window.VisualFileChange, {
 			subHeading = i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + (/^(?:File|Category)/.test(target) ? ':' : '') + target + ']] ';
 		}
-		if (si.modePage) {
+		if (si.modeSearch) {
 			subHeading = i18n.filesWith + ' -';
 			defaultHeading = 'Files found with [[Special:Search/' + target + ']] ';
 		}
