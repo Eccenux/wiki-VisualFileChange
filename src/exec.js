@@ -130,6 +130,7 @@ $.extend(window.VisualFileChange,
 		if (si.modeCat) mdRequestPage = 'Files in ';
 		if (si.modeUser) mdRequestPage = 'Files uploaded by ';
 		if (si.modePage) mdRequestPage = 'Files on ';
+		if (si.modeSearch) mdRequestPage = 'Files found with ';
 		
 		mdRequestPage += qp.target;
 		vfc.requestPage =  vfc.mdRequestPagePrefix + mdRequestPage;
