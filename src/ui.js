@@ -1781,8 +1781,6 @@ $.extend(window.VisualFileChange, {
 					rvprop: 'timestamp',
 					inprop: 'talkid',
 					iiprop: 'url|size|metadata',
-					iiurlwidth: 120,
-					iiurlheight: 120,
 					titles: files.join('|'),
 					clprop: 'hidden',
 					cllimit: 500,
@@ -1796,9 +1794,13 @@ $.extend(window.VisualFileChange, {
 					query.iilimit = 500;
 				}
 
+				if (si.loadThumbs)
+					query.iiurlwidth = query.iiurlheight = 120;
+
 				$doc.triggerHandler('vFC', ['detail-info', vfc, query]);
 
 				vfc.mdUploadCt++;
+				vfc.failQueriedAgain = '';
 				vfc.queryAPI(query, 'mdQueriedFile', 'failQueriedFile'); // Dont use task queue because this is a loop
 			};
 
@@ -2044,6 +2046,11 @@ $.extend(window.VisualFileChange, {
 */
 	mdQueriedFile: function (result) {
 		vfc.mdUploadCt--;
+		// If some failed, try again
+		if (vfc.failQueriedAgain) {
+			vfc.queryAPI( this.failQueriedAgain, 'mdQueriedFile' );
+			vfc.failQueriedAgain = '';
+		}
 
 		$doc.triggerHandler('vFC', ['got detail-info', vfc, result]);
 
@@ -2086,10 +2093,13 @@ $.extend(window.VisualFileChange, {
 				} catch (e) {}
 				return;
 			}
+			 // No thump-image, create dummy
+			if ( !pg.imageinfo || $.isEmptyObject( pg.imageinfo[0] ) || !pg.imageinfo[0].thumbwidth ) {
+				var fileext = dirtyTitle.slice(-4).toLowerCase();
+				fileext = $.inArray(fileext, ['djvu', '.mov', 'mpga', '.svg', '.ogg', '.pdf', '.psd', '.xcf']) !== -1 ? '-' + fileext : '';
 
-			if (!pg.imageinfo /* || $.isEmptyObject( pg.imageinfo[0] ) */) { // No thump image, create dummy
 				pg.imageinfo = [{
-					thumburl: '/w/resources/assets/file-type-icons/fileicon.png',
+					thumburl: '/w/resources/assets/file-type-icons/fileicon' + fileext + '.png',
 					size: 0,
 					width: 0,
 					height: 0,
