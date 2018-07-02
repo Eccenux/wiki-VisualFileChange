@@ -70,7 +70,7 @@ mw.util.addCSS(
 VisualFileChange = vfc = window.VisualFileChange = {
 
 /** REVISION **/ // (x.major.minor.bug)
-	scriptRevision: '0.9.71.1',
+	scriptRevision: '0.9.71.2',
 
 /**
 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -1253,10 +1253,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 // try again
 			if ( regFile && q.titles !== regFile ) {
 				q.titles = regFile;
-				vfc.queryAPI( q, callback );
+				vfc.queryAPI( q, callback, 'failQueriedFile' );
 			}
 // Separate affected files
-			q2.titles = rFile;
 			if ( q2.iiurlheight ) {
 				delete q2.iiurlheight;
 				delete q2.iiurlwidth;
@@ -1265,7 +1264,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				delete q2.iiprop;
 				delete q2.iilimit;
 			}
-			vfc.queryAPI( q2, callback );
+			//q2.titles = rFile; // catch all affected files
+			if (this.failQueriedAgain && this.failQueriedAgain.titles)
+				q2.titles = this.failQueriedAgain.titles + '|' + rFile;
+
+			this.failQueriedAgain = q2;
+			// If nothing more for normal re-try
+			if (q.titles < 5) vfc.queryAPI(this.failQueriedAgain, callback);
 			return;
 		}
 		vfc.fail( err );
