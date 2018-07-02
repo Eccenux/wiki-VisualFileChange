@@ -3,7 +3,7 @@
 // <nowiki>
 /* global jQuery:false, mediaWiki:false*/
 /* eslint one-var:0, vars-on-top:0, no-underscore-dangle:0, no-multi-str:0, indent:0, valid-jsdoc:0, no-bitwise:0, camelcase:0, curly:0, space-in-parens:0, computed-property-spacing:0,array-bracket-spacing:0 */
-/* jshint curly:false, maxerr:200, laxbreak:true, bitwise:false, multistr:true*/
+/* jshint curly:false, multistr:true*/
 (function ($, mw) {
 'use strict';
 
@@ -1880,6 +1880,20 @@ $.extend(window.VisualFileChange, {
 			vfc.gbu = {};
 		});
 	},
+	mdLargerGallery: function () {
+		if ( !mw.libs.largerGallery) {
+			mw.loader.using('ext.gadget.LargerGallery', function () {
+				vfc.secureCall('_mdLargerGallery');
+			});
+		} else
+			vfc.secureCall('_mdLargerGallery');
+	},
+	_mdLargerGallery: function () {
+		if (!$('#largerGallery2')[0])
+			mw.libs.largerGallery.init('AjaxDeletedUploads', vfc.$ctrs.ajaxMdUlContainer);
+		vfc.nextTask();
+	},
+
 /** Helper function: Creating a link to the log of a deleted item **/
 	mdCreateDelUploadItem: function (img) {
 		return $('<li>').append($('<a>', {
@@ -2040,6 +2054,7 @@ $.extend(window.VisualFileChange, {
 			return; // don't try to add something if there was an error.
 		result = result.query;
 		var pages = result.pages,
+			redirects = result.redirects,
 			loadThumb = vfc.startInput.loadThumbs;
 
 		vfc.mdBusy = true;
@@ -2049,10 +2064,8 @@ $.extend(window.VisualFileChange, {
 				uItem = vfc.iUploads[dirtyTitle],
 				i,
 				ii,
-				redirects,
 				seenHash = {};
-			if (!uItem && result.redirects) { // Resolve redirect
-				redirects = result.redirects;
+			if (!uItem && redirects) { // Resolve redirect
 				for (var r = 0; r < redirects.length; r++) {
 					var redirect = redirects[r];
 					if (redirect && dirtyTitle === redirect.to) {
@@ -2062,7 +2075,7 @@ $.extend(window.VisualFileChange, {
 						break;
 					}
 				}
-				uItem = uItem || {}; // should never happen
+				// uItem = uItem || {}; // should never happen
 			}
 
 			vfc.$ctrs.ajaxMdNotReady.text(vfc._msg('query-progress', vfc.mdUploadCt, vfc.iiUploads, dirtyTitle));
@@ -2141,7 +2154,7 @@ $.extend(window.VisualFileChange, {
 					target: '_blank',
 					'class': 'image'
 				})
-					.append(loadThumb ? $('<img>', {
+					.append(loadThumb ? $('<img>').attr({ // attr is needed to not convert to CSS
 						src: ii.thumburl,
 						width: ii.thumbwidth,
 						height: ii.thumbheight,
@@ -2226,10 +2239,12 @@ $.extend(window.VisualFileChange, {
 **/
 	mdQueryFileDone: function () {
 		// Append all queried files to the screen-container
+		var largerGallery = $('#largerGallery2')[0] ? mw.libs.largerGallery.run : function(){};
 		$.each(vfc.iUploads, function (id, uItem) {
 			if (!uItem.gbInUse) {
 				var $galleryBox = vfc.gbs[id];
 				if ($galleryBox) {
+					largerGallery($galleryBox, 1);
 					uItem.gbInUse = true;
 					vfc.$ctrs.ajaxMdUlContainer.append($galleryBox);
 					vfc.mdThumbsOnDlg++;
@@ -2252,8 +2267,8 @@ $.extend(window.VisualFileChange, {
 					vfc.secureCall('mdQueryMore');
 
 			};
-			vfc.dlg.off('scroll', __onScroll);
-			vfc.dlg.on('scroll', __onScroll);
+			vfc.dlg.off('scroll', __onScroll)
+				.on('scroll', __onScroll);
 		}
 		if (!vfc.mdNoMoreFiles) { // silently run the next upload-list-query in background
 			vfc.secureCall('mdCreateList');
