@@ -39,7 +39,7 @@ console.log('VisualFileChange> ' + p1);
 // Interested? See [[:commons:MediaWiki:JSValidator.js]].
 /* global jQuery:false, mediaWiki:false, Geo:false */
 /* eslint one-var:0, vars-on-top:0, indent:0, no-underscore-dangle:0, no-unused-vars:0, valid-jsdoc:0, no-bitwise:0, camelcase:0, curly:0 */
-/* jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true */
+/* jshint curly:false, forin:false, maxerr:200, laxbreak:true, laxcomma:true, bitwise:false, smarttabs:true, multistr:true */
 
 ( function ( $, mw ) {
 'use strict';
@@ -56,10 +56,10 @@ var VisualFileChange,
 
 // Adding Style-definitions
 mw.util.addCSS(
-	'.md-collapsible {padding:3px;padding-top:0;padding-left:0;margin-top:2px;display:inline-block}\n' +
-	'.md-optioncontainer {padding:3px;margin:5px 0}\n' +
-	'.md-option-space-v {padding:5px 0}\n' +
-	'.md-option-space-v>input,select {margin:0 3px}' );
+	'.md-collapsible {padding:3px;padding-top:0;padding-left:0;margin-top:2px;display:inline-block}\n\
+	.md-optioncontainer {padding:3px;margin:5px 0}\n\
+	.md-option-space-v {padding:5px 0}\n\
+	.md-option-space-v>input,select {margin:0 3px}' );
 
 /**
 * Create a new VisualFileChange-Object-literal.
@@ -170,8 +170,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				if ( !mw.libs.schnark_diff ) {
 					if ( cb ) {
 						mw.hook( 'userjs.load-script.diff-core' ).add( function () {
-							mw.libs.schnarkDiff.style.set( 'ins', 'text-decoration: underline; font-weight: bold; font-size:1.2em; color: #020; background-color: #ABE; text-shadow: 1px 1px 2px #363; -moz-text-decoration-color:#474;' );
-							mw.libs.schnarkDiff.style.set( 'del', 'font-weight: bold; font-size:1.2em; color: #200; background-color: #FD9; -moz-text-decoration-color:#744;' );
+							mw.libs.schnarkDiff.style.set( 'ins', 'text-decoration:underline; font-weight:bold; font-size:1.2em; color:#020; background-color:#ABE; text-shadow:1px 1px 2px #363;-moz-text-decoration-color:#474;' );
+							mw.libs.schnarkDiff.style.set( 'del', 'font-weight:bold; font-size:1.2em; color:#200; background-color:#FD9; -moz-text-decoration-color:#744;' );
 							mw.util.addCSS( mw.libs.schnarkDiff.getCSS() );
 							mw.libs.schnarkDiff.config.set( 'minMovedLength', 20 );
 							mw.libs.schnarkDiff.config.set( 'tooShort', 3 );
@@ -337,6 +337,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 /* Shedule next tasks */
 		this.addTask( 'mdCreateList' );
 		this.addTask( 'mdGenIGallery' );
+		this.addTask( 'mdLargerGallery' );
 		this.addTask( 'mdQueryFileDone' );
 
 /* Setting up variables needed later */
@@ -2437,7 +2438,7 @@ ProgressBox.fn = ProgressBox.prototype = {
 
 // Translation II (more sophisticated stuff)
 mw.messages.set( {
-	'vfc-query-progress': 'Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current file: $3',
+	'vfc-query-progress': 'Querying detailed information: $1 batch-{{PLURAL:$1|query|queries}} pending. Total {{PLURAL:$2|file|files}}: $2. Current: $3',
 	'vfc-selected-count': '$1 {{PLURAL:$1|file|files}} selected to perform the action on.',
 	'vfc-enter-reason': 'Please specify a reason with at least $1 {{PLURAL:$1|letter|letters}}.',
 	'vfc-edit-count-one-time': 'Would you like to do edit number $1?',
