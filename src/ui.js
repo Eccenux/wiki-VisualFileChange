@@ -991,7 +991,7 @@ $.extend(window.VisualFileChange, {
 		if (si.modeUser) {
 			subHeading = i18n.filesBy + ' -';
 			targetHref = vfc.mdUserTalkPrefix + targetHref;
-			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] ' + '([[' +
+			defaultHeading = 'Files uploaded by [[' + vfc.mdUserPrefix + target + '|' + target + ']] ([[' +
 				vfc.mdUserTalkPrefix + target + '|talk]] · [[' + vfc.mdContribPrefix + target + '|contribs]])';
 		}
 		if (si.modePage) {
@@ -2048,7 +2048,7 @@ $.extend(window.VisualFileChange, {
 		vfc.mdUploadCt--;
 		// If some failed, try again
 		if (vfc.failQueriedAgain) {
-			vfc.queryAPI( this.failQueriedAgain, 'mdQueriedFile' );
+			vfc.queryAPI( vfc.failQueriedAgain, 'mdQueriedFile' );
 			vfc.failQueriedAgain = '';
 		}
 
@@ -2093,10 +2093,10 @@ $.extend(window.VisualFileChange, {
 				} catch (e) {}
 				return;
 			}
-			 // No thump-image, create dummy
-			if ( !pg.imageinfo || $.isEmptyObject( pg.imageinfo[0] ) || !pg.imageinfo[0].thumbwidth ) {
+			// No thump-image, create dummy
+			if ( !pg.imageinfo/* || $.isEmptyObject( pg.imageinfo[0] )*/ || !pg.imageinfo[0].thumbwidth ) {
 				var fileext = dirtyTitle.slice(-4).toLowerCase();
-				fileext = $.inArray(fileext, ['djvu', '.mov', 'mpga', '.svg', '.ogg', '.pdf', '.psd', '.xcf']) !== -1 ? '-' + fileext : '';
+				fileext = $.inArray(fileext, ['djvu', '.mov', 'mpga', '.svg', '.ogg', '.pdf', '.psd', '.xcf']) !== -1 ? '-' + fileext.replace(/^\./, '') : '';
 
 				pg.imageinfo = [{
 					thumburl: '/w/resources/assets/file-type-icons/fileicon' + fileext + '.png',
@@ -2249,7 +2249,7 @@ $.extend(window.VisualFileChange, {
 **/
 	mdQueryFileDone: function () {
 		// Append all queried files to the screen-container
-		var largerGallery = $('#largerGallery2')[0] ? mw.libs.largerGallery.run : function(){};
+		var largerGallery = $('#largerGallery2')[0] ? mw.libs.largerGallery.run : function () {};
 		$.each(vfc.iUploads, function (id, uItem) {
 			if (!uItem.gbInUse) {
 				var $galleryBox = vfc.gbs[id];
