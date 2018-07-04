@@ -1805,8 +1805,8 @@ $.extend(window.VisualFileChange, {
 			};
 
 			$.each(this.iUploads, function (upload, upli) {
-				if ((vfc.iCurrentIId + 1) > upli.iId)
-					return;
+
+				if ((vfc.iCurrentIId + 1) > upli.iId) return;
 				collectedFiles.push(upload);
 				collectedCount++;
 				if (collectedCount > 9) { // only 10 at once
@@ -2094,7 +2094,7 @@ $.extend(window.VisualFileChange, {
 				return;
 			}
 			// No thump-image, create dummy
-			if ( !pg.imageinfo/* || $.isEmptyObject( pg.imageinfo[0] )*/ || !pg.imageinfo[0].thumbwidth ) {
+			if ( loadThumb && !pg.imageinfo || $.isEmptyObject( pg.imageinfo[0] ) || !pg.imageinfo[0].thumbwidth ) {
 				var fileext = dirtyTitle.slice(-4).toLowerCase();
 				fileext = $.inArray(fileext, ['djvu', '.mov', 'mpga', '.svg', '.ogg', '.pdf', '.psd', '.xcf']) !== -1 ? '-' + fileext.replace(/^\./, '') : '';
 
