@@ -178,7 +178,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 							executeCB();
 						} );
 					}
-					mw.loader.load( '//de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript' );
+					mw.loader.load( 'https://de.wikipedia.org/w/index.php?title=Benutzer:Schnark/js/diff.js/core.js&action=raw&ctype=text/javascript' );
 				} else {
 					executeCB();
 				}
