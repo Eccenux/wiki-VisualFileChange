@@ -2093,8 +2093,8 @@ $.extend(window.VisualFileChange, {
 				} catch (e) {}
 				return;
 			}
-			// No thump-image, create dummy
-			if ( loadThumb && !pg.imageinfo || $.isEmptyObject( pg.imageinfo[0] ) || !pg.imageinfo[0].thumbwidth ) {
+			// No thumb-image, create dummy
+			if ( loadThumb && (!pg.imageinfo || $.isEmptyObject( pg.imageinfo[0] ) || !pg.imageinfo[0].thumbwidth )) {
 				var fileext = dirtyTitle.slice(-4).toLowerCase();
 				fileext = $.inArray(fileext, ['djvu', '.mov', 'mpga', '.svg', '.ogg', '.pdf', '.psd', '.xcf']) !== -1 ? '-' + fileext.replace(/^\./, '') : '';
 
