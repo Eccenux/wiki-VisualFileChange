@@ -2130,7 +2130,7 @@ $.extend(window.VisualFileChange, {
 				}
 			}
 
-			ii = (pg.imageinfo || [])[0];
+			ii = (pg.imageinfo || [{}])[0];
 			ii.metadata = ii.metadata || []; // not all images have metadata
 			pg.categories = pg.categories || []; // not all images have categories
 
