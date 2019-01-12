@@ -2113,7 +2113,7 @@ $.extend(window.VisualFileChange, {
 			vfc.mdActualResultCount++;
 
 			if (!vfc.startInput.modeUser) {
-				for (i = pg.imageinfo.length - 1; i >= 0; i--) {
+				for (i = (pg.imageinfo || []).length - 1; i >= 0; i--) {
 					ii = pg.imageinfo[i];
 					if (ii.sha1 && !seenHash[ii.sha1]) {
 						seenHash[ii.sha1] = true;
@@ -2130,7 +2130,7 @@ $.extend(window.VisualFileChange, {
 				}
 			}
 
-			ii = pg.imageinfo[0];
+			ii = (pg.imageinfo || [])[0];
 			ii.metadata = ii.metadata || []; // not all images have metadata
 			pg.categories = pg.categories || []; // not all images have categories
 
