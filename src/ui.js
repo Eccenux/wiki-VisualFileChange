@@ -2410,7 +2410,7 @@ mw.loader.using([// TODO
 	'jquery.ui.dialog', // deprecated
 	'jquery.ui.button', // deprecated
 	'jquery.tipsy', // deprecated
-	'jquery.byteLimit', // deprecated: replacement 'jquery.lengthLimit' not working
+	'jquery.lengthLimit',
 	'jquery.byteLength', // deprecated: replacement 'mediawiki.String' not working
 	'mediawiki.storage', // former jquery.jStorage
 	'mediawiki.RegExp',
