@@ -148,7 +148,8 @@ $.extend(window.VisualFileChange,
 			
 		vfc.tag = fTag.tag && fTag.tag.replace('%REASON%', vfc.reason).replace('%SUBPAGE%', mdRequestPage).replace('%D%', vfc.formatDate('year=YYYY|month=MON|day=DAY'));
 		
-		vfc.file_summary = (vfc.mdAddEditSummary && (vfc.mdAddEditSummary + ' - ')) + 
+		vfc.file_summary = vfc.mdAddEditSummary +
+			(vfc.mdAddEditSummary && fTag.summary && ' - ') + 
 			(fTag.summary && fTag.summary.replace('%pattern%', vfc.reason).replace('%replacementcount%', vfc.mdReplacementMatrix.length-1).replace('%REASON%', vfc.reason));
 		var r = vfc.file_summary.match(/\%(.{1,9})\%/);
 		if (r && r[1]) vfc.file_summary = vfc.file_summary.replace('%' + r[1] + '%', vfc.mdOptText[r[1]]);
