@@ -350,9 +350,9 @@ $.extend(window.VisualFileChange, {
 		if (!/%.+%/.test(replacetext))
 			return replacetext;
 
-		replacetext = replacetext.replace('%PAGENAME%', uploadTitle.replace(/^File:/, ''));
-		replacetext = replacetext.replace('%FULLPAGENAME%', uploadTitle);
-		replacetext = replacetext.replace('%FULLPAGENAMEE%', encodeURIComponent(uploadTitle));
+		replacetext = replacetext.replace('%PAGENAME%', uploadTitle.replace(/^File:/, ''))
+			.replace('%FULLPAGENAME%', uploadTitle)
+			.replace('%FULLPAGENAMEE%', encodeURIComponent(uploadTitle));
 		$.each(uploadObject.metadata, function (i, el) {
 			if ($.inArray(typeof el.value, ['string', 'number']) !== -1)
 				replacetext = replacetext.replace('%' + el.name + '%', el.value);
@@ -998,11 +998,12 @@ $.extend(window.VisualFileChange, {
 			subHeading = i18n.filesOn + ' -';
 			defaultHeading = 'Files on [[' + (/^(?:File|Category)/.test(target) ? ':' : '') + target + ']] ';
 		}
+		targetHref = mw.util.getUrl(targetHref);
 		if (si.modeSearch) {
 			subHeading = i18n.filesWith + ' -';
+			targetHref = document.location.href;
 			defaultHeading = 'Files found with [[Special:Search/' + target + ']] ';
 		}
-		targetHref = mw.util.getUrl(targetHref);
 
 		// Build the input-ui
 		// Save the controls into a var that's reference we need later
@@ -1959,7 +1960,7 @@ $.extend(window.VisualFileChange, {
 	mdGetMetaTable: function (rv, o) {
 		var val,
 			mdata = o.iUploads[rv].metadata,
-			fRestr = (mdata.length > 6),
+			fRestr = (mdata && mdata.length > 6),
 			stMdat = '<b><i>File-Metadata:</i></b><br><br>',
 			restrArr = ['ImageDescription', 'Make', 'Model', 'Copyright', 'DateTime', 'Artist', 'Title', 'Author', 'Creator', 'CreationDate'];
 
