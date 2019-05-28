@@ -4,8 +4,7 @@
 			portlet = mw.util.addPortletLink( 'p-tb', '#', portlettext, 't-AjaxQuickDeleteOnDemand' );
 		$( portlet ).click( function ( e ) {
 			e.preventDefault();
-			// importScript is part of wikibits.js; may get deprecated in the future
-			importScript("MediaWiki:VisualFileChange.js");
+			mw.loader.load( 'ext.gadget.VisualFileChange.core' );
 		} );
 	} );
 }( jQuery, mediaWiki ) );
