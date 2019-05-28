@@ -70,7 +70,7 @@ mw.util.addCSS(
 VisualFileChange = vfc = window.VisualFileChange = {
 
 /** REVISION **/ // (x.major.minor.bug)
-	scriptRevision: '0.9.71.2',
+	scriptRevision: '0.10.0.0',
 
 /**
 ** Set up the VisualFileChange object and add the toolbox link. Called via $doc.ready() during page loading.
@@ -157,13 +157,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				vfc[ cb ]( vfc, [] );
 		};
 		switch ( m ) {
-			case 'exec.js':
+			case 'exec':
 				alias = 'editComponents';
 				break;
-			case 'ui.js':
+			case 'ui':
 				alias = 'displayComponents';
 				break;
-			case 'cfg.js':
+			case 'cfg':
 				alias = 'configManager';
 				break;
 			case 'diff':
@@ -220,7 +220,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					}
 				} );
 			}
-			mw.loader.load( mw.config.get( 'wgServer' ) + mw.config.get( 'wgScript' ) + '?title=' + mw.util.wikiUrlencode( 'MediaWiki:VisualFileChange.js/' + m ) + '&action=raw&ctype=text/javascript&dummy=' + vfc.scriptRevision );
+			mw.loader.load( 'ext.gadget.VisualFileChange.' + m );
 		}
 	},
 
@@ -291,7 +291,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		$doc.triggerHandler( 'vFC', [ 'prepared', vfc ] );
 
 // Load the Execute/ Edit components
-		vfc.loadModule( 'exec.js' );
+		vfc.loadModule( 'exec' );
 
 		vfc.addTask( 'reinit' );
 		vfc.nextTask();
@@ -593,7 +593,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				}
 			} );
 
-			vfc.loadModule( 'ui.js', 'nextTask' );
+			vfc.loadModule( 'ui', 'nextTask' );
 
 // We removed some inputs; maybe a tipsy tooltip was left?
 			$( '.tipsy' ).remove();
@@ -981,7 +981,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		onEnter( vfc.$AjaxMdContainer.find( 'select,input' ) );
 
 // Load the configuration module
-		vfc.loadModule( 'cfg.js', 'mdConfigInstall' );
+		vfc.loadModule( 'cfg', 'mdConfigInstall' );
 // The following modules are not crucial for execution because there are fallbacks
 		if ( !$.fx.off )
 			mw.loader.load( [ 'jquery.effects.highlight' ] );
@@ -1880,7 +1880,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
 	mdWikipageRegExp: new RegExp( mw.RegExp.escape( mw.config.get( 'wgArticlePath' ).replace( '$1', '' ) ) + '(.+)' ),
-	mdSelfPath: 'MediaWiki:VisualFileChange.js',
+	mdSelfPath: 'MediaWiki:Gadget-VisualFileChange.js',
 	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
 	mdChangeTag: 'VisualFileChange',
@@ -1889,7 +1889,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdContribPrefix: mw.config.get( 'wgFormattedNamespaces' )[ -1 ] + ':Contributions/',
 	mdRequestPagePrefix: 'Commons:Deletion requests/',
 	mdReLoader: '<p align="center"><img src="//upload.wikimedia.org/wikipedia/commons/c/ce/RE_Ajax-Loader.gif"/></p>',
-	mdErrorsReportPath: mw.util.getUrl( 'MediaWiki talk:VisualFileChange.js' ),
+	mdErrorsReportPath: mw.util.getUrl( 'MediaWiki talk:Gadget-VisualFileChange.js' ),
 	mdHelpNode: '<a href="' + mw.util.getUrl( 'Help:VisualFileChange.js' ) + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
