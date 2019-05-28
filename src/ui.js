@@ -1334,8 +1334,8 @@ $.extend(window.VisualFileChange, {
 			vfc.$ctrs.editSummary.off('keypress');
 			vfc.$ctrs.editSummary.byteLimit(opt.bLimit);
 			var summary = vfc.$ctrs.editSummary.val();
-			var mwString = require('mediawiki.String');
-			while (mwString.byteLength(summary) > opt.bLimit)
+			// var mwString = require( 'mediawiki.String' ); // FIXME require??
+			while ($.byteLength(summary) > opt.bLimit)
 				summary = $.trim(summary.slice(0, summary.length - 1));
 
 			vfc.$ctrs.editSummary.val(summary);
@@ -2412,7 +2412,7 @@ mw.loader.using([// TODO
 	'jquery.ui.button', // deprecated
 	'jquery.tipsy', // deprecated
 	'jquery.lengthLimit',
-	'mediawiki.String',
+	'jquery.byteLength', // deprecated: replacement 'mediawiki.String' not working
 	'mediawiki.storage', // former jquery.jStorage
 	'mediawiki.RegExp',
 	'mediawiki.page.gallery.styles',
