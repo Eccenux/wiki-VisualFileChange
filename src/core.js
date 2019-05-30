@@ -110,7 +110,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 // Immediately start Md
 			autostart = true;
 		} else {
-			if ( mw.util.getParamValue( 'withJS' ) === 'MediaWiki:VisualFileChange.js' ) {
+			if ( mw.util.getParamValue( 'withModule' ) === 'ext.gadget.VisualFileChange.core' ) {
 // Load immediately and add no link
 				autostart = true;
 			} // else: User wrongly uses VFC with importScript
