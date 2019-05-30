@@ -190,7 +190,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					url: mw.util.wikiScript(),
 					dataType: 'script',
 					data: {
-						title: 'MediaWiki:VisualFileChange.js/i18n/' + mw.config.get( 'wgUserLanguage' ).split( '-' )[ 0 ] + '.js',
+						title: 'MediaWiki:Gadget-VisualFileChange.js/i18n/' + mw.config.get( 'wgUserLanguage' ).split( '-' )[ 0 ] + '.js',
 						action: 'raw',
 						ctype: 'text/javascript',
 // Allow caching for 28 days
