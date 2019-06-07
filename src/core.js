@@ -2186,6 +2186,7 @@ function ProgressBox( width, o ) {
 
 	var _this = this;
 	this.$cont = $( '<div>', {
+		id: 'vfc-progressbox',
 		style: 'display:none;overflow:hidden;left:0;width:' + this.w + 'px;height:100%;z-index:1000;top:0pt;position:fixed;font:15px sans-serif;background-color:#cde;background-image:background-image:-webkit-linear-gradient(top,#cde,#eee 100px,#eee);background-image:linear-gradient(to bottom,#cde,#eee 100px,#eee);'
 	} ).dblclick( function () {
 		_this.$cmd.focus();
