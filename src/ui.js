@@ -670,9 +670,9 @@ $.extend(window.VisualFileChange, {
 			})).focus(function () {
 				var $el = $(this),
 					val = $el.val(),
-					pos = $el.position();
+					pos = $el.offset();
 
-				$regExpEscapeHelper.show().css('top', pos.top + 5).css('left', pos.left - $regExpEscapeHelper.width() - 6);
+				$regExpEscapeHelper.show().offset({top: pos.top + 5, left: pos.left - $regExpEscapeHelper.width() - 6});
 				$regExpEscapeHelper.data('mdServiceFor', $el);
 				$regExpEscapeHelper.data('mdServiceForEnable', $el.data('mdServiceForEnable'));
 
