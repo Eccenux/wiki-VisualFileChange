@@ -137,7 +137,7 @@ $.extend(window.VisualFileChange, {
 		var allFiles = result.query.allimages,
 			qp = vfc.queryParams;
 
-		$.each(allFileChanges, function (id, f) {
+		$.each(allFiles, function (id, f) {
 			if (f.canonicaltitle in vfc.iUploads)
 				return;
 			vfc.iUploads[f.canonicaltitle] = {
