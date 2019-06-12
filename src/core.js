@@ -525,6 +525,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						lc.setVals = [ 'cmstart' ];
 					} else if ( si.modeUser ) {
 						qp.ledir = 'newer';
+						qp.aidir = 'newer';
 					}
 					break;
 				case 'nf': // newest first
@@ -535,6 +536,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						lc.setVals = [ 'cmstart' ];
 					} else if ( si.modeUser ) {
 						qp.ledir = 'older';
+						qp.aidir = 'older';
 					}
 					break;
 				case 'ca': // cat asc
@@ -566,6 +568,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						lc.setVals = [ 'cmcontinue' ];
 					} else if ( si.modeUser ) {
 						qp.ledir = 'older';
+						qp.aidir = 'older';
 					} else if ( si.modePage ) {
 						qp.imdir = 'ascending';
 					}
