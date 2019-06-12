@@ -114,18 +114,18 @@ $.extend(window.VisualFileChange, {
 		var qp = vfc.queryParams;
 		var query = {
 			action: 'query',
-			list: 'logevents',
+			list: 'allimages',
 			rawcontinue: 1,
-			leprop: 'title|timestamp|type',
-			leaction: 'upload/upload',
-			leuser: qp.target,
-			lelimit: vfc.mdSettings.loadBatchSize,
-			ledir: qp.ledir
+			aiprop: 'canonicaltitle|timestamp',
+			aiuser: qp.target,
+			ailimit: vfc.mdSettings.loadBatchSize,
+			aisort: 'timestamp',
+			aidir: qp.aidir
 		};
-		if (qp.lecontinue)
-			query.lecontinue = qp.lecontinue;
-		if (qp.lestart)
-			query.lestart = qp.lestart;
+		if (qp.aicontinue)
+			query.aicontinue = qp.aicontinue;
+		if (qp.aistart)
+			query.aistart = qp.aistart;
 		$doc.triggerHandler('vFC', ['useruploads', vfc, query]);
 		vfc.queryAPI(query, 'mdFindUploadsCB');
 	},
@@ -134,39 +134,28 @@ $.extend(window.VisualFileChange, {
 		$doc.triggerHandler('vFC', ['got useruploads', vfc, result]);
 		vfc.pb.setCurrentTaskDone();
 
-		var allFileChanges = result.query.logevents,
+		var allFiles = result.query.allimages,
 			qp = vfc.queryParams;
 
-		$.each(allFileChanges, function (id, fc) { // loop through all filechanges (upload-events) (array)
-			// This file was initially uploaded by the user.
-			if (fc.action === 'upload') {
-				// Do not mess-up numbers when a file was deleted and re-uploaded
-				if (fc.title in vfc.iUploads)
-					return;
-				vfc.iUploads[fc.title] = {
-					uploader: [],
-					iId: vfc.iiUploads,
-					time: fc.timestamp
-				};
+		$.each(allFileChanges, function (id, f) {
+			if (f.canonicaltitle in vfc.iUploads)
+				return;
+			vfc.iUploads[f.canonicaltitle] = {
+				uploader: [],
+				iId: vfc.iiUploads,
+				time: f.timestamp
+			};
 
-				vfc.iiUploads++;
-				// User overwrote file.
-			} else if (fc.action === 'overwrite') {
-				vfc.oUploads[fc.title] = {
-					iId: vfc.ioUploads,
-					time: fc.timestamp
-				};
-				vfc.ioUploads++;
-			}
+			vfc.iiUploads++;
 		});
 
 		if (!result['query-continue'])
 			vfc.mdNoMoreFiles = true;
 
 		if (!vfc.mdNoMoreFiles) {
-			qp.lecontinue = result['query-continue'].logevents.lecontinue;
-			qp.lestart = result['query-continue'].logevents.lestart;
-			vfc.mdSaveContinueKey(qp.lecontinue);
+			qp.aicontinue = result['query-continue'].allimages.aicontinue;
+			qp.aistart = result['query-continue'].allimages.aistart;
+			vfc.mdSaveContinueKey(qp.aicontinue);
 		}
 		if (vfc.mdFirstRun) { // Call nextTask the first time only
 			vfc.mdFirstRun = false;
