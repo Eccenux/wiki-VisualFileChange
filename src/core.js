@@ -501,7 +501,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			if ( si.modeCat ) {
 				si.target = vfc.cleanReason( $targetSelect.val() + ':' + $targetInput.val().replace( /_/g, ' ' ) );
 			} else if ( si.modeUser ) {
-				qp.aistart = si.startDate;
+				qp.lestart = si.startDate;
 				si.target = vfc.cleanReason( $targetInput.val().replace( /_/g, ' ' ) );
 				vfc.lastContinues.setVals = [ 'lecontinue' ];
 			} else if ( si.modePage ) {
@@ -524,7 +524,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmstart = si.startDate;
 						lc.setVals = [ 'cmstart' ];
 					} else if ( si.modeUser ) {
-						qp.aidir = 'newer';
+						qp.ledir = 'newer';
 					}
 					break;
 				case 'nf': // newest first
@@ -534,7 +534,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmstart = si.startDate;
 						lc.setVals = [ 'cmstart' ];
 					} else if ( si.modeUser ) {
-						qp.aidir = 'older';
+						qp.ledir = 'older';
 					}
 					break;
 				case 'ca': // cat asc
@@ -565,7 +565,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 						qp.cmstartsortkey = si.startFile;
 						lc.setVals = [ 'cmcontinue' ];
 					} else if ( si.modeUser ) {
-						qp.aidir = 'older';
+						qp.ledir = 'older';
 					} else if ( si.modePage ) {
 						qp.imdir = 'ascending';
 					}
