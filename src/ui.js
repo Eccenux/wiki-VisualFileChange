@@ -2414,7 +2414,7 @@ mw.loader.using([// TODO
 	'jquery.lengthLimit',
 	'mediawiki.String',
 	'mediawiki.storage', // former jquery.jStorage
-	'mediawiki.RegExp',
+	'mediawiki.util',
 	'mediawiki.page.gallery.styles',
 	'ext.gadget.libAPI',
 	'ext.gadget.libJQuery',
