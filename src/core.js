@@ -44,7 +44,7 @@ console.log('VisualFileChange> ' + p1);
 ( function ( $, mw ) {
 'use strict';
 if ( window.VisualFileChange ) return;
-$.when( mw.loader.using( 'mediawiki.RegExp' ), $.ready ).then( function () {
+$.when( mw.loader.using( 'mediawiki.util' ), $.ready ).then( function () {
 
 var VisualFileChange,
 	vfc,
