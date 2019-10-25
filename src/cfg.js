@@ -471,9 +471,7 @@ $.extend(window.VisualFileChange,
 
 
 mw.loader.using([
-	'jquery.ui', 
-	'jquery.ui', 
-	'jquery.ui', 
+	'jquery.ui', // deprecated
 	'jquery.cookie', 
 	'jquery.jStorage',
 	'mediawiki.user',
