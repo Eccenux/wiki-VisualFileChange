@@ -984,7 +984,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		vfc.loadModule( 'cfg', 'mdConfigInstall' );
 // The following modules are not crucial for execution because there are fallbacks
 		if ( !$.fx.off )
-			mw.loader.load( [ 'jquery.effects.highlight' ] );
+			mw.loader.load( [ 'jquery.ui' ] );
 	},
 
 	cleanReason: function ( uncleanReason ) {
@@ -2377,7 +2377,7 @@ ProgressBox.fn = ProgressBox.prototype = {
 		if ( _this.progressTimeout )
 			clearTimeout( _this.progressTimeout );
 		_this.progressTimeout = setTimeout( function () {
-			mw.loader.using( 'jquery.ui.progressbar', function () {
+			mw.loader.using( 'jquery.ui', function () {
 				_this.$progressBar.progressbar( {
 					value: ( done ) / ( total ) * 100
 				} );
@@ -2453,9 +2453,9 @@ mw.messages.set( {
 } );
 
 mw.loader.using( [
-	'jquery.ui.dialog', // deprecated
-	'jquery.ui.datepicker', // deprecated
-	'jquery.ui.autocomplete', // deprecated
+	'jquery.ui', // deprecated
+	'jquery.ui', // deprecated
+	'jquery.ui', // deprecated
 	'jquery.tipsy', // deprecated
 	'mediawiki.user',
 	'mediawiki.util',
