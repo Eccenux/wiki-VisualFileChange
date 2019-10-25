@@ -342,7 +342,7 @@ $.extend(window.VisualFileChange,
 					$.growlUI(successHeading, successText);
 					break;
 			}
-			mw.loader.using('jquery.ui.progressbar', function() {
+			mw.loader.using('jquery.ui', function() {
 				$jsProgess.progressbar({ value: status });
 			});
 		};
@@ -397,7 +397,7 @@ $.extend(window.VisualFileChange,
 		$dlgNode.append($('<br>'), $profileSelect, $cmdSection);
 		
 		updateSelect();
-		mw.loader.load('jquery.ui.progressbar');
+		mw.loader.load('jquery.ui');
 		
 		$dlgNode.dialog({
 			title: i18n.profileManager,
@@ -471,9 +471,9 @@ $.extend(window.VisualFileChange,
 
 
 mw.loader.using([
-	'jquery.ui.dialog', 
-	'jquery.ui.slider', 
-	'jquery.ui.button', 
+	'jquery.ui', 
+	'jquery.ui', 
+	'jquery.ui', 
 	'jquery.cookie', 
 	'jquery.jStorage',
 	'mediawiki.user',
