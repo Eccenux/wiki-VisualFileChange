@@ -2408,8 +2408,8 @@ $.extend(window.VisualFileChange, {
 });
 
 mw.loader.using([// TODO
-	'jquery.ui.dialog', // deprecated
-	'jquery.ui.button', // deprecated
+	'jquery.ui', // deprecated
+	'jquery.ui', // deprecated
 	'jquery.tipsy', // deprecated
 	'jquery.lengthLimit',
 	'mediawiki.String',
