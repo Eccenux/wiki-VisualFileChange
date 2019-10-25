@@ -2454,8 +2454,6 @@ mw.messages.set( {
 
 mw.loader.using( [
 	'jquery.ui', // deprecated
-	'jquery.ui', // deprecated
-	'jquery.ui', // deprecated
 	'jquery.tipsy', // deprecated
 	'mediawiki.user',
 	'mediawiki.util',
