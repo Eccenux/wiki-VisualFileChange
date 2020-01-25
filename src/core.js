@@ -1790,10 +1790,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		max: ( ( isSysop || isBot ) ? 1000 : 100 )
 	}, {
 		name: 'maxSimultaneousReq',
-		label: 'Maximum number of requests to send to the API simultaneously',
-		'default': ( isSysop ? 10 : ( mw.user.isAnon() ? 1 : 5 ) ),
+		label: 'Maximum number of requests to send to the API simultaneously (note increasing may cause extreme edit speeds)',
+		'default': ( ( isSysop || isBot ) ? 10 : ( mw.user.isAnon() ? 1 : 5 ) ),
 		min: 1,
-		max: ( isSysop ? 100 : ( mw.user.isAnon() ? 2 : 50 ) )
+		max: ( ( isSysop || isBot ) ? 100 : ( mw.user.isAnon() ? 2 : 50 ) )
 	}, {
 		name: 'summaryChacheLen',
 		label: 'Number of reasons to remember (not fully implemented, yet)',
