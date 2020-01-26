@@ -334,7 +334,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		this.pb.setTaskState( 'target', 'md-doing' );
 		this.pb.setHelp( this.i18n.mdPerformOnWhichTarget );
 
-/* Shedule next tasks */
+/* Schedule next tasks */
 		this.addTask( 'mdCreateList' );
 		this.addTask( 'mdGenIGallery' );
 		this.addTask( 'mdLargerGallery' );
@@ -1790,7 +1790,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		max: ( ( isSysop || isBot ) ? 1000 : 100 )
 	}, {
 		name: 'maxSimultaneousReq',
-		label: 'Maximum number of requests to send to the API simultaneously (note increasing may cause extreme edit speeds)',
+		label: 'Maximum number of requests to send to the API simultaneously (note: may cause extreme edit speeds)',
 		'default': ( ( isSysop || isBot ) ? 10 : ( mw.user.isAnon() ? 1 : 5 ) ),
 		min: 1,
 		max: ( ( isSysop || isBot ) ? 100 : ( mw.user.isAnon() ? 2 : 50 ) )
@@ -2256,7 +2256,7 @@ function ProgressBox( width, o ) {
 	this.$subheading = $( '<span>', {
 		style: 'font:small-caps 0.8em sans-serif;',
 		text: 'Batch Surgery Script v.' + o.scriptRevision
-	} ).append( $( '<br>' ), 'Report bugs and ideas <a href="' + o.mdErrorsReportPath + '" target="_blank">here</a>.', $( '<br>' ), $( '<br>' ), this.$cfg, $( '<br>' ), this.$profile );
+	} ).append( $( '<br>' ), 'Report bugs and ideas <a href="' + o.mdErrorsReportPath + '" target="_blank">here</a>.', $( '<br>' ), 'Edit responsibly', $( '<br>' ), $( '<br>' ), this.$cfg, $( '<br>' ), this.$profile );
 	this.$tasklist = $( '<div>', {
 		style: 'margin-top: 50px; padding: 10px;',
 		text: o.i18n.tasks
