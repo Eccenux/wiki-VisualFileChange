@@ -717,7 +717,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 				nsId = rxNs[ 1 ].replace( / /g, '_' ).toLowerCase();
 				nsId = namespaceIds[ nsId ];
 				if ( nsId ) {
-					rxNs = new RegExp( '^' + mw.RegExp.escape( rxNs[ 1 ] ) + '\\:', 'i' );
+					rxNs = new RegExp( '^' + mw.util.escapeRegExp( rxNs[ 1 ] ) + '\\:', 'i' );
 					request.term = request.term.replace( rxNs, '' );
 				} else {
 					nsId = undefined;
@@ -1246,7 +1246,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		if ( r && r.code === 'urlparamnormal' ) { // [[phab:T187016]]
 			var rFile = 'File:' + r.info.replace( /.*? ([^\s]+)\.$/, '$1' ).replace( /_/g, ' ' );
 // Get defect image and remove it from query
-			var regFile = new RegExp( '\\|?' + mw.RegExp.escape( rFile ) );
+			var regFile = new RegExp( '\\|?' + mw.util.escapeRegExp( rFile ) );
 			var q2 = $.extend( {}, q ); // copy query
 			this.log( rFile + ' is defect' );
 			regFile = q.titles.replace( regFile, '' );
@@ -1879,7 +1879,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdNextParamPattern: /^(?:\n\s*\}\}|\n\s*\|)/i,
 	mdURLPattern: /(https:\/\/\S*)/,
 	mdRegExpPattern: /^\/(.+)\/([oigmx]{0,5})$/,
-	mdWikipageRegExp: new RegExp( mw.RegExp.escape( mw.config.get( 'wgArticlePath' ).replace( '$1', '' ) ) + '(.+)' ),
+	mdWikipageRegExp: new RegExp( mw.util.escapeRegExp( mw.config.get( 'wgArticlePath' ).replace( '$1', '' ) ) + '(.+)' ),
 	mdSelfPath: 'MediaWiki:Gadget-VisualFileChange.js',
 	mdHelpPath: 'COM:VFC',
 	mdErrReportPath: 'User_talk:Rillke/AjaxMassDelete.js',
