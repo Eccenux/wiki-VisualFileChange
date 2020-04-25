@@ -2135,9 +2135,13 @@ $.extend(window.VisualFileChange, {
 			ii.metadata = ii.metadata || []; // not all images have metadata
 			pg.categories = pg.categories || []; // not all images have categories
 
-			uItem.content = pg.revisions[0]['*'] || ''; // save the content for OTRS usage, replace and find-the-real-uploader
-			uItem.time = uItem.time || pg.revisions[0].timestamp;
-			uItem.basetimestamp = pg.revisions[0].timestamp; // timestamp to detect edit conflicts
+			if (pg.revisions[0]) {
+				uItem.content = pg.revisions[0]['*'] || ''; // save the content for OTRS usage, replace and find-the-real-uploader
+				uItem.time = uItem.time || pg.revisions[0].timestamp;
+				uItem.basetimestamp = pg.revisions[0].timestamp; // timestamp to detect edit conflicts
+			} else {
+				mw.log.warn('API response for ' + id + ' has empty revisions list (w.wiki/Njw)'); // TODO properly handle this case (there should be some rvcontinue in the response, follow that)
+			}
 			uItem.categories = pg.categories; // save cats for cute-selection
 			uItem.metadata = ii.metadata; // save Exif and other for cute-selection
 			uItem.size = (ii.size >> 10); // for cute-selection
