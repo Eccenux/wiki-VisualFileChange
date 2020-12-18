@@ -692,6 +692,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 					pCallback( searchTerms );
 				return;
 			}
+			if ( !result.query ) {
+				return;
+			}
 			result = result.query.allusers || result.query.allcategories || result.query.allpages;
 			$.each( result, function ( id, it ) {
 				searchTerms.push( {
