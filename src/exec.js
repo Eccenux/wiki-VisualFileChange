@@ -538,7 +538,9 @@ $.extend(window.VisualFileChange,
 				if (vfc.gbScrollTimeout) clearTimeout(vfc.gbScrollTimeout);
 				vfc.gbScrollTimeout = setTimeout(function() {
 					// Scroll to the recently edited 
-					vfc.dlg.clearQueue().animate({ scrollTop: $gb.position().top }, 800);
+					if(vfc.dlg) {
+						vfc.dlg.clearQueue().animate({ scrollTop: $gb.position().top }, 800);
+					}
 				}, 150);
 			}
 		}
