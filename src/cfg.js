@@ -22,7 +22,7 @@ mw.util.addCSS( ' .vFCConfigRequired { visibility:visible !important; }\n' +
 		'lyTf5+Tm5Re8JUlyurAIMBXPfaFM1ZaW1ZLU4VM5+5MrKtv7KJ1d53uobai6BrBs2LjpWR3tI7183gJsbd022/x1VccOd2DHzl3134dpP+v3ALv27ts/ZqXMH3QD9h06fOSDxWI9dhzS+ciJk6de//p9+owSJxQIn1kRMc5BRbIrVyevXXdSYTIRysHFyFqXEjxUiHEFknv3Hzx0dJAIuJgQ5RFS2wsOjq6ujAusJzCVE5fLeIIxpILAlTwOh2cz5Pr+AdZMhGvAEGFPAAAAAElFTkSuQmCC") no-repeat 10px 10px } div.growlUI h1, div.growlUI h2 {color: white; padding: 5px 5px 5px 75px; text-align: left }'
 );
 
-var profileVar = 'vFC_Profiles';
+var profileVar = 'mwgadget-vFC_Profiles';
 var scriptpath = mw.config.get('wgUserName') ? mw.config.get('wgFormattedNamespaces')[2] + ':' + mw.config.get('wgUserName').replace(/ /g, '_') + '/' : '';
 var commonjsPath = scriptpath + 'common.js';
 var skinjsPath = scriptpath + mw.config.get('skin') + '.js';
@@ -159,7 +159,20 @@ $.extend(window.VisualFileChange,
 	 *
 	 */
 	mdGetClientProfiles: function () {
-		return $.jStorage.get(profileVar, {});
+		var ret = mw.storage.getObject(profileVar);
+		if (ret) {
+			return ret;
+		}
+		// Try to get old data from jStorage
+		var jstorage = mw.storage.getObject("jStorage");
+		if (jstorage.vFC_Profiles) {
+			ret = jstorage.vFC_Profiles;
+			// Clear out jStorage
+			delete jstorage.vFC_Profiles;
+			mw.storage.setObject("jStorage", jstorage);
+			return ret;
+		}
+		return {};
 	},
 	getNewConfigItem: function (objProfile) {
 		if ('object' === typeof objProfile) return objProfile;
@@ -200,7 +213,7 @@ $.extend(window.VisualFileChange,
 		var oldClientConfig = vfc.mdGetClientProfiles();
 
 		oldClientConfig[saveName] = vfc.getNewConfigItem(objProfile);
-		$.jStorage.set(profileVar, oldClientConfig);
+		mw.storage.setObject(profileVar, oldClientConfig);
 	},
 	mdApplyProfile: function (applyName, source) {
 		var profiles;
@@ -259,7 +272,7 @@ $.extend(window.VisualFileChange,
 				newConfig[profileName] = profileContent;
 			}
 		});
-		$.jStorage.set(profileVar, newConfig);
+		mw.storage.setObject(profileVar, newConfig);
 	},
 	
 	mdProfile: function () {
@@ -473,7 +486,7 @@ $.extend(window.VisualFileChange,
 mw.loader.using([
 	'jquery.ui', // deprecated
 	'jquery.cookie', 
-	'jquery.jStorage',
+	'mediawiki.storage',
 	'mediawiki.user',
 	'ext.gadget.libJQuery',
 	'ext.gadget.SettingsManager',
