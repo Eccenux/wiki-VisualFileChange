@@ -167,6 +167,7 @@ $.extend(window.VisualFileChange,
 		var jstorage = mw.storage.getObject("jStorage");
 		if (jstorage.vFC_Profiles) {
 			ret = jstorage.vFC_Profiles;
+			mw.storage.setObject(profileVar, ret)
 			// Clear out jStorage
 			delete jstorage.vFC_Profiles;
 			mw.storage.setObject("jStorage", jstorage);
