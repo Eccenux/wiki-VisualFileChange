@@ -1394,7 +1394,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		},
 		np: {
 			tag: '{{subst:image permission|1=%FILE%}}',
-			summary: 'Please send permission for [[%FILE%]] (and the listed ones) to [[COM:OTRS|OTRS]].'
+			summary: 'Please send permission for [[%FILE%]] (and the listed ones) to [[COM:VRT|VRT]].'
 		},
 		ns: {
 			tag: '{{subst:image source|1=%FILE%}}',
@@ -1470,10 +1470,10 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			summary: 'Missing a valid [[Commons:Copyright tags|copyright tag]] (/[[Commons:Licensing|license]]).'
 		},
 		otrs: {
-			summary: 'Adding an [[COM:OTRS|OTRS]] tag to the permission section of this file. Removing problem tags.'
+			summary: 'Adding an [[COM:VRT|VRT]] tag to the permission section of this file. Removing problem tags.'
 		},
 		other: {
-			summary: 'Adding an [[COM:OTRS|OTRS]] or license-review tag to the permission section of this file.'
+			summary: 'Adding an [[COM:VRT|VRT]] or license-review tag to the permission section of this file.'
 		},
 		aDelete: {
 			summary: ''
@@ -1782,7 +1782,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		select: 'mdGetWatchlistSelect'
 	}, {
 		name: 'watchlistOTRS',
-		label: 'Watchlist settings during using OTRS options',
+		label: 'Watchlist settings during using VRT options',
 		'default': 'nochange',
 		select: 'mdGetWatchlistSelect'
 	}, {
@@ -1917,7 +1917,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		mdInvertSelection: 'Invert selection',
 		mdInsertDeleteReasen: 'Select the files to delete and fill in the reason, please',
 		mdInsertDeleteHeading: 'Insert the heading for the mass deletion request, please',
-		mdInsertOther: 'Please insert the OTRS (or other) text to add to the permission-section',
+		mdInsertOther: 'Please insert the VRT (or other) text to add to the permission-section',
 		mdInsertEditSummary: 'An auto-edit summary for the file-pages will be created. Additionally add',
 		mdInsertDeleteSummary: 'Specify the reason for the deletion',
 		mdReplacePermissionText: 'Clean permission-section?',
