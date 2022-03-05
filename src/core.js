@@ -1818,11 +1818,11 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdSettings: {},
 
 	mdTagRemoval: [
-		[ /\{\{[Oo]TRS[ _][Pp]ending[^}\n]*\}\}/g ],
-		[ /\{\{[Oo]TRS[ _][Rr]eceived\|.*\}\}/g ],
+		[ /\{\{[Pp]ermission[ _][Pp]ending[^}\n]*\}\}/g ],
+		[ /\{\{[Pp]ermission[ _][Rr]eceived\|.*\}\}/g ],
 		[ /\{\{[Nn]o[ _]license[^}\n]*\}\}/g ],
 		[ /\{\{[Nn]o[ _]permission[^}\n]*\}\}/g ],
-		[ /\{\{[Nn]o[ _]OTRS[ _]permission[^}\n]*\}\}/g ],
+		[ /\{\{[Nn]o[ _]VRTS[ _]permission[^}\n]*\}\}/g ],
 		[ /\{\{[Nn]o[ _]source[ _]since\|.*\}\}/g ],
 		[ /\{\{[Dd]w[ _]no[ _]source[ _]since\|.*\}\}/g ],
 		[ /\{\{[Ss]peedydelete.*\}\}/g ],
@@ -1845,9 +1845,9 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Media without a source.*/, '!s' ],
 		[ /Other speedy deletions.*/, 'speedyd' ],
 		[ /Copyright violations.*/, 'copyvio' ],
-		[ /OTRS pending.*/, 'on', 'ddf' ],
-		[ /Items with (?:ticket )?OTRS permission confirmed.*/, 'opm', 'bcf' ],
-		[ /OTRS received.*/, 'or', 'cdf' ],
+		[ /Permission pending.*/, 'pn', 'ddf' ],
+		[ /Items with (?:ticket )?OTRS permission confirmed.*/, 'ppm', 'bcf' ],
+		[ /Permission received.*/, 'pr', 'cdf' ],
 		[ /[Aa]dmin[- ]reviewed [licenses|Flickr images]/, 'lrd', '8fa' ],
 		[ /Flickr images reviewed by/, 'frd', '8fa' ],
 		[ /Flickr images needing human review/, 'frR', 'af8' ],
@@ -1872,7 +1872,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Category:Free screenshot.*/i, 'free-Screenshot' ],
 		[ /Category:Copyright by Wikimedia.*/i, '(c)WMF' ],
 		[ /Category:Self[- _]published[ _]work/i, '<b>self</b>' ], // rm the next tags from being shown
-		[ /Valid SVG/, '' ], [ /Translation possible/, '' ], [ /License[- _]migration redundant/, '' ], [ /Retouched pictures/, '' ], [ /Extracted images/, '' ], [ /Images with annotations/, '' ], [ /Media needing category/, '' ], [ /requiring review/, '' ], [ /[Flickr|License] review needed/, '' ], [ /[Aa]dmin[- ]reviewed/, '' ], [ /UploadWizard/, '' ], [ /OTRS[- _]received/, '' ], [ /Items[- _]with[- _]OTRS[- _]permission/, '' ], [ /OTRS[- _]pending/, '' ], [ /Flickr images reviewed by/, '' ], [ /Media with locations/, '' ], [ /Media missing/, '' ], [ /Media without a/, '' ], [ /Deletion requests/, '' ]
+		[ /Valid SVG/, '' ], [ /Translation possible/, '' ], [ /License[- _]migration redundant/, '' ], [ /Retouched pictures/, '' ], [ /Extracted images/, '' ], [ /Images with annotations/, '' ], [ /Media needing category/, '' ], [ /requiring review/, '' ], [ /[Flickr|License] review needed/, '' ], [ /[Aa]dmin[- ]reviewed/, '' ], [ /UploadWizard/, '' ], [ /OTRS[- _]received/, '' ], [ /Items[- _]with[- _]OTRS[- _]permission/, '' ], [ /Permission[- _]pending/, '' ], [ /Flickr images reviewed by/, '' ], [ /Media with locations/, '' ], [ /Media missing/, '' ], [ /Media without a/, '' ], [ /Deletion requests/, '' ]
 	],
 
 	mdOTRSprefill: '{{PermissionTicket|id=%ID|user={{subst:REVISIONUSER}}}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
@@ -2035,8 +2035,8 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			ns: 'No source',
 			'ns-dw': 'No source -Derivative',
 			nl: 'No license',
-			other: 'OTRS- add',
-			otrs: 'OTRS- remove tags',
+			other: 'VRTS- add',
+			otrs: 'VRTS- remove tags',
 			c_replace: 'custom replace',
 			prepend: 'prepend any text',
 			append: 'append any text',
