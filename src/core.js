@@ -1846,7 +1846,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Other speedy deletions.*/, 'speedyd' ],
 		[ /Copyright violations.*/, 'copyvio' ],
 		[ /Permission pending.*/, 'pn', 'ddf' ],
-		[ /Items with (?:ticket )?OTRS permission confirmed.*/, 'ppm', 'bcf' ],
+		[ /Items with (?:ticket )?VRTS permission confirmed.*/, 'ppm', 'bcf' ],
 		[ /Permission received.*/, 'pr', 'cdf' ],
 		[ /[Aa]dmin[- ]reviewed [licenses|Flickr images]/, 'lrd', '8fa' ],
 		[ /Flickr images reviewed by/, 'frd', '8fa' ],
@@ -1872,7 +1872,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Category:Free screenshot.*/i, 'free-Screenshot' ],
 		[ /Category:Copyright by Wikimedia.*/i, '(c)WMF' ],
 		[ /Category:Self[- _]published[ _]work/i, '<b>self</b>' ], // rm the next tags from being shown
-		[ /Valid SVG/, '' ], [ /Translation possible/, '' ], [ /License[- _]migration redundant/, '' ], [ /Retouched pictures/, '' ], [ /Extracted images/, '' ], [ /Images with annotations/, '' ], [ /Media needing category/, '' ], [ /requiring review/, '' ], [ /[Flickr|License] review needed/, '' ], [ /[Aa]dmin[- ]reviewed/, '' ], [ /UploadWizard/, '' ], [ /OTRS[- _]received/, '' ], [ /Items[- _]with[- _]OTRS[- _]permission/, '' ], [ /Permission[- _]pending/, '' ], [ /Flickr images reviewed by/, '' ], [ /Media with locations/, '' ], [ /Media missing/, '' ], [ /Media without a/, '' ], [ /Deletion requests/, '' ]
+		[ /Valid SVG/, '' ], [ /Translation possible/, '' ], [ /License[- _]migration redundant/, '' ], [ /Retouched pictures/, '' ], [ /Extracted images/, '' ], [ /Images with annotations/, '' ], [ /Media needing category/, '' ], [ /requiring review/, '' ], [ /[Flickr|License] review needed/, '' ], [ /[Aa]dmin[- ]reviewed/, '' ], [ /UploadWizard/, '' ], [ /Permission[- _]received/, '' ], [ /Items[- _]with[- _]VRTS[- _]permission/, '' ], [ /Permission[- _]pending/, '' ], [ /Flickr images reviewed by/, '' ], [ /Media with locations/, '' ], [ /Media missing/, '' ], [ /Media without a/, '' ], [ /Deletion requests/, '' ]
 	],
 
 	mdOTRSprefill: '{{PermissionTicket|id=%ID|user={{subst:REVISIONUSER}}}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
