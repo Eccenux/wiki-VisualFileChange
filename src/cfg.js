@@ -165,7 +165,7 @@ $.extend(window.VisualFileChange,
 		}
 		// Try to get old data from jStorage
 		var jstorage = mw.storage.getObject("jStorage");
-		if (jstorage.vFC_Profiles) {
+		if (jstorage !== null && jstorage.vFC_Profiles) {
 			ret = jstorage.vFC_Profiles;
 			mw.storage.setObject("mwgadget-" + profileVar, ret);
 			// Clear out jStorage
