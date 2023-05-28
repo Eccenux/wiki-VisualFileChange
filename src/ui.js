@@ -2414,7 +2414,7 @@ $.extend(window.VisualFileChange, {
 mw.loader.using([// TODO
 	'jquery.ui', // deprecated
 	'jquery.ui', // deprecated
-	'jquery.tipsy', // deprecated
+	'ext.gadget.tipsyDeprecated', // very deprecated
 	'jquery.lengthLimit',
 	'mediawiki.String',
 	'mediawiki.storage', // former jquery.jStorage
