@@ -487,7 +487,7 @@ $.extend(window.VisualFileChange,
 
 mw.loader.using([
 	'jquery.ui', // deprecated
-	'jquery.cookie', 
+	'mediawiki.cookie', 
 	'mediawiki.storage',
 	'mediawiki.user',
 	'ext.gadget.libJQuery',
