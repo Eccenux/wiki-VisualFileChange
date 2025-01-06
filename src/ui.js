@@ -1461,7 +1461,7 @@ $.extend(window.VisualFileChange, {
 					// yyyy    mm     dd
 					/(\d{4})-(\d\d)-(\d\d)T(?:(\d\d):(\d\d):(\d\d))Z/.exec(curUpld.time);
 					var curUpldDate = new Date(RegExp.$1, (RegExp.$2 - 1), RegExp.$3, RegExp.$4, RegExp.$5, RegExp.$6);
-					$curThmb = $('input[value="' + upload.replace('"', '\\"') + '"]');
+					$curThmb = $('input[value="' + upload.replaceAll('"', '\\"') + '"]');
 
 					if (v_txtAjaxMdSelectCat) {
 						for (var ct in curUpld.categories) {
