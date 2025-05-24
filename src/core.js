@@ -626,6 +626,7 @@ VisualFileChange = vfc = window.VisualFileChange = {
 			height: 'auto',
 			width: dlgWidth,
 			buttons: dlgButtons,
+			dialogClass: 'vfc-dialog',
 			close: vfc.cancel,
 			open: function () {
 				var $buttons = $( this ).parent().find( '.ui-dialog-buttonpane button' );
@@ -1845,13 +1846,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Media without a source.*/, '!s' ],
 		[ /Other speedy deletions.*/, 'speedyd' ],
 		[ /Copyright violations.*/, 'copyvio' ],
-		[ /Permission pending.*/, 'pn', 'ddf' ],
-		[ /Items with (?:ticket )?VRTS permission confirmed.*/, 'ppm', 'bcf' ],
-		[ /Permission received.*/, 'pr', 'cdf' ],
-		[ /[Aa]dmin[- ]reviewed [licenses|Flickr images]/, 'lrd', '8fa' ],
-		[ /Flickr images reviewed by/, 'frd', '8fa' ],
-		[ /Flickr images needing human review/, 'frR', 'af8' ],
-		[ /License review needed/, 'lrR', 'af8' ]
+		[ /Permission pending.*/, 'pn', 'mdtag-ticket-pending' ],
+		[ /Items with (?:ticket )?VRTS permission confirmed.*/, 'ppm', 'mdtag-ticket-confirmed' ],
+		[ /Permission received.*/, 'pr', 'mdtag-ticket-received' ],
+		[ /[Aa]dmin[- ]reviewed [licenses|Flickr images]/, 'lrd', 'mdtag-reviewed' ],
+		[ /Flickr images reviewed by/, 'frd', 'mdtag-reviewed' ],
+		[ /Flickr images needing human review/, 'frR', 'mdtag-review-pending' ],
+		[ /License review needed/, 'lrR', 'mdtag-review-pending' ]
 	],
 
 	mdLicenseRecognization: [
@@ -2190,7 +2191,7 @@ function ProgressBox( width, o ) {
 	var _this = this;
 	this.$cont = $( '<div>', {
 		id: 'vfc-progressbox',
-		style: 'display:none;overflow:hidden;left:0;width:' + this.w + 'px;height:100%;z-index:1000;top:0pt;position:fixed;font:15px sans-serif;background-color:#cde;background-image:background-image:-webkit-linear-gradient(top,#cde,#eee 100px,#eee);background-image:linear-gradient(to bottom,#cde,#eee 100px,#eee);'
+		style: 'width:' + this.w + 'px;'
 	} ).dblclick( function () {
 		_this.$cmd.focus();
 	} );
