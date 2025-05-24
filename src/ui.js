@@ -17,51 +17,7 @@ if (window.VisualFileChange.displayComponents)
 var vfc = window.VisualFileChange,
 	i18n = vfc.i18n,
 	$doc = $(document),
-	$win = $(window),
-	css = '.rgallery{background-color:#FFF !important;}\n\
-		#AjaxMdContainer{position:relative;}\n\
-		.md-toggle-pane{position:absolute;}\n\
-		.md-nav-button{display:inline-block;background-color:white;border:2px solid #f3f3f3;border-radius:10px}\
-		.md-nav-button:hover,.md-nav-button:focus{background-color:#EEF;}\
-		.md-nav-button:active{border-color:#ccc }\
-		.md-nav-button-container{position:absolute;top:3em;right:1.5em;max-width:18px }\n\
-		.md-nav-button-wrap{display:inline-block;background:none!important;border:none!important;}\n\
-		.numbersOnly{text-align:right;}\n\
-		.md-deleted-uploads{width:99%;display:none;background:#FCC url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png) no-repeat scroll center;}\n\
-		a:link.md-loglink{color:#BB6!important;display:inline-block;}\n\
-		a.md-talklink{color:#888!important;border-bottom:1px dotted #555;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;text-decoration:none!important;}\n\
-		.tipsycategory{border-bottom:1px dotted #888;font-style:italic;margin-right:4px;display:inline-block;cursor:help }\n\
-		.tipsymetadata{color:#68B;border-bottom:1px dotted #57B;white-space:nowrap;font-style:italic;font-weight:bold;margin-right:4px;display:inline-block;cursor:help }\n\
-		.jFileTitle{display:block;text-align:center;padding-right:0 !important;background:#EEE !important;margin-top:3px;border-radius:5px;}\n\
-		.jFileTime{color:gray;font-size:0.9em;line-height:1.1em;}\n\
-		.jFileSize{color:green;font-size:0.9em;}\n\
-		li.rgallerybox{width:155px;background:#f8f8f8;border:#FFF 2px solid;}\n\
-		li.md-selected{background-color:#BBE;}\n\
-		li.md-selected div.thumb{background-color:#DDE;border:#FFF 1px solid;}\n\
-		div.jImage{position:relative }\n\
-		div.jProgress{position:absolute;top:0;left:0;height:16px;width:16px }\n\
-		div.jImage.progress-doing div.jProgress{background:url(\'' + vfc.icons.current + '\') no-repeat center;}\n\
-		div.jImage.progress-done div.jProgress{background:url(\'' + vfc.icons.done + '\') no-repeat center;}\n\
-		div.jImage.progress-failed div.jProgress{background:url(\'' + vfc.icons.failed + '\') no-repeat center;}\n\
-		div.jImage.progress-nochange div.jProgress{background:url(\'' + vfc.icons.nochange + '\') no-repeat center;}\n\
-		div.jGU{position:absolute;right:0;bottom:0;height:0;width:0;overflow:visible;cursor:pointer }\n\
-		li.rgallerybox div.jImage.progress-done{border:2px solid #393;}\n\
-		li.rgallerybox div.jImage.progress-failed{background-color:#ebb;border:2px solid #933;}\n\
-		li.rgallerybox div.jImage.progress-nochange{background-color:#eeb;border:2px solid #993;}\n\
-		.md-re-escape-helper{position:absolute;z-index:1002;color:#FFF;cursor:pointer;padding:3px;\
-		border-top-left-radius:8px;border-bottom-left-radius:8px;background:rgb(97,196,25);background:\
-		-webkit-gradient(radial,center center,0,center center,100%,color-stop(0%,rgb(97,196,25)),color-stop(100%,rgb(180,227,145)));\
-		background:radial-gradient(center,ellipse cover,rgb(97,196,25),rgb(180,227,145));}\n\
-		.md-examine-contents{display:inline-block;width:49%;white-space:pre-wrap;font-family:monospace;border:1px solid #333;text-align:left;word-wrap:break-word;}\n\
-		li#mdLastSelected{border:#447 2px solid;}\n';
-// Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements
-if (mw.config.get('skin') === 'vector') {
-	css += '.ui-buttonset .ui-button{margin-left:0!important;margin-right:-.3em!important;}\n\
-		.ui-buttonset .ui-button-text-only > .ui-button-text{padding-left:0.5em !important;padding-right:0.5em !important;}\n\
-		.ui-buttonset > label.ui-state-active{background:#EEE !important;}\n\
-		.md-examine-contents{font-size:1.2em;}';
-}
-mw.util.addCSS(css);
+	$win = $(window);
 
 $.extend(window.VisualFileChange, {
 	displayComponents: true,
@@ -624,9 +580,9 @@ $.extend(window.VisualFileChange, {
 				$cb.parent().css('background', '');
 				$text.css('background', '');
 				if (isRE && !$cb[0].checked)
-					$cb.parent().css('background', '#FCC');
+					$cb.parent().css({'background': 'var(--background-color-destructive-subtle, #ffe9e5)', 'color': 'inherit'});
 				else if (!isRE && $cb[0].checked)
-					$text.css('background', '#FCC');
+					$text.css({'background': 'var(--background-color-destructive-subtle, #ffe9e5)', 'color': 'inherit'});
 
 				if (!val || isRE)
 					$regExpEscapeHelper.hide();
@@ -637,7 +593,7 @@ $.extend(window.VisualFileChange, {
 			var testEmptyReplace = function () {
 				$replace.css('background', '');
 				if ($text.val() && !$replace.val())
-					$replace.css('background', '#FEB');
+					$replace.css({'background': 'var(--background-color-warning-subtle, #fdf2d5)', 'color': 'inherit'});
 
 			};
 			$text.on('input keyup change', testConditions);
@@ -1333,11 +1289,9 @@ $.extend(window.VisualFileChange, {
 			// So start unbinding them.
 			vfc.$ctrs.editSummary.off('keypress');
 			vfc.$ctrs.editSummary.byteLimit(opt.bLimit);
-			var summary = vfc.$ctrs.editSummary.val();
 			var mwString = require('mediawiki.String');
 			while (mwString.byteLength(summary) > opt.bLimit)
 				summary = $.trim(summary.slice(0, summary.length - 1));
-
 			vfc.$ctrs.editSummary.val(summary);
 
 			// acceptReason
@@ -2009,7 +1963,7 @@ $.extend(window.VisualFileChange, {
 			}
 		});
 
-		mdTags += '</i> <span style="background-color:#FC9;">';
+		mdTags += '</i> <span class="mdtag-base">';
 
 		// Then, deletion tags:
 		$.each(mdCats, function (i, cati) {
@@ -2018,7 +1972,7 @@ $.extend(window.VisualFileChange, {
 			$.each(_this.mdTagRecognization, function (id, thistag) {
 				if (thistag[0].test(thiscat)) {
 					if (thistag[1] !== '')
-						mdTags += (thistag[2] ? '<span style="background-color:#' + thistag[2] + ';">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + thistag[1] + '</abbr>' + (thistag[2] ? '</span>' : '');
+						mdTags += (thistag[2] ? '<span class="' + thistag[2] + '">' : '') + '<abbr title="' + thiscat.replace('Category:', '') + '">' + thistag[1] + '</abbr>' + (thistag[2] ? '</span>' : '');
 
 					skip = true;
 					return false;
@@ -2404,6 +2358,7 @@ $.extend(window.VisualFileChange, {
 				effect: 'highlight',
 				duration: 1800
 			},
+			dialogClass: 'vfc-dialog',
 			width: Math.min(450, $win.width())
 		});
 		document.title = i18nED.title;
