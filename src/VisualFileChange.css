@@ -1,4 +1,314 @@
-/* For the time being this is a dummy file for testing. It won't make actual changes to VFC yet. */
-.vfc-dummy-test {
-	background: red;
+/* Stylesheet for VisualFileChange - maintained by User:Matrix */
+/* License: CC-BY-SA, GFDL - same as the core VFC script */
+body .vfc-dialog.ui-widget-content, 
+body .vfc-dialog .ui-widget-content {
+	border: 1px solid #a2a9b1 !important;
+	background: var(--background-color-interactive, #eaecf0) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-dialog .ui-widget-header {
+	border: 1px solid var(--border-color-progressive, #6485d1) !important;
+	background: var(--background-color-interactive-subtle--active, #dadde3) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-state-default {
+	border: 1px solid var(--border-color-progressive, #6485d1) !important;
+	background: var(--background-color-progressive-subtle, #f1f4fd) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-state-hover {
+	border: 1px solid var(--border-color-progressive--hover, #3056a9) !important;
+	background: var(--background-color-progressive-subtle--hover, #dce3f9) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-state-highlight {
+	border: 1px solid var(--border-color-warning, #ab7f2a) !important;
+	background: var(--background-color-warning-subtle, #fdf2d5) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-button.ui-state-hover {
+	border: 1px solid var(--border-color-progressive--hover, #3056a9) !important;
+	background: var(--background-color-progressive-subtle--hover, #dce3f9) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-button.ui-state-active {
+	border: 1px solid var(--border-color-progressive--active, #233566) !important;
+	background: var(--background-color-progressive-subtle--active, #cbd6f6) !important;
+	color: inherit !important;
+}
+body .vfc-dialog.ui-widget-content .ui-button.ui-button-green {
+	border: 1px solid var(--border-color-success, #099979) !important;
+	background: #00b33c !important;
+	color: white !important;
+}
+body .vfc-dialog.ui-widget-content .ui-button.ui-button-red {
+	border: 1px solid var(--border-color-destructive, #f54739) !important;
+	background: #ff3333 !important;
+	color: white !important;
+}
+.rgallery {
+    background-color: var(--background-color-base, #fff) !important;
+    color: inherit;
+}
+#AjaxMdContainer {
+    position: relative;
+}
+.md-toggle-pane {
+    position: absolute;
+}
+.md-nav-button {
+    display: inline-block;
+    background-color: var(--background-color-base, #fff);
+    color: inherit;
+    border: 2px solid #f3f3f3;
+    border-radius: 10px;
+}
+.md-nav-button:hover,
+.md-nav-button:focus {
+    background-color: #eef;
+}
+.md-nav-button:active {
+    border-color: #ccc;
+}
+.md-nav-button-container {
+    position: absolute;
+    top: 3em;
+    right: 1.5em;
+    max-width: 18px;
+}
+.md-nav-button-wrap {
+    display: inline-block;
+    background: none !important;
+    border: none !important;
+}
+.numbersOnly {
+    text-align: right;
+}
+.md-deleted-uploads {
+    width: 99%;
+    display: none;
+    background: #fcc
+        url(//upload.wikimedia.org/wikipedia/commons/d/d6/User-trash.png)
+        no-repeat scroll center;
+}
+a:link.md-loglink {
+    color: var(--color-warning, #886425) !important;
+    display: inline-block;
+}
+a.md-talklink {
+    color: #888 !important;
+    border-bottom: 1px dotted #555;
+    white-space: nowrap;
+    font-style: italic;
+    font-weight: bold;
+    margin-right: 4px;
+    display: inline-block;
+    text-decoration: none !important;
+}
+.tipsycategory {
+    border-bottom: 1px dotted #888;
+    font-style: italic;
+    margin-right: 4px;
+    display: inline-block;
+    cursor: help;
+}
+.tipsymetadata {
+    color: #68b;
+    border-bottom: 1px dotted #57b;
+    white-space: nowrap;
+    font-style: italic;
+    font-weight: bold;
+    margin-right: 4px;
+    display: inline-block;
+    cursor: help;
+}
+.jFileTitle {
+    display: block;
+    text-align: center;
+    padding-right: 0 !important;
+    background: var(--background-color-interactive, #eaecf0) !important;
+    color: inherit;
+    margin-top: 3px;
+    border-radius: 5px;
+}
+.jFileTime {
+    color: var(--color-subtle, #54595d);
+    font-size: 0.9em;
+    line-height: 1.1em;
+}
+.jFileSize {
+    color: var(--color-content-added, #006400);
+    font-size: 0.9em;
+}
+li.rgallerybox {
+    width: 155px;
+    background: var(--background-color-neutral-subtle, #f8f9fa);
+    color: inherit;
+    border: transparent 2px solid;
+}
+li.md-selected {
+    background-color: #bbe;
+    color: inherit;
+}
+li.md-selected div.thumb {
+    background-color: #dde;
+    color: inherit;
+    border: transparent 1px solid;
+}
+div.jImage {
+    position: relative;
+}
+div.jProgress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 16px;
+    width: 16px;
+}
+div.jImage.progress-doing div.jProgress {
+    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png") no-repeat center;
+}
+div.jImage.progress-done div.jProgress {
+    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png") no-repeat center;
+}
+div.jImage.progress-failed div.jProgress {
+    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png") no-repeat center;
+}
+div.jImage.progress-nochange div.jProgress {
+    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png") no-repeat center;
+}
+div.jGU {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    width: 0;
+    overflow: visible;
+    cursor: pointer;
+}
+li.rgallerybox div.jImage.progress-done {
+    border: 2px solid var(--border-color-success, #099979);
+}
+li.rgallerybox div.jImage.progress-failed {
+    background-color: var(--background-color-destructive-subtle, #ffe9e5);
+    color: inherit;
+    border: 2px solid var(--border-color-destructive, #f54739);
+}
+li.rgallerybox div.jImage.progress-nochange {
+    background-color: var(--background-color-warning-subtle, #fdf2d5);
+    border: 2px solid var(--border-color-destructive, #f54739);
+}
+.md-re-escape-helper {
+    position: absolute;
+    z-index: 1002;
+    color: #fff;
+    cursor: pointer;
+    padding: 3px;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    background: #254d08;
+}
+.md-examine-contents {
+    display: inline-block;
+    width: 49%;
+    white-space: pre-wrap;
+    font-family: monospace;
+    border: 1px solid #333;
+    text-align: left;
+    word-wrap: break-word;
+}
+li#mdLastSelected {
+    border: #447 2px solid;
+}
+#vfc-progressbox {
+    display: none;
+    overflow: hidden;
+    left: 0;
+    height: 100%;
+    z-index: 1000;
+    top: 0;
+    position: fixed;
+    font: 15px sans-serif;
+    background-color: #cde;
+    background-image: -webkit-linear-gradient(top, #cde, #eee 100px, #eee);
+    background-image: linear-gradient(to bottom, #cde, #eee 100px, #eee);
+    color: inherit;
+}
+.mdtag-base {
+	background-color: #fc9;
+	color: inherit;
+}
+.mdtag-ticket-pending {
+	background-color: #ddf;
+	color: inherit;
+}
+.mdtag-ticket-confirmed {
+	background-color: #bcf;
+	color: inherit;
+}
+.mdtag-ticket-received {
+	background-color: #cdf;
+	color: inherit;
+}
+.mdtag-reviewed {
+	background-color: #8fa;
+	color: inherit;
+}
+.mdtag-review-pending {
+	background-color: #af8;
+	color: inherit;
+}
+/* TODO: Replace Tipsy with OO.ui.PopupWidget, [[phab:T336019]] */
+.tipsy-inner {
+	background-color: var(--background-color-base, #fff) !important;
+	color: inherit !important;
+}
+/* Vector specific */
+/* Fix https://bugzilla.wikimedia.org/show_bug.cgi?id=32687 and some vector readability improvements */
+body.skin-vector .ui-buttonset .ui-button {
+    margin-left: 0 !important;
+    margin-right: -0.3em !important;
+}
+body.skin-vector .ui-buttonset .ui-button-text-only > .ui-button-text {
+    padding-left: 0.5em !important;
+    padding-right: 0.5em !important;
+}
+body.skin-vector .md-examine-contents {
+    font-size: 1.2em;
+}
+/* Dark mode fixes */
+@media screen {
+	html.skin-theme-clientpref-night #vfc-progressbox {
+		background-color: #204060;
+		background-image: -webkit-linear-gradient(top, #204060, #27292d 100px, #27292d);
+		background-image: linear-gradient(top, #204060, #27292d 100px, #27292d);
+	}
+	html.skin-theme-clientpref-night .ui-icon-closethick {
+		color-scheme: light;
+		filter: invert(1) hue-rotate(180deg);
+	}
+	html.skin-theme-clientpref-night li.md-selected {
+	    background-color: #282857;
+	}
+	li.md-selected div.thumb {
+	    background-color: #1a1a33;
+	}
+	html.skin-theme-clientpref-night .mdtag-base {
+		background-color: #804000;
+	}
+	html.skin-theme-clientpref-night .mdtag-ticket-pending {
+		background-color: #202046;
+	}
+	html.skin-theme-clientpref-night .mdtag-ticket-received {
+		background-color: #00134d;
+	}
+	html.skin-theme-clientpref-night .mdtag-ticket-confirmed {
+		background-color: #002080;
+	}
+	html.skin-theme-clientpref-night .mdtag-reviewed {
+		background-color: #005F2A;
+	}
+	html.skin-theme-clientpref-night .mdtag-review-pending {
+		background-color: #004C22;
+	}
 }
