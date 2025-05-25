@@ -1289,6 +1289,7 @@ $.extend(window.VisualFileChange, {
 			// So start unbinding them.
 			vfc.$ctrs.editSummary.off('keypress');
 			vfc.$ctrs.editSummary.byteLimit(opt.bLimit);
+			var summary = vfc.$ctrs.editSummary.val();
 			var mwString = require('mediawiki.String');
 			while (mwString.byteLength(summary) > opt.bLimit)
 				summary = $.trim(summary.slice(0, summary.length - 1));
