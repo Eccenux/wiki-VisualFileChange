@@ -166,16 +166,20 @@ div.jProgress {
     width: 16px;
 }
 div.jImage.progress-doing div.jProgress {
-    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png") no-repeat center;
+	background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/40px-Crystal_Clear_action_loopnone.png") no-repeat center;
+	background-size: 16px;
 }
 div.jImage.progress-done div.jProgress {
-    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png") no-repeat center;
+	background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/40px-Crystal_Project_success.png") no-repeat center;
+	background-size: 16px;
 }
 div.jImage.progress-failed div.jProgress {
-    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png") no-repeat center;
+	background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/40px-Crystal_Project_cancel.png") no-repeat center;
+	background-size: 16px;
 }
 div.jImage.progress-nochange div.jProgress {
-    background: url("//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png") no-repeat center;
+	background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/40px-Crystal_Project_tick_yellow.png") no-repeat center;
+	background-size: 16px;
 }
 div.jGU {
     position: absolute;
