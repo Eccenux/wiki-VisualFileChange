@@ -313,18 +313,15 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	},
 
 	findOriginalUploaderCB: function ( result ) {
-		var pages = result.query.pages,
-			info,
-			content,
-			i;
-		for ( var id in pages ) { // there should be only one, but we don't know its ID
-			if ( pages.hasOwnProperty( id ) ) {
-				content = pages[ id ].revisions[ 0 ][ '*' ];
-				info = pages[ id ].imageinfo;
-				i = info.length - 1;
-				vfc.queryParams.target = info[ i ].user;
-			}
+		let pages = result.query.pages;
+		
+		for ( let page of Object.values( pages ) ) { // there should be only one, but we don't know its ID
+			//let content = page.revisions[ 0 ][ '*' ];
+			let info = page.imageinfo;
+			let i = info.length - 1;
+			vfc.queryParams.target = info[ i ].user;
 		}
+		
 		vfc.nextTask();
 	},
 
@@ -1897,13 +1894,13 @@ VisualFileChange = vfc = window.VisualFileChange = {
 	mdHelpNode: '<a href="' + mw.util.getUrl( 'Help:VisualFileChange.js' ) + '" target="_blank"><img title="Help and known issues. Icon by Markus Hohenwarter and Michael Borcherds, cc-by-sa-3.0" alt="?" src="//upload.wikimedia.org/wikipedia/commons/4/45/GeoGebra_icon_help.png"></a> ',
 	summaryChageKey: 'vFC_Suggestions',
 	icons: {
-		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/16px-Crystal_Project_tick_yellow.png',
-		current: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/16px-Crystal_Clear_action_loopnone.png',
-		done: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/16px-Crystal_Project_success.png',
-		failed: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/16px-Crystal_Project_cancel.png',
+		nochange: '//upload.wikimedia.org/wikipedia/commons/thumb/7/76/Crystal_Project_tick_yellow.png/20px-Crystal_Project_tick_yellow.png',
+		current: '//upload.wikimedia.org/wikipedia/commons/thumb/4/41/Crystal_Clear_action_loopnone.png/20px-Crystal_Clear_action_loopnone.png',
+		done: '//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Crystal_Project_success.png/20px-Crystal_Project_success.png',
+		failed: '//upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Crystal_Project_cancel.png/20px-Crystal_Project_cancel.png',
 		info: '//upload.wikimedia.org/wikipedia/commons/0/09/Crystal_Clear_action_info.png',
 		question: '//upload.wikimedia.org/wikipedia/commons/9/98/Crystal_Clear_app_miscellaneous_2.png',
-		attention: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/16px-Crystal_Clear_app_error-info.png'
+		attention: '//upload.wikimedia.org/wikipedia/commons/thumb/a/af/Crystal_Clear_app_error-info.png/20px-Crystal_Clear_app_error-info.png'
 	},
 
 // Translatable strings
@@ -2317,10 +2314,10 @@ function ProgressBox( width, o ) {
 
 	this.$cont.append( this.$cmd, this.$x, this.$capt, this.$subheading, this.$tasklist, this.$progressWrap, this.$aHelp, this.$errorCont, this.$credits );
 	$( 'body' ).append( this.$cont );
-	mw.util.addCSS( '.md-doing {padding-left:16px;background:url(\'' + o.icons.current + '\') no-repeat left;font-weight:bold} ' +
-'.md-done {padding-left:16px;background:url(\'' + o.icons.done + '\') no-repeat left} ' +
-'.md-failed {padding-left:16px;background:url(\'' + o.icons.failed + '\') no-repeat left} ' +
-'.md-attention {padding-left:16px;background:url(\'' + o.icons.attention + '\') no-repeat left}\n' );
+	mw.util.addCSS( '.md-doing {padding-left:16px;background-size: 16px;background:url(\'' + o.icons.current + '\') no-repeat left;font-weight:bold} ' +
+'.md-done {padding-left:16px;background-size: 16px;background:url(\'' + o.icons.done + '\') no-repeat left} ' +
+'.md-failed {padding-left:16px;background-size: 16px;background:url(\'' + o.icons.failed + '\') no-repeat left} ' +
+'.md-attention {padding-left:16px;background-size: 16px;background:url(\'' + o.icons.attention + '\') no-repeat left}\n' );
 }
 ProgressBox.fn = ProgressBox.prototype = {
 	constructor: ProgressBox,
