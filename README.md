@@ -7,23 +7,38 @@ For usage instructions, see [Help:VisualFileChange.js](https://commons.wikimedia
 ## History
 
 VisualFileChange was originally developed by [User:Rillke](https://commons.wikimedia.org/wiki/User:Rillke) in 2011 
-and later more authors contriubuted the code including: Zhuyifei1999, Perhelion, Krinkle, AntiCompositeNumber, Lucas Werkmeister, Steinsplitter, Krenair, ~riley, Ruthven, Saibo, Ebrahim, Nux and others.
+and later more authors contributed the code including: Zhuyifei1999, Perhelion, Krinkle, AntiCompositeNumber, Lucas Werkmeister, Steinsplitter, Krenair, ~riley, Ruthven, Saibo, Ebrahim, Nux and others.
 
-Previous attribution was removed in [this revision](https://commons.wikimedia.org/w/index.php?diff=75592478&oldid=75591275), as the remaining code was no longer eligible for copyright protection under that attribution.
+More specific contribution stats:
+
+- [core.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/core.js?editorlimit=200)
+- [cfg.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/cfg.js?editorlimit=200)
+- [exec.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/exec.js?editorlimit=200)
+- [ui.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/ui.js?editorlimit=200)
 
 ## Dependencies
 
-The gadget depends on the following modules:
+The gadget consists of the following modules:
 
-- `VisualFileChange.js/exec.js`
-- `VisualFileChange.js/ui.js`
-- `VisualFileChange.js/cfg.js`
+- `VisualFileChange.js` – just a main loader
+- `VisualFileChange.js/core.js` – core functionality, file management, and shared utilities
+- `VisualFileChange.js/exec.js` – execution of batch operations on selected files
+- `VisualFileChange.js/ui.js` – user interface, file selection, and interaction handling
+- `VisualFileChange.js/cfg.js` – configuration interface, settings, and user profiles
+- `VisualFileChange.css` – styles for the user interface, including dark mode support
+
+Also includes:
+- `VisualFileChange.js/install.js` – deprecated installation helper
+- [VisualFileChange.js/i18n/ar.js](https://commons.wikimedia.org/wiki/MediaWiki:Gadget-VisualFileChange.js/i18n/ar.js) – Arabic
+- [VisualFileChange.js/i18n/de.js](https://commons.wikimedia.org/wiki/MediaWiki:Gadget-VisualFileChange.js/i18n/de.js) – Deutsch
+- [VisualFileChange.js/i18n/it.js](https://commons.wikimedia.org/wiki/MediaWiki:Gadget-VisualFileChange.js/i18n/it.js) – Italian
+- [VisualFileChange.js/i18n/sl.js](https://commons.wikimedia.org/wiki/MediaWiki:Gadget-VisualFileChange.js/i18n/sl.js) – Slovene
 
 ## License
 
 Licensed under **CC BY-SA** and **GFDL**.
 
-**Attribution:** [User:Rillke](https://commons.wikimedia.org/wiki/User:Rillke) and others, see [core.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/core.js?editorlimit=200), [cfg.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/cfg.js?editorlimit=200), [exec.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/exec.js?editorlimit=200), [ui.js user stats](https://xtools.wmcloud.org/articleinfo/commons.wikimedia.org/MediaWiki:Gadget-VisualFileChange.js/ui.js?editorlimit=200).
+**Attribution:** [User:Rillke](https://commons.wikimedia.org/wiki/User:Rillke) and others.
 
 Contributors proposing or making changes agree to publish their contributions under the same licenses.
 
