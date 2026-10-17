@@ -1,0 +1,12 @@
+{
+	"name": "wiki-visualfilechange",
+	"private": true,
+	"type": "commonjs",
+	"scripts": {
+		"deploy": "node wikiploy.mjs"
+	},
+	"devDependencies": {
+		"wikiploy": "^2.2.0"
+		"eslint": "8.x",
+	}
+}

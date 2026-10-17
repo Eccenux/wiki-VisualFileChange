@@ -1,0 +1,55 @@
+// Remember to change VSC settings (UI): in `files.associations` add `commandbar.json: jsonc`
+{
+	"skipTerminateQuickPick": true,
+	"skipSwitchToOutput": false,
+	"skipErrorMessage": true,
+	"commands": [
+		// "commandType": "script" runs npm script directly
+		{
+			"text": "test",
+			"tooltip": "Run mocha tests.",
+			"color": "lightgreen",
+			"commandType": "script",
+			"command": "test",
+			"priority": 0
+		},
+		
+		{
+			"text": "build",
+			"tooltip": "Run the browserify build.",
+			"color": "lightgreen",
+			"commandType": "script",
+			"command": "build",
+			"priority": 0
+		},
+		
+		// running deployment as a task (so that prompts work)
+		// note that "Run dev deploy" is a label from tasks.json 
+		{
+			"text": "wikiploy-dev",
+			"tooltip": "Deploy pre-built script.",
+			"color": "lightgreen",
+			"commandType": "palette",
+			"command": "workbench.action.tasks.runTask|Run dev deploy",
+			"priority": 0
+		},
+
+		// this our one-click rollout
+		{
+			"text": "build & deploy-dev",
+			"tooltip": "Build (browserify) and deploy (wikiploy).",
+			"color": "lightgreen",
+			"commandType": "palette",
+			"command": "workbench.action.tasks.runTask|Run dev rollout",
+			"priority": 0
+		},
+		{
+			"text": "build & deploy-RELEASE",
+			"tooltip": "Build (browserify) and deploy (wikiploy).",
+			"color": "lightgreen",
+			"commandType": "palette",
+			"command": "workbench.action.tasks.runTask|Run rollout",
+			"priority": 0
+		}
+	]
+}
