@@ -2146,7 +2146,8 @@ $.extend(window.VisualFileChange, {
 						html: true,
 						delayOut: 1000,
 						gravity: $.fn.tipsy.autoNS
-					}), ' ',
+					}),
+					' ',
 					(($.isArray(ii.metadata) && !!ii.metadata.length) ?
 						$('<span>', {
 							'class': 'tipsymetadata'
@@ -2172,8 +2173,10 @@ $.extend(window.VisualFileChange, {
 						target: '_blank',
 						text: 'log',
 						'class': 'md-loglink'
-					}), '<br>',
-					(vfc.secureCall('mdExtractTags', pg.categories)), ' ',
+					}),
+					'<br>',
+					(vfc.secureCall('mdExtractTags', pg.categories)),
+					' ',
 					$('<a>', {
 						href: ii.descriptionurl,
 						target: '_blank',

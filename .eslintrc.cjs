@@ -49,6 +49,8 @@ module.exports = {
 				"SwitchCase": 1,
 			},
 		],
+		'no-empty': ['error', { allowEmptyCatch: true }],
+		'no-useless-escape': 'off',
 		//"array-bracket-newline": ["error", { "multiline": true, "minItems": 3 }],
 		//"array-element-newline": ["error", { "multiline": true }]
 		"array-element-newline": ["error", "consistent"]

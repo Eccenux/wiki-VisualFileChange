@@ -1870,7 +1870,25 @@ VisualFileChange = vfc = window.VisualFileChange = {
 		[ /Category:Free screenshot.*/i, 'free-Screenshot' ],
 		[ /Category:Copyright by Wikimedia.*/i, '(c)WMF' ],
 		[ /Category:Self[- _]published[ _]work/i, '<b>self</b>' ], // rm the next tags from being shown
-		[ /Valid SVG/, '' ], [ /Translation possible/, '' ], [ /License[- _]migration redundant/, '' ], [ /Retouched pictures/, '' ], [ /Extracted images/, '' ], [ /Images with annotations/, '' ], [ /Media needing category/, '' ], [ /requiring review/, '' ], [ /[Flickr|License] review needed/, '' ], [ /[Aa]dmin[- ]reviewed/, '' ], [ /UploadWizard/, '' ], [ /Permission[- _]received/, '' ], [ /Items[- _]with[- _]VRTS[- _]permission/, '' ], [ /Permission[- _]pending/, '' ], [ /Flickr images reviewed by/, '' ], [ /Media with locations/, '' ], [ /Media missing/, '' ], [ /Media without a/, '' ], [ /Deletion requests/, '' ]
+		[ /Valid SVG/, '' ],
+		[ /Translation possible/, '' ],
+		[ /License[- _]migration redundant/, '' ],
+		[ /Retouched pictures/, '' ],
+		[ /Extracted images/, '' ],
+		[ /Images with annotations/, '' ],
+		[ /Media needing category/, '' ],
+		[ /requiring review/, '' ],
+		[ /[Flickr|License] review needed/, '' ],
+		[ /[Aa]dmin[- ]reviewed/, '' ],
+		[ /UploadWizard/, '' ],
+		[ /Permission[- _]received/, '' ],
+		[ /Items[- _]with[- _]VRTS[- _]permission/, '' ],
+		[ /Permission[- _]pending/, '' ],
+		[ /Flickr images reviewed by/, '' ],
+		[ /Media with locations/, '' ],
+		[ /Media missing/, '' ],
+		[ /Media without a/, '' ],
+		[ /Deletion requests/, '' ]
 	],
 
 	mdOTRSprefill: '{{PermissionTicket|id=%ID|user={{subst:REVISIONUSER}}}} {{subst:OR|id=%ID|reason=processing, nonfree, email}}',
