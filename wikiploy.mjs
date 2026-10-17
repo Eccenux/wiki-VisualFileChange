@@ -16,7 +16,6 @@ const files = [
 const configs = files.map(([src, dst]) => new DeployConfig({
 	src,
 	dst: `MediaWiki:${dst}`,
-	nowiki: src.endsWith('.js')
 }));
 
 try {
