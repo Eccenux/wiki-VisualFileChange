@@ -6,4 +6,12 @@
 		"package-lock.json": true,
 		"**/dist/": true,
 	},
+	"spellright.language": [
+		"en"
+	],
+	"spellright.documentTypes": [
+		"markdown",
+		"latex",
+		"plaintext"
+	],
 }
